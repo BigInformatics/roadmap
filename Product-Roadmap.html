@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Roadmap</title>
+<style>
+  :root {
+    --bg: #0b0c10;
+    --surface: #1f2833;
+    --surface-2: #2a3542;
+    --ink: #c5c6c7;
+    --muted: #8899a6;
+    --accent: #66fcf1;
+    --accent-dim: #45a29e;
+    --danger: #ff6b6b;
+    --warning: #feca57;
+    --success: #1dd1a1;
+    --border: #2a3542;
+    --radius: 8px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .brand-dot {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .brand h1 { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.02em; }
+  .brand span { color: var(--muted); font-size: 0.875rem; }
+
+  .controls {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--accent-dim); color: var(--bg); border-color: var(--accent-dim); }
+  .btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+
+  select.btn { appearance: none; padding-right: 2rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c5c6c7' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; }
+
+  .main { padding: 2rem; max-width: 1600px; margin: 0 auto; }
+
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+  }
+  .stat-value { font-size: 1.75rem; font-weight: 700; }
+  .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
+
+  .roadmap-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow-x: auto;
+    box-shadow: var(--shadow);
+  }
+
+  .timeline-header {
+    display: grid;
+    grid-template-columns: 220px repeat(6, 1fr);
+    min-width: 900px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 50;
+  }
+
+  .th-cell {
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .th-cell:first-child { text-align: left; border-left: none; }
+  .th-cell:last-child { border-right: none; }
+
+  .th-cell .month-name { display: block; }
+  .th-cell .quarter-tag { font-size: 0.65rem; color: var(--accent-dim); margin-top: 2px; }
+
+  .swimlane {
+    border-bottom: 1px solid var(--border);
+  }
+  .swimlane:last-child { border-bottom: none; }
+
+  .swimlane-header {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-width: 900px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .product-name {
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-right: 1px solid var(--border);
+  }
+
+  .product-meta {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  .product-bar {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .progress-mini {
+    height: 6px;
+    background: var(--bg);
+    border-radius: 3px;
+    width: 120px;
+    overflow: hidden;
+  }
+  .progress-mini-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .deliverable-row {
+    display: grid;
+    grid-template-columns: 220px repeat(6, 1fr);
+    min-width: 900px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .deliverable-row:hover { background: rgba(102, 252, 241, 0.03); }
+  .deliverable-row:last-child { border-bottom: none; }
+
+  .del-name {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+  }
+  .del-name .title { font-weight: 500; }
+  .del-name .owner { font-size: 0.75rem; color: var(--muted); }
+
+  .cell {
+    border-right: 1px solid var(--border);
+    position: relative;
+    min-height: 48px;
+  }
+  .cell:last-child { border-right: none; }
+
+  .del-block {
+    position: absolute;
+    top: 6px; bottom: 6px;
+    border-radius: var(--radius);
+    padding: 0.35rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    border: 1px solid transparent;
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+  }
+  .del-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    z-index: 10;
+    white-space: normal;
+    overflow: visible;
+    min-width: fit-content;
+  }
+
+  .status-not-started { background: rgba(136, 153, 166, 0.15); color: var(--muted); border-color: rgba(136,153,166,0.3); }
+  .status-in-progress { background: rgba(102, 252, 241, 0.12); color: var(--accent); border-color: rgba(102,252,241,0.3); }
+  .status-at-risk   { background: rgba(255, 107, 107, 0.12); color: var(--danger); border-color: rgba(255,107,107,0.3); }
+  .status-completed { background: rgba(29, 209, 161, 0.12); color: var(--success); border-color: rgba(29,209,161,0.3); }
+  .status-blocked   { background: rgba(255, 107, 107, 0.08); color: var(--danger); border-color: rgba(255,107,107,0.2); border-style: dashed; }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    flex-shrink: 0;
+  }
+  .status-dot.not-started { background: var(--muted); }
+  .status-dot.in-progress { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+  .status-dot.at-risk   { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
+  .status-dot.completed { background: var(--success); }
+  .status-dot.blocked   { background: var(--danger); opacity: 0.6; }
+
+  .detail-panel {
+    position: fixed;
+    right: -420px;
+    top: 0;
+    width: 400px;
+    height: 100vh;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    z-index: 200;
+    transition: right 0.25s ease;
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+  .detail-panel.open { right: 0; }
+
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .panel-header h2 { font-size: 1.1rem; font-weight: 600; }
+  .close-btn {
+    background: none; border: none; color: var(--muted);
+    font-size: 1.5rem; cursor: pointer; line-height: 1;
+  }
+  .close-btn:hover { color: var(--ink); }
+
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; letter-spacing: 0.03em; }
+  .field .value { font-size: 0.9rem; }
+  .field .value.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 150;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .overlay.open { opacity: 1; pointer-events: auto; }
+
+  .editable {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem;
+    width: 100%;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 60px;
+  }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 768px) {
+    header { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding: 1rem; }
+    .main { padding: 1rem; }
+    .timeline-header, .deliverable-row { grid-template-columns: 160px repeat(6, 1fr); }
+    .detail-panel { width: 100%; right: -100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <div>
+      <h1>Product Roadmap</h1>
+      <span>Interactive Deliverables &amp; Timeline</span>
+    </div>
+  </div>
+  <div class="controls">
+    <select class="btn" id="viewFilter">
+      <option value="all">All Products</option>
+    </select>
+    <select class="btn" id="statusFilter">
+      <option value="all">All Statuses</option>
+      <option value="in-progress">In Progress</option>
+      <option value="at-risk">At Risk</option>
+      <option value="blocked">Blocked</option>
+      <option value="not-started">Not Started</option>
+      <option value="completed">Completed</option>
+    </select>
+    <button class="btn" id="btnNow">Jump to Now</button>
+    <button class="btn" id="btnEdit">Edit Data</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Deliverables</div></div>
+    <div class="stat-card"><div class="stat-value" id="statInProgress" style="color:var(--accent)">0</div><div class="stat-label">In Progress</div></div>
+    <div class="stat-card"><div class="stat-value" id="statAtRisk" style="color:var(--danger)">0</div><div class="stat-label">At Risk</div></div>
+    <div class="stat-card"><div class="stat-value" id="statBlocked" style="color:var(--danger)">0</div><div class="stat-label">Blocked</div></div>
+    <div class="stat-card"><div class="stat-value" id="statCompleted" style="color:var(--success)">0</div><div class="stat-label">Completed</div></div>
+    <div class="stat-card"><div class="stat-value" id="statDueThisMonth" style="color:var(--warning)">0</div><div class="stat-label">Due This Month</div></div>
+  </div>
+
+  <div class="roadmap-wrap" id="roadmapWrap">
+    <div class="timeline-header" id="timelineHeader">
+      <div class="th-cell">Product / Deliverable</div>
+    </div>
+    <div id="roadmapBody"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="detail-panel" id="detailPanel">
+  <div class="panel-header">
+    <h2 id="panelTitle">Deliverable</h2>
+    <button class="close-btn" id="btnClose">&times;</button>
+  </div>
+  <div id="panelContent"></div>
+</div>
+
+<script>
+/* ========================
+   CONFIGURATION — EDIT THIS
+   ======================== */
+const MONTHS = ['May','Jun','Jul','Aug','Sep','Oct'];
+const QUARTERS = { 'May':'Q2','Jun':'Q2','Jul':'Q3','Aug':'Q3','Sep':'Q3','Oct':'Q4' };
+
+// Set to true to start with example data, false for blank
+const SHOW_EXAMPLE_DATA = true;
+
+let ROADMAP_DATA = SHOW_EXAMPLE_DATA ? [
+  {
+    "product": "Backend Platform",
+    "owner": "Engineering Team",
+    "deliverables": [
+      { "id": "bp-1", "title": "API Authentication", "owner": "Engineering", "status": "in-progress", "start": "May", "end": "Jun", "desc": "Implement OAuth2 and JWT token management for all API endpoints." },
+      { "id": "bp-2", "title": "Database Migration", "owner": "Engineering", "status": "not-started", "start": "Jul", "end": "Aug", "desc": "Migrate primary database to new cluster with zero downtime." }
+    ]
+  },
+  {
+    "product": "Web Application",
+    "owner": "Frontend Team",
+    "deliverables": [
+      { "id": "wa-1", "title": "Dashboard Redesign", "owner": "Frontend", "status": "completed", "start": "May", "end": "May", "desc": "Redesign main dashboard with new analytics widgets and responsive layout." },
+      { "id": "wa-2", "title": "Settings Panel", "owner": "Frontend", "status": "in-progress", "start": "Jun", "end": "Jul", "desc": "Build new settings and preferences interface with form validation." }
+    ]
+  }
+] : [];
+
+/* ========================
+   STATE & UTILS
+   ======================== */
+let currentStatusFilter = 'all';
+let currentProductFilter = 'all';
+
+function $(sel) { return document.querySelector(sel); }
+function monthIndex(m) { return MONTHS.indexOf(m); }
+function statusClass(s) { return 'status-' + s; }
+function statusLabel(s) {
+  return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked' }[s] || s;
+}
+
+/* ========================
+   RENDER
+   ======================== */
+function renderHeader() {
+  const h = $('#timelineHeader');
+  h.innerHTML = '<div class="th-cell">Product / Deliverable</div>';
+  MONTHS.forEach(m => {
+    const el = document.createElement('div');
+    el.className = 'th-cell';
+    el.innerHTML = `<span class="month-name">${m}</span><span class="quarter-tag">${QUARTERS[m]}</span>`;
+    h.appendChild(el);
+  });
+}
+
+function renderStats() {
+  let total=0, ip=0, ar=0, bl=0, comp=0, due=0;
+  const now = new Date();
+  const thisMonthName = MONTHS[now.getMonth() - 4] || MONTHS[0];
+
+  ROADMAP_DATA.forEach(p => p.deliverables.forEach(d => {
+    const visible = statusVisible(d.status) && productVisible(p.product);
+    if (!visible) return;
+    total++;
+    if (d.status==='in-progress') ip++;
+    if (d.status==='at-risk') ar++;
+    if (d.status==='blocked') bl++;
+    if (d.status==='completed') comp++;
+    if (d.end === thisMonthName) due++;
+  }));
+
+  $('#statTotal').textContent = total;
+  $('#statInProgress').textContent = ip;
+  $('#statAtRisk').textContent = ar;
+  $('#statBlocked').textContent = bl;
+  $('#statCompleted').textContent = comp;
+  $('#statDueThisMonth').textContent = due;
+}
+
+function statusVisible(s) { return currentStatusFilter === 'all' || currentStatusFilter === s; }
+function productVisible(p) { return currentProductFilter === 'all' || currentProductFilter === p; }
+
+function renderRoadmap() {
+  const body = $('#roadmapBody');
+  body.innerHTML = '';
+
+  ROADMAP_DATA.forEach(product => {
+    const visibleDels = product.deliverables.filter(d => statusVisible(d.status));
+    if (visibleDels.length === 0 && currentProductFilter !== 'all' && currentProductFilter !== product.product) return;
+
+    const swimlane = document.createElement('div');
+    swimlane.className = 'swimlane';
+
+    const completed = product.deliverables.filter(d => d.status === 'completed').length;
+    const progress = product.deliverables.length ? Math.round((completed / product.deliverables.length) * 100) : 0;
+
+    const hdr = document.createElement('div');
+    hdr.className = 'swimlane-header';
+    hdr.innerHTML = `
+      <div class="product-name">
+        ${product.product}
+        <span class="product-meta">${product.owner} &bull; ${completed}/${product.deliverables.length} done</span>
+      </div>
+      <div class="product-bar">
+        <div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div>
+        <span style="font-size:0.75rem;color:var(--muted)">${progress}%</span>
+      </div>
+    `;
+    swimlane.appendChild(hdr);
+
+    product.deliverables.forEach(del => {
+      if (!statusVisible(del.status)) return;
+
+      const row = document.createElement('div');
+      row.className = 'deliverable-row';
+      row.dataset.id = del.id;
+
+      let nameHtml = `<div class="title">${del.title}</div>`;
+      if (del.owner) nameHtml += `<div class="owner">${del.owner}</div>`;
+
+      const nameCell = document.createElement('div');
+      nameCell.className = 'del-name';
+      nameCell.innerHTML = nameHtml;
+      row.appendChild(nameCell);
+
+      MONTHS.forEach(m => {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        row.appendChild(cell);
+      });
+
+      const startIdx = monthIndex(del.start);
+      const endIdx = monthIndex(del.end);
+      if (startIdx >= 0 && endIdx >= 0) {
+        const cells = row.querySelectorAll('.cell');
+        const startCell = cells[startIdx];
+        const block = document.createElement('div');
+        block.className = 'del-block ' + statusClass(del.status);
+        block.innerHTML = `<span class="status-dot ${del.status}"></span>${del.title}`;
+        block.style.left = '4px';
+        block.style.right = '4px';
+        block.addEventListener('click', () => openDetail(del, product));
+        startCell.appendChild(block);
+      }
+
+      swimlane.appendChild(row);
+    });
+
+    body.appendChild(swimlane);
+  });
+
+  renderStats();
+}
+
+/* ========================
+   DETAIL PANEL
+   ======================== */
+function openDetail(del, product) {
+  $('#panelTitle').textContent = del.title;
+  const sc = statusClass(del.status);
+  const sl = statusLabel(del.status);
+  $('#panelContent').innerHTML = `
+    <div class="field"><label>Status</label><div class="value status-badge ${sc}"><span class="status-dot ${del.status}"></span>${sl}</div></div>
+    <div class="field"><label>Product</label><div class="value">${product.product}</div></div>
+    <div class="field"><label>Owner</label><div class="value">${del.owner || product.owner}</div></div>
+    <div class="field"><label>Timeline</label><div class="value">${del.start} &rarr; ${del.end}</div></div>
+    <div class="field"><label>Description</label><div class="value">${del.desc || 'No description provided.'}</div></div>
+    <div class="field"><label>ID</label><div class="value" style="font-family:monospace;font-size:0.8rem;color:var(--muted)">${del.id}</div></div>
+  `;
+  $('#overlay').classList.add('open');
+  $('#detailPanel').classList.add('open');
+}
+
+function closeDetail() {
+  $('#overlay').classList.remove('open');
+  $('#detailPanel').classList.remove('open');
+}
+
+/* ========================
+   EDIT MODE (simple inline)
+   ======================== */
+let editMode = false;
+function toggleEdit() {
+  editMode = !editMode;
+  const panel = $('#detailPanel');
+  if (!editMode) {
+    $('#btnEdit').textContent = 'Edit Data';
+    $('#btnEdit').classList.remove('active');
+    closeDetail();
+    renderRoadmap();
+    return;
+  }
+  $('#btnEdit').textContent = 'Done Editing';
+  $('#btnEdit').classList.add('active');
+
+  $('#panelTitle').textContent = 'Edit Roadmap Data';
+  $('#panelContent').innerHTML = `
+    <div class="field"><label>Paste your roadmap JSON here. Structure: array of products, each with deliverables array.</label>
+    <textarea class="editable" id="jsonEditor" rows="30">${JSON.stringify(ROADMAP_DATA, null, 2)}</textarea></div>
+    <div style="display:flex;gap:0.5rem;margin-top:1rem">
+      <button class="btn" id="btnSaveJson">Save &amp; Render</button>
+      <button class="btn" id="btnDownload">Download JSON</button>
+    </div>
+    <div class="field" style="margin-top:1rem"><label>Quick Add</label>
+    <div style="font-size:0.8rem;color:var(--muted)">Add rows via the JSON editor above. Each deliverable needs: id, title, status, start, end. Statuses: not-started, in-progress, at-risk, blocked, completed.</div></div>
+  `;
+  $('#overlay').classList.add('open');
+  panel.classList.add('open');
+
+  $('#btnSaveJson').addEventListener('click', () => {
+    try {
+      ROADMAP_DATA = JSON.parse($('#jsonEditor').value);
+      populateFilters();
+      renderRoadmap();
+      toggleEdit();
+    } catch(e) { alert('Invalid JSON: ' + e.message); }
+  });
+
+  $('#btnDownload').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(ROADMAP_DATA, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'roadmap-data.json';
+    a.click();
+  });
+}
+
+/* ========================
+   FILTERS
+   ======================== */
+function populateFilters() {
+  const sel = $('#viewFilter');
+  sel.innerHTML = '<option value="all">All Products</option>';
+  ROADMAP_DATA.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.product;
+    opt.textContent = p.product;
+    sel.appendChild(opt);
+  });
+}
+
+/* ========================
+   INIT
+   ======================== */
+renderHeader();
+populateFilters();
+renderRoadmap();
+
+$('#statusFilter').addEventListener('change', e => {
+  currentStatusFilter = e.target.value;
+  renderRoadmap();
+});
+
+$('#viewFilter').addEventListener('change', e => {
+  currentProductFilter = e.target.value;
+  renderRoadmap();
+});
+
+$('#btnNow').addEventListener('click', () => {
+  const now = new Date();
+  const month = MONTHS[now.getMonth() - 4] || MONTHS[0];
+  const idx = monthIndex(month);
+  const wrap = $('#roadmapWrap');
+  const cellWidth = wrap.scrollWidth / (MONTHS.length + 1);
+  wrap.scrollTo({ left: cellWidth * idx, behavior: 'smooth' });
+});
+
+$('#btnEdit').addEventListener('click', toggleEdit);
+$('#btnClose').addEventListener('click', closeDetail);
+$('#overlay').addEventListener('click', closeDetail);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeDetail();
+});
+</script>
+</body>
+</html>
