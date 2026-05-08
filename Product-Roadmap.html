@@ -21,7 +21,7 @@
     --border: #2a3542;
     --radius: 6px;
     --shadow: 0 4px 20px rgba(0,0,0,0.4);
-    --name-col: 220px;
+    --name-col: 240px;
     --month-col: 55px;
     --month-count: 84;
   }
@@ -72,8 +72,13 @@
   .btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
   .btn.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
   .btn.small { padding: 0.35rem 0.65rem; font-size: 0.75rem; min-height: 30px; }
+  .btn.ghost { background: transparent; }
 
   .main { padding: 2rem; max-width: 100%; margin: 0 auto; }
+  .product-toggle-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; max-width: 1600px; }
+  .toggle-pill { display: inline-flex; align-items: center; gap: 0.45rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer; color: var(--muted); }
+  .toggle-pill input { width: auto; accent-color: var(--accent); }
+  .toggle-pill.enabled { color: var(--ink); border-color: rgba(102,252,241,0.35); background: rgba(102,252,241,0.07); }
   .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; max-width: 1600px; }
   .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
   .stat-value { font-size: 1.75rem; font-weight: 700; }
@@ -96,6 +101,7 @@
   .product-bar { padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
   .progress-mini { height: 6px; background: var(--bg); border-radius: 3px; width: 120px; overflow: hidden; }
   .progress-mini-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+  .empty-state { padding: 2rem; color: var(--muted); }
 
   .deliverable-row { display: flex; border-bottom: 1px solid var(--border); transition: background 0.15s; position: relative; }
   .deliverable-row:hover { background: rgba(102, 252, 241, 0.03); }
@@ -122,7 +128,7 @@
 
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .overlay.open { opacity: 1; pointer-events: auto; }
-  .detail-panel { position: fixed; right: -520px; top: 0; width: 500px; max-width: 100%; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); z-index: 200; transition: right 0.25s ease; overflow-y: auto; padding: 1.5rem; }
+  .detail-panel { position: fixed; right: -680px; top: 0; width: 660px; max-width: 100%; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); z-index: 200; transition: right 0.25s ease; overflow-y: auto; padding: 1.5rem; }
   .detail-panel.open { right: 0; }
   .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .panel-header h2 { font-size: 1.1rem; font-weight: 600; }
@@ -132,16 +138,22 @@
   .field label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; letter-spacing: 0.03em; }
   .field .value { font-size: 0.9rem; }
   .editable, textarea, input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; width: 100%; color: var(--ink); font-family: inherit; font-size: 0.85rem; resize: vertical; }
-  textarea.editable { min-height: 300px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-  .status-buttons, .roadmap-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
+  textarea.editable { min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+  .status-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
   .notes-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
   .notes-list li { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; font-size: 0.8rem; color: var(--muted); }
+  .doc-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
+  .doc-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .doc-card-title { display: flex; align-items: center; gap: 0.55rem; font-weight: 600; }
+  .doc-card-title input { width: auto; accent-color: var(--accent); }
+  .doc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+  .help-text { font-size: 0.8rem; color: var(--muted); }
 
   @media (max-width: 768px) {
     header { flex-direction: column; align-items: flex-start; padding: 1rem; }
     .controls { justify-content: flex-start; }
     .main { padding: 1rem; }
-    :root { --name-col: 160px; --month-col: 45px; }
+    :root { --name-col: 170px; --month-col: 45px; }
   }
 </style>
 </head>
@@ -155,7 +167,6 @@
     </div>
   </div>
   <div class="controls">
-    <select class="btn" id="roadmapSelect"></select>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
       <option value="in-progress">In Progress</option>
@@ -171,7 +182,9 @@
 </header>
 
 <div class="main">
+  <div class="product-toggle-bar" id="productToggleBar"></div>
   <div class="stats-bar">
+    <div class="stat-card"><div class="stat-value" id="statProducts">0</div><div class="stat-label">Products On</div></div>
     <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Deliverables</div></div>
     <div class="stat-card"><div class="stat-value" id="statInProgress" style="color:var(--accent)">0</div><div class="stat-label">In Progress</div></div>
     <div class="stat-card"><div class="stat-value" id="statAtRisk" style="color:var(--danger)">0</div><div class="stat-label">At Risk</div></div>
@@ -192,89 +205,127 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'product-roadmap-v2';
+const STORAGE_KEY = 'product-roadmap-v3-documents';
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS = [];
 for (let y = 2026; y <= 2032; y++) for (let i = 0; i < 12; i++) MONTHS.push(`${MONTH_NAMES[i]} ${y}`);
 document.documentElement.style.setProperty('--month-count', MONTHS.length);
 
-const DEFAULT_ROADMAPS = [
+const DEFAULT_DOCUMENTS = [
   {
-    project: 'Backend Platform',
-    title: 'Product Roadmap',
-    subtitle: 'Interactive Deliverables & Timeline',
-    lastUpdated: '2026-05-08 10:00:00 ET',
-    owner: 'Engineering Team',
-    deliverables: [
-      { id: 'bp-1', title: 'API Authentication', owner: 'Engineering', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for all API endpoints.', notes: [] },
-      { id: 'bp-2', title: 'Database Migration', owner: 'Engineering', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with zero downtime.', notes: [] }
-    ]
+    id: 'backend-platform',
+    enabled: true,
+    data: {
+      project: 'Backend Platform',
+      title: 'Product Roadmap',
+      subtitle: 'Interactive Deliverables & Timeline',
+      lastUpdated: '2026-05-08 10:00:00 ET',
+      owner: 'Engineering Team',
+      deliverables: [
+        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', notes: [] },
+        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', notes: [] }
+      ]
+    }
   },
   {
-    project: 'Web Application',
-    title: 'Product Roadmap',
-    subtitle: 'Interactive Deliverables & Timeline',
-    lastUpdated: '2026-05-08 10:00:00 ET',
-    owner: 'Frontend Team',
-    deliverables: [
-      { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Redesign main dashboard with new analytics widgets and responsive layout.', notes: [] },
-      { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build new settings and preferences interface with form validation.', notes: [] }
-    ]
+    id: 'web-application',
+    enabled: true,
+    data: {
+      project: 'Web Application',
+      title: 'Product Roadmap',
+      subtitle: 'Interactive Deliverables & Timeline',
+      lastUpdated: '2026-05-08 10:00:00 ET',
+      owner: 'Frontend Team',
+      deliverables: [
+        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', notes: [] },
+        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', notes: [] }
+      ]
+    }
   }
 ];
 
-let ROADMAPS = loadRoadmaps();
-let activeRoadmapIndex = 0;
+let DOCUMENTS = loadDocuments();
 let currentStatusFilter = 'all';
 let selectedStatus = null;
 let selectedDeliverable = null;
-let selectedProject = null;
+let selectedDocument = null;
 
 function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
-function activeRoadmap() { return ROADMAPS[activeRoadmapIndex] || ROADMAPS[0] || { project:'Roadmap', deliverables:[] }; }
 function monthIndex(m) { return MONTHS.indexOf(m); }
 function statusClass(s) { return 'status-' + s; }
 function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked' }[s] || s; }
+function productName(doc) { return doc?.data?.project || doc?.data?.product || doc?.name || 'Roadmap'; }
+function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
+function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
   const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
   return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second} ET`;
 }
-function loadRoadmaps() {
-  try { const cached = localStorage.getItem(STORAGE_KEY); if (cached) return JSON.parse(cached); } catch(e) { console.warn('Unable to load cache', e); }
-  return deepClone(DEFAULT_ROADMAPS);
+function normalizeDocument(item, index = 0) {
+  const raw = item && item.data ? item : { data: item || {} };
+  const data = raw.data || {};
+  return {
+    id: raw.id || slugify(data.project || data.product || `roadmap-${index + 1}`),
+    enabled: raw.enabled !== false,
+    data: {
+      project: data.project || data.product || `Roadmap ${index + 1}`,
+      title: data.title || 'Product Roadmap',
+      subtitle: data.subtitle || 'Interactive Deliverables & Timeline',
+      lastUpdated: data.lastUpdated || '',
+      owner: data.owner || '',
+      deliverables: Array.isArray(data.deliverables) ? data.deliverables : []
+    }
+  };
 }
-function saveCache() { localStorage.setItem(STORAGE_KEY, JSON.stringify(ROADMAPS)); }
-function touchRoadmap(r = activeRoadmap()) { r.lastUpdated = getEasternTimestamp(); }
+function normalizeDocuments(value) {
+  if (Array.isArray(value)) return value.map(normalizeDocument);
+  if (value && Array.isArray(value.documents)) return value.documents.map(normalizeDocument);
+  if (value && typeof value === 'object') return [normalizeDocument(value, 0)];
+  return deepClone(DEFAULT_DOCUMENTS);
+}
+function loadDocuments() {
+  try { const cached = localStorage.getItem(STORAGE_KEY); if (cached) return normalizeDocuments(JSON.parse(cached)); } catch(e) { console.warn('Unable to load cache', e); }
+  return deepClone(DEFAULT_DOCUMENTS);
+}
+function saveCache() { localStorage.setItem(STORAGE_KEY, JSON.stringify(DOCUMENTS)); }
+function touchDocument(doc) { if (doc?.data) doc.data.lastUpdated = getEasternTimestamp(); }
 
 function renderHeader() {
-  const r = activeRoadmap();
-  const title = r.title || 'Product Roadmap';
-  const subtitle = r.subtitle || 'Interactive Deliverables & Timeline';
+  const on = enabledDocuments();
+  const first = on[0]?.data || DOCUMENTS[0]?.data || {};
+  const title = first.title || 'Product Roadmap';
+  const subtitle = on.length > 1 ? `${on.length} products enabled` : (first.subtitle || 'Interactive Deliverables & Timeline');
+  const newest = on.map(d => d.data.lastUpdated).filter(Boolean).sort().at(-1);
   $('#pageTitle').textContent = title;
   $('#pageSubtitle').textContent = subtitle;
-  $('#lastUpdated').textContent = r.lastUpdated ? `Last updated: ${r.lastUpdated}` : '';
+  $('#lastUpdated').textContent = newest ? `Last updated: ${newest}` : '';
   document.title = title;
 }
 
-function renderRoadmapSelect() {
-  const sel = $('#roadmapSelect');
-  sel.innerHTML = '';
-  ROADMAPS.forEach((r, i) => {
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = r.project || r.product || `Roadmap ${i + 1}`;
-    sel.appendChild(opt);
+function renderProductToggles() {
+  const bar = $('#productToggleBar');
+  bar.innerHTML = '';
+  DOCUMENTS.forEach((doc, idx) => {
+    const label = document.createElement('label');
+    label.className = 'toggle-pill' + (doc.enabled ? ' enabled' : '');
+    label.innerHTML = `<input type="checkbox" ${doc.enabled ? 'checked' : ''} data-doc-toggle="${idx}"> ${escapeHtml(productName(doc))}`;
+    bar.appendChild(label);
   });
-  sel.value = activeRoadmapIndex;
+  document.querySelectorAll('[data-doc-toggle]').forEach(input => input.addEventListener('change', e => {
+    DOCUMENTS[Number(e.target.dataset.docToggle)].enabled = e.target.checked;
+    saveCache();
+    renderRoadmap();
+  }));
 }
 
 function renderTimelineHeader() {
   const h = $('#timelineHeader');
   const currentIdx = monthIndex(getCurrentMonthKey());
-  h.innerHTML = '<div class="th-cell">Project / Deliverable</div>';
+  h.innerHTML = '<div class="th-cell">Product / Deliverable</div>';
   MONTHS.forEach((m, idx) => {
     const [month, year] = m.split(' ');
     const el = document.createElement('div');
@@ -284,18 +335,21 @@ function renderTimelineHeader() {
   });
 }
 
+function getVisibleDeliverables(doc) {
+  return (doc.data.deliverables || []).filter(d => currentStatusFilter === 'all' || d.status === currentStatusFilter);
+}
 function renderStats() {
   let total=0, ip=0, ar=0, bl=0, comp=0, due=0;
   const thisMonth = getCurrentMonthKey();
-  (activeRoadmap().deliverables || []).forEach(d => {
-    if (currentStatusFilter !== 'all' && d.status !== currentStatusFilter) return;
+  enabledDocuments().forEach(doc => getVisibleDeliverables(doc).forEach(d => {
     total++;
     if (d.status === 'in-progress') ip++;
     if (d.status === 'at-risk') ar++;
     if (d.status === 'blocked') bl++;
     if (d.status === 'completed') comp++;
     if (d.end === thisMonth) due++;
-  });
+  }));
+  $('#statProducts').textContent = enabledDocuments().length;
   $('#statTotal').textContent = total;
   $('#statInProgress').textContent = ip;
   $('#statAtRisk').textContent = ar;
@@ -306,50 +360,66 @@ function renderStats() {
 
 function renderRoadmap() {
   renderHeader();
-  renderRoadmapSelect();
+  renderProductToggles();
   renderTimelineHeader();
   const body = $('#roadmapBody');
   body.innerHTML = '';
-  const r = activeRoadmap();
-  const deliverables = (r.deliverables || []).filter(d => currentStatusFilter === 'all' || d.status === currentStatusFilter);
-  const completed = (r.deliverables || []).filter(d => d.status === 'completed').length;
-  const progress = (r.deliverables || []).length ? Math.round((completed / r.deliverables.length) * 100) : 0;
   const currentIdx = monthIndex(getCurrentMonthKey());
+  const docs = enabledDocuments();
 
-  const swimlane = document.createElement('div');
-  swimlane.className = 'swimlane';
-  const hdr = document.createElement('div');
-  hdr.className = 'swimlane-header';
-  hdr.innerHTML = `<div class="product-name">${r.project || r.product || 'Roadmap'}<span class="product-meta">${r.owner || ''} &bull; ${completed}/${(r.deliverables || []).length} done</span></div><div class="product-bar"><div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div><span style="font-size:0.75rem;color:var(--muted)">${progress}%</span></div>`;
-  swimlane.appendChild(hdr);
+  if (!docs.length) {
+    body.innerHTML = '<div class="empty-state">No products are enabled. Toggle products on above or use Edit Data to add roadmap JSON documents.</div>';
+    renderStats();
+    return;
+  }
 
-  deliverables.forEach(del => {
-    const row = document.createElement('div');
-    row.className = 'deliverable-row';
-    row.dataset.id = del.id;
-    const nameCell = document.createElement('div');
-    nameCell.className = 'del-name';
-    nameCell.innerHTML = `<div class="title">${del.title}</div>${del.owner ? `<div class="owner">${del.owner}</div>` : ''}`;
-    row.appendChild(nameCell);
-    MONTHS.forEach((m, idx) => {
-      const cell = document.createElement('div');
-      cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '');
-      row.appendChild(cell);
-    });
-    const startIdx = monthIndex(del.start);
-    const endIdx = monthIndex(del.end);
-    if (startIdx >= 0 && endIdx >= 0 && endIdx >= startIdx) {
-      const block = document.createElement('div');
-      block.className = 'del-block ' + statusClass(del.status);
-      block.innerHTML = `<span class="status-dot ${del.status}"></span>${del.title}`;
-      block.style.left = `calc(var(--name-col) + var(--month-col) * ${startIdx} + 4px)`;
-      block.style.width = `calc(var(--month-col) * ${endIdx - startIdx + 1} - 8px)`;
-      block.addEventListener('click', () => openDetail(del, r));
-      row.appendChild(block);
+  docs.forEach(doc => {
+    const data = doc.data;
+    const deliverables = getVisibleDeliverables(doc);
+    const completed = (data.deliverables || []).filter(d => d.status === 'completed').length;
+    const progress = (data.deliverables || []).length ? Math.round((completed / data.deliverables.length) * 100) : 0;
+    const swimlane = document.createElement('div');
+    swimlane.className = 'swimlane';
+    const hdr = document.createElement('div');
+    hdr.className = 'swimlane-header';
+    hdr.innerHTML = `<div class="product-name">${escapeHtml(productName(doc))}<span class="product-meta">${escapeHtml(data.owner || '')} &bull; ${completed}/${(data.deliverables || []).length} done</span></div><div class="product-bar"><div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div><span style="font-size:0.75rem;color:var(--muted)">${progress}%</span></div>`;
+    swimlane.appendChild(hdr);
+
+    if (!deliverables.length) {
+      const empty = document.createElement('div');
+      empty.className = 'deliverable-row';
+      empty.innerHTML = `<div class="del-name"><div class="title">No matching deliverables</div><div class="owner">${currentStatusFilter === 'all' ? 'Add items in Edit Data' : 'Change the status filter'}</div></div>` + MONTHS.map((m, idx) => `<div class="cell${idx === currentIdx ? ' current-month' : ''}"></div>`).join('');
+      swimlane.appendChild(empty);
     }
-    swimlane.appendChild(row);
+
+    deliverables.forEach(del => {
+      const row = document.createElement('div');
+      row.className = 'deliverable-row';
+      row.dataset.id = del.id;
+      const nameCell = document.createElement('div');
+      nameCell.className = 'del-name';
+      nameCell.innerHTML = `<div class="title">${escapeHtml(del.title)}</div>${del.owner ? `<div class="owner">${escapeHtml(del.owner)}</div>` : ''}`;
+      row.appendChild(nameCell);
+      MONTHS.forEach((m, idx) => {
+        const cell = document.createElement('div');
+        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '');
+        row.appendChild(cell);
+      });
+      const startIdx = monthIndex(del.start);
+      const endIdx = monthIndex(del.end);
+      if (startIdx >= 0 && endIdx >= 0 && endIdx >= startIdx) {
+        const block = document.createElement('div');
+        block.className = 'del-block ' + statusClass(del.status);
+        block.innerHTML = `<span class="status-dot ${escapeHtml(del.status)}"></span>${escapeHtml(del.title)}`;
+        block.style.left = `calc(var(--name-col) + var(--month-col) * ${startIdx} + 4px)`;
+        block.style.width = `calc(var(--month-col) * ${endIdx - startIdx + 1} - 8px)`;
+        block.addEventListener('click', () => openDetail(del, doc));
+        row.appendChild(block);
+      }
+      swimlane.appendChild(row);
+    });
+    body.appendChild(swimlane);
   });
-  body.appendChild(swimlane);
   renderStats();
 }
 
@@ -359,21 +429,21 @@ function openPanel(title, html) {
   $('#overlay').classList.add('open');
   $('#detailPanel').classList.add('open');
 }
-function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); selectedStatus = null; selectedDeliverable = null; selectedProject = null; }
+function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); selectedStatus = null; selectedDeliverable = null; selectedDocument = null; }
 
-function openDetail(del, project) {
+function openDetail(del, doc) {
   selectedDeliverable = del;
-  selectedProject = project;
+  selectedDocument = doc;
   selectedStatus = del.status;
-  const notes = (del.notes || []).map(n => `<li>${n}</li>`).join('') || '<li>No notes yet.</li>';
+  const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No notes yet.</li>';
   openPanel(del.title, `
     <div class="field"><label>Status</label><div class="status-buttons" id="statusButtons">
       ${['not-started','in-progress','at-risk','blocked','completed'].map(s => `<button class="btn small ${s === del.status ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
     </div></div>
-    <div class="field"><label>Project</label><div class="value">${project.project || project.product || ''}</div></div>
-    <div class="field"><label>Owner</label><div class="value">${del.owner || project.owner || ''}</div></div>
-    <div class="field"><label>Timeline</label><div class="value">${del.start} &rarr; ${del.end}</div></div>
-    <div class="field"><label>Description</label><div class="value">${del.desc || 'No description provided.'}</div></div>
+    <div class="field"><label>Product</label><div class="value">${escapeHtml(productName(doc))}</div></div>
+    <div class="field"><label>Owner</label><div class="value">${escapeHtml(del.owner || doc.data.owner || '')}</div></div>
+    <div class="field"><label>Timeline</label><div class="value">${escapeHtml(del.start)} &rarr; ${escapeHtml(del.end)}</div></div>
+    <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>Status Note</label><textarea id="statusNote" rows="4" placeholder="Optional note about this status change..."></textarea></div>
     <button class="btn active" id="btnSaveStatus">Save Changes</button>
     <div class="field" style="margin-top:1rem"><label>Notes</label><ul class="notes-list">${notes}</ul></div>
@@ -387,51 +457,91 @@ function openDetail(del, project) {
 }
 
 function saveStatusChange() {
-  if (!selectedDeliverable || !selectedProject) return;
+  if (!selectedDeliverable || !selectedDocument) return;
   const oldStatus = selectedDeliverable.status;
   const note = ($('#statusNote').value || '').trim();
   selectedDeliverable.status = selectedStatus;
   if (!Array.isArray(selectedDeliverable.notes)) selectedDeliverable.notes = [];
   if (note || oldStatus !== selectedStatus) selectedDeliverable.notes.push(`${new Date().toISOString()} | ${selectedStatus} | ${note || `Status changed from ${oldStatus} to ${selectedStatus}`}`);
-  touchRoadmap(selectedProject);
+  touchDocument(selectedDocument);
   saveCache();
   renderRoadmap();
   closeDetail();
 }
 
 function openEditor() {
-  const tabs = ROADMAPS.map((r, i) => `<button class="btn small ${i === activeRoadmapIndex ? 'active' : ''}" data-roadmap-tab="${i}">${r.project || r.product || `Roadmap ${i+1}`}</button>`).join('');
-  openPanel('Edit Roadmap Data', `
-    <div class="field"><label>Roadmaps</label><div class="roadmap-tabs">${tabs}</div></div>
-    <div class="field"><label>JSON Array</label><textarea class="editable" id="jsonEditor">${JSON.stringify(ROADMAPS, null, 2)}</textarea></div>
+  const cards = DOCUMENTS.map((doc, i) => `
+    <div class="doc-card" data-doc-card="${i}">
+      <div class="doc-card-header">
+        <label class="doc-card-title"><input type="checkbox" ${doc.enabled ? 'checked' : ''} data-edit-enabled="${i}"> ${escapeHtml(productName(doc))}</label>
+        <div class="doc-actions">
+          <button class="btn small" data-download-doc="${i}">Download</button>
+          <button class="btn small danger" data-remove-doc="${i}">Remove</button>
+        </div>
+      </div>
+      <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
+    </div>`).join('');
+  openPanel('Edit Product JSON Documents', `
+    <div class="field"><label>Products</label><div class="help-text">Each card is an independent product roadmap JSON document. Check products on/off to control which swimlanes render together.</div></div>
+    ${cards || '<div class="empty-state">No product JSON documents yet.</div>'}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
       <button class="btn active" id="btnSaveJson">Save & Render</button>
-      <button class="btn" id="btnDownloadAll">Download All JSON</button>
-      <button class="btn" id="btnDownloadCurrent">Download Current Roadmap</button>
+      <button class="btn" id="btnAddDoc">Add Product JSON</button>
+      <button class="btn" id="btnDownloadEnabled">Download Enabled JSONs</button>
+      <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value" style="font-size:0.8rem;color:var(--muted)">Use a JSON array of project objects. Dates use "Mon YYYY" (e.g. "Jun 2027"). Save writes to localStorage.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card. Dates use "Mon YYYY" (e.g. "Jun 2027"). Save writes all product JSON documents and toggle states to localStorage.</div></div>
   `);
-  document.querySelectorAll('[data-roadmap-tab]').forEach(btn => btn.addEventListener('click', e => {
-    activeRoadmapIndex = Number(e.target.dataset.roadmapTab);
+  document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
+    const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
+    downloadJson(doc.data, `${slugify(productName(doc))}.json`);
+  }));
+  document.querySelectorAll('[data-remove-doc]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.target.dataset.removeDoc);
+    if (!confirm(`Remove ${productName(DOCUMENTS[idx])} from this local roadmap set?`)) return;
+    DOCUMENTS.splice(idx, 1);
+    saveCache();
     renderRoadmap();
     openEditor();
   }));
-  $('#btnSaveJson').addEventListener('click', () => {
-    try {
-      const parsed = JSON.parse($('#jsonEditor').value);
-      if (!Array.isArray(parsed)) throw new Error('Top-level JSON must be an array of roadmap objects.');
-      ROADMAPS = parsed;
-      if (activeRoadmapIndex >= ROADMAPS.length) activeRoadmapIndex = 0;
-      touchRoadmap(activeRoadmap());
-      saveCache();
-      renderRoadmap();
-      openEditor();
-    } catch(e) { alert('Invalid JSON: ' + e.message); }
-  });
-  $('#btnDownloadAll').addEventListener('click', () => downloadJson(ROADMAPS, 'roadmaps.json'));
-  $('#btnDownloadCurrent').addEventListener('click', () => downloadJson(activeRoadmap(), `${(activeRoadmap().project || 'roadmap').replace(/\s+/g,'-').toLowerCase()}.json`));
+  $('#btnSaveJson').addEventListener('click', saveEditorDocuments);
+  $('#btnAddDoc').addEventListener('click', addProductDocument);
+  $('#btnDownloadEnabled').addEventListener('click', () => downloadJson({ documents: enabledDocuments() }, 'enabled-product-roadmaps.json'));
+  $('#btnDownloadAll').addEventListener('click', () => downloadJson({ documents: DOCUMENTS }, 'all-product-roadmaps.json'));
   $('#btnClearCacheDrawer').addEventListener('click', clearCache);
+}
+
+function saveEditorDocuments() {
+  const next = [];
+  const seenIds = new Set();
+  try {
+    document.querySelectorAll('[data-doc-json]').forEach(textarea => {
+      const idx = Number(textarea.dataset.docJson);
+      const parsed = JSON.parse(textarea.value);
+      if (Array.isArray(parsed)) throw new Error(`Product card ${idx + 1} must contain one product object, not an array.`);
+      const doc = normalizeDocument({
+        id: DOCUMENTS[idx]?.id,
+        enabled: document.querySelector(`[data-edit-enabled="${idx}"]`)?.checked !== false,
+        data: parsed
+      }, idx);
+      if (seenIds.has(doc.id)) doc.id = `${doc.id}-${idx + 1}`;
+      seenIds.add(doc.id);
+      touchDocument(doc);
+      next.push(doc);
+    });
+    DOCUMENTS = next;
+    saveCache();
+    renderRoadmap();
+    openEditor();
+  } catch(e) { alert('Invalid JSON: ' + e.message); }
+}
+function addProductDocument() {
+  saveEditorDocuments();
+  DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', deliverables: [] }, DOCUMENTS.length));
+  saveCache();
+  renderRoadmap();
+  openEditor();
 }
 
 function downloadJson(data, filename) {
@@ -446,13 +556,11 @@ function downloadJson(data, filename) {
 function clearCache() {
   if (!confirm('Clear localStorage cache and reset to embedded defaults?')) return;
   localStorage.removeItem(STORAGE_KEY);
-  ROADMAPS = deepClone(DEFAULT_ROADMAPS);
-  activeRoadmapIndex = 0;
+  DOCUMENTS = deepClone(DEFAULT_DOCUMENTS);
   renderRoadmap();
   closeDetail();
 }
 
-$('#roadmapSelect').addEventListener('change', e => { activeRoadmapIndex = Number(e.target.value); renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClearCache').addEventListener('click', clearCache);
@@ -463,7 +571,7 @@ $('#btnNow').addEventListener('click', () => {
   if (idx < 0) return;
   const wrap = $('#roadmapWrap');
   const monthWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--month-col')) || 55;
-  const nameWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--name-col')) || 220;
+  const nameWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--name-col')) || 240;
   wrap.scrollTo({ left: nameWidth + (monthWidth * idx) - (wrap.clientWidth / 2) + (monthWidth / 2), behavior: 'smooth' });
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
