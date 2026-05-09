@@ -200,7 +200,6 @@
     </select>
     <button class="btn" id="btnNow">Jump to Now</button>
     <button class="btn" id="btnEdit">Edit Data</button>
-    <button class="btn danger" id="btnClearCache">Clear Cache</button>
   </div>
 </header>
 
@@ -618,11 +617,13 @@ function openEditor() {
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
       <button class="btn active" id="btnSaveJson">Save & Render</button>
       <button class="btn" id="btnAddDoc">Add Product JSON</button>
+      <button class="btn" id="btnLoadJson">Load JSON Document</button>
+      <input id="jsonFileInput" type="file" accept="application/json,.json" multiple hidden>
       <button class="btn" id="btnDownloadEnabled">Download Enabled JSONs</button>
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Legacy string due dates are migrated automatically.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
     const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
@@ -636,14 +637,16 @@ function openEditor() {
     renderRoadmap();
     openEditor();
   }));
-  $('#btnSaveJson').addEventListener('click', saveEditorDocuments);
+  $('#btnSaveJson').addEventListener('click', () => saveEditorDocuments());
   $('#btnAddDoc').addEventListener('click', addProductDocument);
+  $('#btnLoadJson').addEventListener('click', () => $('#jsonFileInput').click());
+  $('#jsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
   $('#btnDownloadEnabled').addEventListener('click', () => downloadJson({ documents: enabledDocuments() }, 'enabled-product-roadmaps.json'));
   $('#btnDownloadAll').addEventListener('click', () => downloadJson({ documents: DOCUMENTS }, 'all-product-roadmaps.json'));
   $('#btnClearCacheDrawer').addEventListener('click', clearCache);
 }
 
-function saveEditorDocuments() {
+function saveEditorDocuments(reopen = true) {
   const next = [];
   const seenIds = new Set();
   try {
@@ -664,15 +667,54 @@ function saveEditorDocuments() {
     DOCUMENTS = next;
     saveCache();
     renderRoadmap();
-    openEditor();
-  } catch(e) { alert('Invalid JSON: ' + e.message); }
+    if (reopen) openEditor();
+    return true;
+  } catch(e) {
+    alert('Invalid JSON: ' + e.message);
+    return false;
+  }
+}
+function ensureUniqueDocumentIds(docs) {
+  const seen = new Set();
+  return docs.map((doc, idx) => {
+    const base = doc.id || slugify(productName(doc) || `roadmap-${idx + 1}`);
+    let id = base;
+    let suffix = 2;
+    while (seen.has(id)) id = `${base}-${suffix++}`;
+    seen.add(id);
+    return { ...doc, id };
+  });
 }
 function addProductDocument() {
-  saveEditorDocuments();
+  if (!saveEditorDocuments(false)) return;
   DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', deliverables: [] }, DOCUMENTS.length));
+  DOCUMENTS = ensureUniqueDocumentIds(DOCUMENTS);
   saveCache();
   renderRoadmap();
   openEditor();
+}
+async function loadJsonDocumentsFromFiles(event) {
+  const input = event.target;
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  if (!saveEditorDocuments(false)) { input.value = ''; return; }
+  try {
+    const imported = [];
+    for (const file of files) {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      imported.push(...normalizeDocuments(parsed));
+    }
+    if (!imported.length) throw new Error('No roadmap documents found in selected file(s).');
+    DOCUMENTS = ensureUniqueDocumentIds([...DOCUMENTS, ...imported]);
+    saveCache();
+    renderRoadmap();
+    openEditor();
+  } catch(e) {
+    alert('Unable to load JSON document: ' + e.message);
+  } finally {
+    input.value = '';
+  }
 }
 
 function downloadJson(data, filename) {
@@ -696,7 +738,6 @@ $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.
 $('#btnClearMonth').addEventListener('click', () => { selectedMonthFilter = null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnEdit').addEventListener('click', openEditor);
-$('#btnClearCache').addEventListener('click', clearCache);
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
 $('#btnNow').addEventListener('click', () => {

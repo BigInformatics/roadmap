@@ -14,6 +14,7 @@ In the **Edit Data** drawer:
 
 - Each product gets its own JSON card/text area.
 - Each card contains one product roadmap object using the schema below.
+- Use **Load JSON Document** to import one or more `.json` files when you do not want to paste JSON manually.
 - Use the checkbox on each card to toggle that product on/off.
 - Enabled products render together as separate swimlanes on the same timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
@@ -131,7 +132,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
 }
 ```
 
-For normal editing, you usually only edit the **product object** inside each card, not the wrapper.
+For normal editing, you usually only edit the **product object** inside each card, not the wrapper. **Load JSON Document** accepts a single product object, an array of product objects, or this wrapped export format.
 
 ---
 
@@ -162,7 +163,7 @@ Examples:
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add one product roadmap JSON document per card.
+3. Add one product roadmap JSON document per card, or click **Load JSON Document** to import `.json` files.
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
 6. Enabled products render together as separate swimlanes.
@@ -170,7 +171,7 @@ Examples:
 8. Click a due-date chip to edit that specific due date's status and note.
 9. Click a month heading to filter to due dates in that month, or use search to filter tasks by phrase.
 10. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-11. Click **Clear Cache** to reset to embedded defaults.
+11. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ---
 

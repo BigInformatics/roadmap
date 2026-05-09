@@ -10,12 +10,13 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
+- **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
 - **Month filtering** — click a month column heading to highlight that column green and show only tasks with due dates in that month; clear it with the chip in the header.
 - **Search filtering** — use the header search box to filter tasks by phrase.
 - **Live editing** — click **Edit Data** to paste or update product roadmap JSON and re-render instantly.
-- **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. **Clear Cache** resets to defaults.
+- **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. The drawer **Clear Cache** action resets to defaults.
 - **Status changes + notes** — click a due-date chip, change that date's status, and enter a date-specific note.
 - **Filtering** — filter visible deliverables by task or due-date status across all enabled products.
 - **Stats dashboard** — at-a-glance counts for enabled products, total deliverables, in-progress, at-risk, blocked/on-hold, completed, and due-this-month.
@@ -25,11 +26,11 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add or edit one product JSON document per card.
+3. Add or edit one product JSON document per card, or click **Load JSON Document** to import `.json` files.
 4. Check/uncheck product cards to toggle products on/off.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
 6. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
-7. Click **Clear Cache** to reset to embedded defaults.
+7. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ## Product JSON Schema
 
@@ -96,7 +97,7 @@ Downloads use a wrapper so toggle state can be preserved:
 }
 ```
 
-For day-to-day editing, use one product JSON object per editor card.
+For day-to-day editing, use one product JSON object per editor card. **Load JSON Document** accepts a single product object, an array of product objects, or the wrapped `{ "documents": [...] }` export format.
 
 ## Customization
 
