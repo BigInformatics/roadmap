@@ -7,7 +7,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane view with years, months, and status-colored deliverable blocks spanning 2026–2032.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
-- **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column; no long start-to-end task bars are drawn.
+- **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using the deliverable's status color; no long start-to-end task bars are drawn.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
