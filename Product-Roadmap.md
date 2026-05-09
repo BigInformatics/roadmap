@@ -14,9 +14,11 @@ In the **Edit Data** drawer:
 
 - Each product gets its own JSON card/text area.
 - Each card contains one product roadmap object using the schema below.
+- Use **Load JSON Document** to import one or more `.json` files when you do not want to paste JSON manually.
 - Use the checkbox on each card to toggle that product on/off.
 - Enabled products render together as separate swimlanes on the same timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
+- The header view toggle switches between the month grid and a chronological linear due-date list.
 
 The page saves the document set and toggle states to `localStorage`.
 
@@ -105,6 +107,7 @@ Rendering behavior:
 5. Click a due-date chip to open the drawer for that specific date, update its status, and save a date-specific note.
 6. Click a month heading to filter the roadmap to tasks with due dates in that month and highlight the column green; use **Clear month** to remove the filter.
 7. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, and due dates.
+8. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
 
 ---
 
@@ -131,7 +134,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
 }
 ```
 
-For normal editing, you usually only edit the **product object** inside each card, not the wrapper.
+For normal editing, you usually only edit the **product object** inside each card, not the wrapper. **Load JSON Document** accepts a single product object, an array of product objects, or this wrapped export format.
 
 ---
 
@@ -162,15 +165,16 @@ Examples:
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add one product roadmap JSON document per card.
+3. Add one product roadmap JSON document per card, or click **Load JSON Document** to import `.json` files.
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
 6. Enabled products render together as separate swimlanes.
-7. Due dates display as month chips when parseable.
-8. Click a due-date chip to edit that specific due date's status and note.
-9. Click a month heading to filter to due dates in that month, or use search to filter tasks by phrase.
-10. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-11. Click **Clear Cache** to reset to embedded defaults.
+7. Use the view toggle to switch between grid view and the chronological linear due-date view.
+8. Due dates display as month chips when parseable.
+9. Click a due-date chip or linear row to edit that specific due date's status and note.
+10. Click a month heading to filter to due dates in that month, or use search to filter tasks by phrase.
+11. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+12. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ---
 
