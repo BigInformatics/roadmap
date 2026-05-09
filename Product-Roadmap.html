@@ -108,23 +108,31 @@
   .del-name { width: var(--name-col); flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; background: rgba(31,40,51,0.75); z-index: 2; }
   .del-name .title { font-weight: 500; }
   .del-name .owner { font-size: 0.7rem; color: var(--muted); }
-  .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 42px; }
+  .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 62px; padding: 3px; }
   .cell.current-month { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.2); }
 
-  .del-block { position: absolute; top: 4px; bottom: 4px; border-radius: var(--radius); padding: 0.25rem 0.4rem; font-size: 0.7rem; font-weight: 500; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border: 1px solid transparent; transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: center; z-index: 3; }
-  .del-block:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 20; white-space: normal; overflow: visible; min-width: fit-content; max-width: 320px; }
+  .del-block { position: absolute; top: 4px; min-height: 42px; border-radius: var(--radius); padding: 0.25rem 0.4rem; font-size: 0.7rem; font-weight: 500; cursor: pointer; overflow: hidden; white-space: normal; text-overflow: ellipsis; border: 1px solid transparent; transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: flex-start; z-index: 3; }
+  .del-block:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 20; overflow: visible; min-width: fit-content; max-width: 360px; }
+  .del-block-content { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .del-block-title { display: flex; align-items: center; gap: 0.3rem; line-height: 1.15; }
+  .del-block-dates { font-size: 0.62rem; line-height: 1.2; opacity: 0.9; color: inherit; }
+  .due-chip { display: block; width: 100%; padding: 0.12rem 0.2rem; margin-bottom: 2px; border-radius: 4px; background: rgba(254,202,87,0.14); border: 1px solid rgba(254,202,87,0.35); color: var(--gold); font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
+  .cell .due-chip:first-child { margin-top: 44px; }
+  .due-chip:hover { background: rgba(254,202,87,0.28); color: #ffe2a0; overflow: visible; white-space: normal; z-index: 25; position: relative; }
 
   .status-not-started { background: rgba(136, 153, 166, 0.15); color: var(--muted); border-color: rgba(136,153,166,0.3); }
   .status-in-progress { background: rgba(102, 252, 241, 0.12); color: var(--accent); border-color: rgba(102,252,241,0.3); }
   .status-at-risk { background: rgba(255, 107, 107, 0.12); color: var(--danger); border-color: rgba(255,107,107,0.3); }
   .status-completed { background: rgba(29, 209, 161, 0.12); color: var(--success); border-color: rgba(29,209,161,0.3); }
-  .status-blocked { background: rgba(255, 107, 107, 0.08); color: var(--danger); border-color: rgba(255,107,107,0.2); border-style: dashed; }
-  .status-dot { width: 5px; height: 5px; border-radius: 50%; margin-right: 0.3rem; flex-shrink: 0; }
+  .status-blocked, .status-on-hold { background: rgba(255, 107, 107, 0.08); color: var(--danger); border-color: rgba(255,107,107,0.2); border-style: dashed; }
+  .status-cancelled { background: rgba(136, 153, 166, 0.08); color: var(--muted); border-color: rgba(136,153,166,0.22); border-style: dashed; text-decoration: line-through; }
+  .status-dot { width: 5px; height: 5px; border-radius: 50%; margin-right: 0.1rem; flex-shrink: 0; }
   .status-dot.not-started { background: var(--muted); }
   .status-dot.in-progress { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
   .status-dot.at-risk { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
   .status-dot.completed { background: var(--success); }
-  .status-dot.blocked { background: var(--danger); opacity: 0.6; }
+  .status-dot.blocked, .status-dot.on-hold { background: var(--danger); opacity: 0.6; }
+  .status-dot.cancelled { background: var(--muted); opacity: 0.5; }
 
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .overlay.open { opacity: 1; pointer-events: auto; }
@@ -174,6 +182,8 @@
       <option value="blocked">Blocked</option>
       <option value="not-started">Not Started</option>
       <option value="completed">Completed</option>
+      <option value="on-hold">On Hold</option>
+      <option value="cancelled">Cancelled</option>
     </select>
     <button class="btn" id="btnNow">Jump to Now</button>
     <button class="btn" id="btnEdit">Edit Data</button>
@@ -222,8 +232,8 @@ const DEFAULT_DOCUMENTS = [
       lastUpdated: '2026-05-08 10:00:00 ET',
       owner: 'Engineering Team',
       deliverables: [
-        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', notes: [] },
-        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', notes: [] }
+        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', dueDates: ['05/15/2026', '06/30/2026'], notes: [] },
+        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', dueDates: ['07/15/2026', '08/28/2026'], notes: [] }
       ]
     }
   },
@@ -237,8 +247,8 @@ const DEFAULT_DOCUMENTS = [
       lastUpdated: '2026-05-08 10:00:00 ET',
       owner: 'Frontend Team',
       deliverables: [
-        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', notes: [] },
-        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', notes: [] }
+        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', dueDates: ['05/29/2026'], notes: [] },
+        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', dueDates: ['06/15/2026', '07/31/2026'], notes: [] }
       ]
     }
   }
@@ -254,12 +264,29 @@ function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
 function monthIndex(m) { return MONTHS.indexOf(m); }
 function statusClass(s) { return 'status-' + s; }
-function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked' }[s] || s; }
+function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
+function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
 function productName(doc) { return doc?.data?.project || doc?.data?.product || doc?.name || 'Roadmap'; }
 function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
 function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
+function monthKeyFromDueDate(value) {
+  const text = String(value || '').trim();
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const month = Number(match[1]);
+  const year = Number(match[3]);
+  if (month < 1 || month > 12) return null;
+  return `${MONTH_NAMES[month - 1]} ${year}`;
+}
+function dueDatesForMonth(del, monthKey) {
+  return (Array.isArray(del.dueDates) ? del.dueDates : []).filter(d => monthKeyFromDueDate(d) === monthKey);
+}
+function formatDueDates(del) {
+  const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
+  return dates.length ? dates.join(' • ') : '';
+}
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
   const p = Object.fromEntries(parts.map(x => [x.type, x.value]));
@@ -277,7 +304,17 @@ function normalizeDocument(item, index = 0) {
       subtitle: data.subtitle || 'Interactive Deliverables & Timeline',
       lastUpdated: data.lastUpdated || '',
       owner: data.owner || '',
-      deliverables: Array.isArray(data.deliverables) ? data.deliverables : []
+      deliverables: Array.isArray(data.deliverables) ? data.deliverables.map((d, dIdx) => ({
+        id: d.id || `${slugify(data.project || data.product || `roadmap-${index + 1}`)}-${String(dIdx + 1).padStart(3, '0')}`,
+        title: d.title || `Deliverable ${dIdx + 1}`,
+        owner: d.owner || data.owner || '',
+        status: d.status || 'not-started',
+        start: d.start || '',
+        end: d.end || d.start || '',
+        desc: d.desc || '',
+        dueDates: Array.isArray(d.dueDates) ? d.dueDates : [],
+        notes: Array.isArray(d.notes) ? d.notes : []
+      })) : []
     }
   };
 }
@@ -345,9 +382,9 @@ function renderStats() {
     total++;
     if (d.status === 'in-progress') ip++;
     if (d.status === 'at-risk') ar++;
-    if (d.status === 'blocked') bl++;
+    if (d.status === 'blocked' || d.status === 'on-hold') bl++;
     if (d.status === 'completed') comp++;
-    if (d.end === thisMonth) due++;
+    due += dueDatesForMonth(d, thisMonth).length;
   }));
   $('#statProducts').textContent = enabledDocuments().length;
   $('#statTotal').textContent = total;
@@ -403,6 +440,15 @@ function renderRoadmap() {
       MONTHS.forEach((m, idx) => {
         const cell = document.createElement('div');
         cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '');
+        dueDatesForMonth(del, m).forEach(dueDate => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'due-chip';
+          chip.textContent = dueDate;
+          chip.title = `${del.title} due ${dueDate}`;
+          chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc); });
+          cell.appendChild(chip);
+        });
         row.appendChild(cell);
       });
       const startIdx = monthIndex(del.start);
@@ -410,7 +456,8 @@ function renderRoadmap() {
       if (startIdx >= 0 && endIdx >= 0 && endIdx >= startIdx) {
         const block = document.createElement('div');
         block.className = 'del-block ' + statusClass(del.status);
-        block.innerHTML = `<span class="status-dot ${escapeHtml(del.status)}"></span>${escapeHtml(del.title)}`;
+        const dueLabel = formatDueDates(del);
+        block.innerHTML = `<div class="del-block-content"><div class="del-block-title"><span class="status-dot ${escapeHtml(del.status)}"></span><span>${escapeHtml(del.title)}</span></div>${dueLabel ? `<div class="del-block-dates">Due: ${escapeHtml(dueLabel)}</div>` : ''}</div>`;
         block.style.left = `calc(var(--name-col) + var(--month-col) * ${startIdx} + 4px)`;
         block.style.width = `calc(var(--month-col) * ${endIdx - startIdx + 1} - 8px)`;
         block.addEventListener('click', () => openDetail(del, doc));
@@ -436,13 +483,15 @@ function openDetail(del, doc) {
   selectedDocument = doc;
   selectedStatus = del.status;
   const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No notes yet.</li>';
+  const dueDates = (del.dueDates || []).map(d => `<li>${escapeHtml(d)}${monthKeyFromDueDate(d) ? ` <span style="color:var(--muted)">(${escapeHtml(monthKeyFromDueDate(d))})</span>` : ''}</li>`).join('') || '<li>No due dates provided.</li>';
   openPanel(del.title, `
     <div class="field"><label>Status</label><div class="status-buttons" id="statusButtons">
-      ${['not-started','in-progress','at-risk','blocked','completed'].map(s => `<button class="btn small ${s === del.status ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
+      ${supportedStatuses().map(s => `<button class="btn small ${s === del.status ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
     </div></div>
     <div class="field"><label>Product</label><div class="value">${escapeHtml(productName(doc))}</div></div>
     <div class="field"><label>Owner</label><div class="value">${escapeHtml(del.owner || doc.data.owner || '')}</div></div>
     <div class="field"><label>Timeline</label><div class="value">${escapeHtml(del.start)} &rarr; ${escapeHtml(del.end)}</div></div>
+    <div class="field"><label>Due Dates</label><ul class="notes-list">${dueDates}</ul></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>Status Note</label><textarea id="statusNote" rows="4" placeholder="Optional note about this status change..."></textarea></div>
     <button class="btn active" id="btnSaveStatus">Save Changes</button>

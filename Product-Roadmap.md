@@ -2,7 +2,7 @@
 
 This document describes the data format for the `Product-Roadmap.html` interactive roadmap artifact.
 
-All roadmap dates use `"Mon YYYY"` format, e.g. `"Jun 2027"`, `"Apr 2026"`.
+The roadmap supports the provided **Project Roadmap Schema** for product documents. Timeline range dates use `"Mon YYYY"`; deliverable due dates use the product schema's `dueDates` array.
 
 ---
 
@@ -13,7 +13,7 @@ The page manages a **set of independent product roadmap JSON documents**.
 In the **Edit Data** drawer:
 
 - Each product gets its own JSON card/text area.
-- Each card contains one product roadmap object.
+- Each card contains one product roadmap object using the schema below.
 - Use the checkbox on each card to toggle that product on/off.
 - Enabled products render together as separate swimlanes on the same timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
@@ -22,9 +22,83 @@ The page saves the document set and toggle states to `localStorage`.
 
 ---
 
+## Product Roadmap Object
+
+Each editor card contains one product roadmap JSON object:
+
+```json
+{
+  "project": "Backend Platform",
+  "title": "Product Roadmap",
+  "subtitle": "Interactive Deliverables & Timeline",
+  "lastUpdated": "2026-05-08 14:30:00 ET",
+  "owner": "Engineering Team",
+  "deliverables": [
+    {
+      "id": "bp-001",
+      "title": "API Authentication",
+      "owner": "Engineering Team",
+      "status": "in-progress",
+      "start": "May 2026",
+      "end": "Jun 2026",
+      "desc": "Implement OAuth2 and JWT token management for API endpoints.",
+      "dueDates": [
+        "05/15/2026",
+        "06/30/2026"
+      ],
+      "notes": []
+    }
+  ]
+}
+```
+
+| Field | Required | Type | Description |
+|---|---|---|---|
+| `project` | **Yes** | string | Product, project, or contract name. Displayed as the swimlane header and toggle label. |
+| `title` | **Yes** | string | Document/page title. The first enabled product controls the page title. |
+| `subtitle` | **Yes** | string | Document/page subtitle. With multiple products enabled, the page shows the enabled product count. |
+| `lastUpdated` | **Yes** | string | Last update timestamp, e.g. `YYYY-MM-DD HH:mm:ss ET`. Auto-updated on save. |
+| `owner` | **Yes** | string | Primary owner or contractor responsible for the roadmap. |
+| `deliverables` | **Yes** | array | List of deliverables. |
+
+---
+
+## Deliverable Object
+
+| Field | Required | Type | Description |
+|---|---|---|---|
+| `id` | **Yes** | string | Unique deliverable identifier, e.g. `bp-001`. The supplied schema pattern is `^[a-z]{2}-\\d{3}$`. |
+| `title` | **Yes** | string | Deliverable title. Displayed in the timeline block and detail panel. |
+| `owner` | **Yes** | string | Owner responsible for this deliverable. |
+| `status` | **Yes** | enum | Schema values: `not-started`, `in-progress`, `completed`, `on-hold`, `cancelled`. The renderer also keeps backward-compatible visual support for `at-risk` and `blocked`. |
+| `start` | **Yes** | string | Planned start month in `"Mon YYYY"` format. |
+| `end` | **Yes** | string | Planned end month in `"Mon YYYY"` format. Must be `>=` `start` chronologically. |
+| `desc` | **Yes** | string | Detailed description, requirements, or submission rules. |
+| `dueDates` | **Yes** | array | List of due dates or scheduling notes. `MM/DD/YYYY` dates are parsed into timeline month chips. Descriptive strings are displayed under the block title and in the detail panel. |
+| `notes` | **Yes** | array | Additional comments, attachments, metadata, or status-change notes. |
+
+---
+
+## Due Date Rendering
+
+Each deliverable can have one or more values in `dueDates`.
+
+```json
+"dueDates": ["05/15/2026", "06/30/2026", "As needed"]
+```
+
+Rendering behavior:
+
+1. All due date strings display **under the deliverable block title** as `Due: ...`.
+2. Any `MM/DD/YYYY` date is converted to its `Mon YYYY` month.
+3. Each parsed due date is rendered as a small due-date chip inside that month column on the deliverable row.
+4. Descriptive strings such as `"As needed"` or `"Weekly from kickoff"` remain visible under the block title and in the detail panel, but are not placed in a specific month unless they contain a parseable `MM/DD/YYYY` date.
+
+---
+
 ## Saved Document Set
 
-When you download all roadmap data, the export uses this wrapper:
+When you download all roadmap data, the export uses this wrapper so product toggle state can be preserved:
 
 ```json
 {
@@ -45,98 +119,30 @@ When you download all roadmap data, the export uses this wrapper:
 }
 ```
 
-### Document Wrapper
-
-| Field | Required | Type | Description |
-|---|---|---|---|
-| `id` | No | string | Stable local identifier for the product document. Auto-generated from `project` if omitted. |
-| `enabled` | No | boolean | Whether this product renders on the timeline. Defaults to `true`. |
-| `data` | **Yes** | object | One product roadmap object. |
-
 For normal editing, you usually only edit the **product object** inside each card, not the wrapper.
 
 ---
 
-## Product Roadmap Object
+## Date Formats
 
-Each editor card contains one product object like this:
+### Timeline Range Dates
 
-```json
-{
-  "project": "Backend Platform",
-  "title": "Product Roadmap",
-  "subtitle": "Interactive Deliverables & Timeline",
-  "lastUpdated": "2026-05-08 14:30:00 ET",
-  "owner": "Engineering Team",
-  "deliverables": [
-    {
-      "id": "bp-1",
-      "title": "API Authentication",
-      "owner": "Engineering Team",
-      "status": "in-progress",
-      "start": "May 2026",
-      "end": "Jun 2026",
-      "desc": "Implement OAuth2 and JWT token management for API endpoints.",
-      "notes": [
-        "2026-05-01T10:00:00Z | in-progress | Started OAuth2 implementation"
-      ]
-    }
-  ]
-}
-```
+`start` and `end` use **`"Mon YYYY"`** where:
 
-| Field | Required | Type | Description |
-|---|---|---|---|
-| `project` | **Yes** | string | Product name. Displayed as the swimlane header and toggle label. |
-| `title` | No | string | Page title. The first enabled product provides the page title. Falls back to `"Product Roadmap"`. |
-| `subtitle` | No | string | Subtitle text when one product is enabled. With multiple products enabled, the subtitle shows the enabled product count. |
-| `lastUpdated` | No | string | Last update timestamp in Eastern timezone (`YYYY-MM-DD HH:mm:ss ET`). Auto-generated on save. |
-| `owner` | No | string | Default owner for deliverables. Shown in the swimlane header. |
-| `deliverables` | **Yes** | array | List of deliverables. Can be `[]`. |
-
----
-
-## Deliverable Object
-
-| Field | Required | Type | Description |
-|---|---|---|---|
-| `id` | **Yes** | string | Unique identifier. Example: `bp-1`, `wa-001`. |
-| `title` | **Yes** | string | Deliverable name. Displayed in the timeline block and detail panel. |
-| `owner` | No | string | Owner name. Falls back to product-level `owner`. |
-| `status` | **Yes** | enum | One of: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`. |
-| `start` | **Yes** | string | Start date in `"Mon YYYY"` format. |
-| `end` | **Yes** | string | End date in `"Mon YYYY"` format. Must be `>=` `start` chronologically. |
-| `desc` | No | string | Description displayed in the detail panel. |
-| `notes` | No | array | Array of status-change notes with timestamps. Auto-appended when you change status. |
-
----
-
-## Date Format
-
-All `start` and `end` values use **`"Mon YYYY"`** where:
-
-- `Mon` is the three-letter month abbreviation: `Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`, `Sep`, `Oct`, `Nov`, `Dec`
+- `Mon` is `Jan`, `Feb`, `Mar`, `Apr`, `May`, `Jun`, `Jul`, `Aug`, `Sep`, `Oct`, `Nov`, or `Dec`
 - `YYYY` is the four-digit year
 
 The default timeline supports **January 2026 through December 2032**.
 
+### Due Dates
+
+`dueDates` accepts strings. `MM/DD/YYYY` strings are parsed into timeline month chips.
+
 Examples:
 
-- `"Jan 2026"`
-- `"Dec 2028"`
-- `"Mar 2031"`
-
----
-
-## Status Values
-
-| Status | Visual Treatment |
-|---|---|
-| `not-started` | Gray block |
-| `in-progress` | Teal block with glow dot |
-| `at-risk` | Red block with glow dot |
-| `blocked` | Dashed red block |
-| `completed` | Green block |
+- `"05/15/2026"` renders in the `May 2026` column
+- `"12/01/2028"` renders in the `Dec 2028` column
+- `"As needed"` displays as text under the block title and in the detail panel
 
 ---
 
@@ -144,36 +150,13 @@ Examples:
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add one product JSON document per card.
+3. Add one product roadmap JSON document per card.
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
-6. The enabled products render together as separate swimlanes.
-7. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-8. Click **Clear Cache** to reset to embedded defaults.
-
----
-
-## Features
-
-### Multiple Product JSON Documents
-
-The editor is organized around separate product JSON documents. This keeps each product's roadmap portable and lets you combine several products into one consolidated timeline.
-
-### Product Toggle Controls
-
-Product toggles appear both above the roadmap and inside the edit drawer. Toggle states are saved to `localStorage`.
-
-### Current Month Highlight
-
-The present month is highlighted with a golden background on the timeline.
-
-### localStorage Caching
-
-When you click **Save & Render**, all product JSON documents and toggle states are cached to `localStorage`. On page reload, cached data is restored automatically.
-
-### Status Change + Notes
-
-Click a deliverable to open details. You can change status and add a status note. On save, the note is appended to the deliverable's `notes` array and the product document is updated.
+6. Enabled products render together as separate swimlanes.
+7. Due dates display under block titles and as month chips when parseable.
+8. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+9. Click **Clear Cache** to reset to embedded defaults.
 
 ---
 
@@ -182,5 +165,6 @@ Click a deliverable to open details. You can change status and add a status note
 - Use one JSON card per product.
 - Keep `id` values unique within each product roadmap.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
+- Use `dueDates` for concrete submission dates and scheduling notes.
 - Use `desc` for coordination context — blockers, dependencies, definition of done.
 - To change the date range, edit the year loop in the `MONTHS` generator at the top of the HTML file.
