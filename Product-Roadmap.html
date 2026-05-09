@@ -56,6 +56,9 @@
   .last-updated { color: var(--gold); font-size: 0.75rem; }
 
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .search-box { min-width: 220px; max-width: 320px; }
+  .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
+  .filter-chip.active { display: inline-flex; align-items: center; }
   .btn, select.btn {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -87,10 +90,14 @@
   .roadmap-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
   .timeline-header, .swimlane-header, .deliverable-row { min-width: calc(var(--name-col) + (var(--month-col) * var(--month-count))); }
   .timeline-header { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 50; }
-  .th-cell { flex-shrink: 0; padding: 0.4rem 0.2rem; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); border-right: 1px solid var(--border); text-align: center; line-height: 1.3; }
+  .th-cell { flex-shrink: 0; padding: 0.4rem 0.2rem; font: inherit; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); background: transparent; border: 0; border-right: 1px solid var(--border); text-align: center; line-height: 1.3; }
   .th-cell:first-child { width: var(--name-col); text-align: left; padding: 0.75rem 1rem; font-size: 0.75rem; border-left: none; display: flex; align-items: center; }
   .th-cell:not(:first-child) { width: var(--month-col); }
   .th-cell.current-month { background: var(--gold-bg); color: var(--gold); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.35); }
+  .th-cell.month-selectable { cursor: pointer; user-select: none; }
+  .th-cell.month-selectable:hover { background: rgba(29,209,161,0.08); color: var(--success); }
+  .th-cell.selected-month, .cell.selected-month { background: rgba(29,209,161,0.14); box-shadow: inset 0 0 0 1px rgba(29,209,161,0.35); }
+  .th-cell.selected-month { color: var(--success); }
   .th-cell .year-tag { font-size: 0.55rem; color: inherit; display: block; margin-top: 1px; }
 
   .swimlane { border-bottom: 1px solid var(--border); }
@@ -148,7 +155,9 @@
   .due-summary.empty { color: var(--muted); font-size: 0.85rem; }
   .due-count { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.45rem; }
   .due-pill-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-  .due-date-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0.2rem 0.45rem; border: 1px solid; border-radius: 999px; font-size: 0.76rem; line-height: 1; }
+  .due-date-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0.2rem 0.45rem; border: 1px solid; border-radius: 999px; font-size: 0.76rem; line-height: 1; cursor: pointer; }
+  .due-date-pill.active { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .due-note { color: var(--muted); font-size: 0.72rem; margin-left: 0.3rem; }
   .due-more { margin-top: 0.5rem; }
   .due-more summary { color: var(--accent); cursor: pointer; font-size: 0.8rem; }
   .due-more .due-pill-grid { margin-top: 0.45rem; max-height: 7rem; overflow-y: auto; padding-right: 0.25rem; }
@@ -177,6 +186,8 @@
     </div>
   </div>
   <div class="controls">
+    <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks..." aria-label="Search tasks">
+    <button class="btn filter-chip" id="btnClearMonth" type="button">Clear month</button>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
       <option value="in-progress">In Progress</option>
@@ -234,8 +245,8 @@ const DEFAULT_DOCUMENTS = [
       lastUpdated: '2026-05-08 10:00:00 ET',
       owner: 'Engineering Team',
       deliverables: [
-        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', dueDates: ['05/15/2026', '06/30/2026'], notes: [] },
-        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', dueDates: ['07/15/2026', '08/28/2026'], notes: [] }
+        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', dueDates: [{ date: '05/15/2026', status: 'in-progress', note: 'Token endpoint handoff.' }, { date: '06/30/2026', status: 'not-started', note: '' }], notes: [] },
+        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', dueDates: [{ date: '07/15/2026', status: 'not-started', note: '' }, { date: '08/28/2026', status: 'not-started', note: '' }], notes: [] }
       ]
     }
   },
@@ -249,8 +260,8 @@ const DEFAULT_DOCUMENTS = [
       lastUpdated: '2026-05-08 10:00:00 ET',
       owner: 'Frontend Team',
       deliverables: [
-        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', dueDates: ['05/29/2026'], notes: [] },
-        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', dueDates: ['06/15/2026', '07/31/2026'], notes: [] }
+        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', dueDates: [{ date: '05/29/2026', status: 'completed', note: 'Released.' }], notes: [] },
+        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', dueDates: [{ date: '06/15/2026', status: 'in-progress', note: '' }, { date: '07/31/2026', status: 'not-started', note: '' }], notes: [] }
       ]
     }
   }
@@ -258,9 +269,12 @@ const DEFAULT_DOCUMENTS = [
 
 let DOCUMENTS = loadDocuments();
 let currentStatusFilter = 'all';
+let currentSearchQuery = '';
+let selectedMonthFilter = null;
 let selectedStatus = null;
 let selectedDeliverable = null;
 let selectedDocument = null;
+let selectedDueDate = null;
 
 function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
@@ -273,8 +287,16 @@ function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
 function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
+function normalizeDueDate(item, fallbackStatus = 'not-started') {
+  if (item && typeof item === 'object') {
+    return { date: String(item.date || '').trim(), status: item.status || fallbackStatus, note: item.note || '' };
+  }
+  return { date: String(item || '').trim(), status: fallbackStatus, note: '' };
+}
+function dueDateValue(item) { return normalizeDueDate(item).date; }
+function dueDateStatus(item, del) { return normalizeDueDate(item, del?.status || 'not-started').status; }
 function monthKeyFromDueDate(value) {
-  const text = String(value || '').trim();
+  const text = dueDateValue(value);
   const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!match) return null;
   const month = Number(match[1]);
@@ -287,10 +309,10 @@ function dueDatesForMonth(del, monthKey) {
 }
 function formatDueDates(del) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
-  return dates.length ? dates.join(' • ') : '';
+  return dates.length ? dates.map(dueDateValue).join(' • ') : '';
 }
 function parseDueDate(value) {
-  const match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  const match = dueDateValue(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!match) return null;
   return new Date(Number(match[3]), Number(match[1]) - 1, Number(match[2]));
 }
@@ -300,21 +322,40 @@ function compareDueDates(a, b) {
   if (parsedA && parsedB) return parsedA - parsedB;
   if (parsedA) return -1;
   if (parsedB) return 1;
-  return String(a).localeCompare(String(b));
+  return dueDateValue(a).localeCompare(dueDateValue(b));
 }
-function renderDueDatesCompact(del) {
+function renderDueDatesCompact(del, activeDueDate = selectedDueDate) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates.slice().sort(compareDueDates) : [];
   if (!dates.length) return '<div class="due-summary empty">No due dates provided.</div>';
   const limit = 6;
-  const pill = d => `<span class="due-date-pill ${statusClass(del.status)}" title="${escapeHtml(monthKeyFromDueDate(d) || '')}">${escapeHtml(d)}</span>`;
+  const pill = d => {
+    const idx = del.dueDates.indexOf(d);
+    const active = activeDueDate === d ? ' active' : '';
+    const note = d.note ? '<span class="due-note">note</span>' : '';
+    return `<button type="button" class="due-date-pill ${statusClass(dueDateStatus(d, del))}${active}" data-due-index="${idx}" title="${escapeHtml(d.note || monthKeyFromDueDate(d) || '')}">${escapeHtml(dueDateValue(d))}${note}</button>`;
+  };
   const visible = dates.slice(0, limit).map(pill).join('');
   const hidden = dates.slice(limit).map(pill).join('');
   return `
     <div class="due-summary">
-      <div class="due-count">${dates.length} due date${dates.length === 1 ? '' : 's'}</div>
+      <div class="due-count">${dates.length} due date${dates.length === 1 ? '' : 's'}${activeDueDate ? ` • editing ${escapeHtml(dueDateValue(activeDueDate))}` : ''}</div>
       <div class="due-pill-grid">${visible}</div>
       ${hidden ? `<details class="due-more"><summary>Show ${dates.length - limit} more</summary><div class="due-pill-grid">${hidden}</div></details>` : ''}
     </div>`;
+}
+function deliverableMatchesSearch(del) {
+  const q = currentSearchQuery.trim().toLowerCase();
+  if (!q) return true;
+  const dueText = (del.dueDates || []).map(d => [dueDateValue(d), dueDateStatus(d, del), d.note || ''].join(' ')).join(' ');
+  const haystack = [del.title, del.owner, del.status, del.start, del.end, del.desc, dueText, ...(del.notes || [])]
+    .join(' ')
+    .toLowerCase();
+  return haystack.includes(q);
+}
+function deliverableMatchesFilters(del) {
+  const statusOk = currentStatusFilter === 'all' || del.status === currentStatusFilter || (del.dueDates || []).some(d => dueDateStatus(d, del) === currentStatusFilter);
+  const monthOk = !selectedMonthFilter || dueDatesForMonth(del, selectedMonthFilter).length > 0;
+  return statusOk && monthOk && deliverableMatchesSearch(del);
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -341,7 +382,7 @@ function normalizeDocument(item, index = 0) {
         start: d.start || '',
         end: d.end || d.start || '',
         desc: d.desc || '',
-        dueDates: Array.isArray(d.dueDates) ? d.dueDates : [],
+        dueDates: Array.isArray(d.dueDates) ? d.dueDates.map(item => normalizeDueDate(item, d.status || 'not-started')).filter(item => item.date) : [],
         notes: Array.isArray(d.notes) ? d.notes : []
       })) : []
     }
@@ -394,15 +435,21 @@ function renderTimelineHeader() {
   h.innerHTML = '<div class="th-cell">Product / Deliverable</div>';
   MONTHS.forEach((m, idx) => {
     const [month, year] = m.split(' ');
-    const el = document.createElement('div');
-    el.className = 'th-cell' + (idx === currentIdx ? ' current-month' : '');
+    const el = document.createElement('button');
+    el.type = 'button';
+    el.className = 'th-cell month-selectable' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
     el.innerHTML = `<span>${month}</span>${month === 'Jan' ? `<span class="year-tag">${year}</span>` : ''}`;
+    el.title = `Filter to tasks due in ${m}`;
+    el.addEventListener('click', () => {
+      selectedMonthFilter = selectedMonthFilter === m ? null : m;
+      renderRoadmap();
+    });
     h.appendChild(el);
   });
 }
 
 function getVisibleDeliverables(doc) {
-  return (doc.data.deliverables || []).filter(d => currentStatusFilter === 'all' || d.status === currentStatusFilter);
+  return (doc.data.deliverables || []).filter(deliverableMatchesFilters);
 }
 function renderStats() {
   let total=0, ip=0, ar=0, bl=0, comp=0, due=0;
@@ -422,6 +469,13 @@ function renderStats() {
   $('#statBlocked').textContent = bl;
   $('#statCompleted').textContent = comp;
   $('#statDueThisMonth').textContent = due;
+  const monthBtn = $('#btnClearMonth');
+  if (monthBtn) {
+    monthBtn.textContent = selectedMonthFilter ? `Clear ${selectedMonthFilter}` : 'Clear month';
+    monthBtn.classList.toggle('active', Boolean(selectedMonthFilter));
+  }
+  const search = $('#taskSearch');
+  if (search && search.value !== currentSearchQuery) search.value = currentSearchQuery;
 }
 
 function renderRoadmap() {
@@ -468,14 +522,14 @@ function renderRoadmap() {
       row.appendChild(nameCell);
       MONTHS.forEach((m, idx) => {
         const cell = document.createElement('div');
-        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '');
+        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
         dueDatesForMonth(del, m).forEach(dueDate => {
           const chip = document.createElement('button');
           chip.type = 'button';
-          chip.className = `due-chip ${statusClass(del.status)}`;
-          chip.textContent = dueDate;
-          chip.title = `${del.title} due ${dueDate}`;
-          chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc); });
+          chip.className = `due-chip ${statusClass(dueDateStatus(dueDate, del))}`;
+          chip.textContent = dueDateValue(dueDate);
+          chip.title = `${del.title} due ${dueDateValue(dueDate)}${dueDate.note ? ` — ${dueDate.note}` : ''}`;
+          chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc, dueDate); });
           cell.appendChild(chip);
         });
         row.appendChild(cell);
@@ -493,27 +547,33 @@ function openPanel(title, html) {
   $('#overlay').classList.add('open');
   $('#detailPanel').classList.add('open');
 }
-function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); selectedStatus = null; selectedDeliverable = null; selectedDocument = null; }
+function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); selectedStatus = null; selectedDeliverable = null; selectedDocument = null; selectedDueDate = null; }
 
-function openDetail(del, doc) {
+function openDetail(del, doc, dueDate = null) {
   selectedDeliverable = del;
   selectedDocument = doc;
-  selectedStatus = del.status;
-  const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No notes yet.</li>';
-  const dueDates = renderDueDatesCompact(del);
+  selectedDueDate = dueDate || (Array.isArray(del.dueDates) && del.dueDates.length === 1 ? del.dueDates[0] : null);
+  selectedStatus = selectedDueDate ? dueDateStatus(selectedDueDate, del) : del.status;
+  const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No task notes yet.</li>';
+  const dueDates = renderDueDatesCompact(del, selectedDueDate);
+  const selectedNote = selectedDueDate ? selectedDueDate.note || '' : '';
   openPanel(del.title, `
-    <div class="field"><label>Status</label><div class="status-buttons" id="statusButtons">
-      ${supportedStatuses().map(s => `<button class="btn small ${s === del.status ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
+    <div class="field"><label>${selectedDueDate ? `Due Date Status: ${escapeHtml(dueDateValue(selectedDueDate))}` : 'Task Status'}</label><div class="status-buttons" id="statusButtons">
+      ${supportedStatuses().map(s => `<button class="btn small ${s === selectedStatus ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
     </div></div>
     <div class="field"><label>Product</label><div class="value">${escapeHtml(productName(doc))}</div></div>
     <div class="field"><label>Owner</label><div class="value">${escapeHtml(del.owner || doc.data.owner || '')}</div></div>
     <div class="field"><label>Timeline</label><div class="value">${escapeHtml(del.start)} &rarr; ${escapeHtml(del.end)}</div></div>
-    <div class="field"><label>Due Dates</label><ul class="notes-list">${dueDates}</ul></div>
+    <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
-    <div class="field"><label>Status Note</label><textarea id="statusNote" rows="4" placeholder="Optional note about this status change..."></textarea></div>
+    <div class="field"><label>${selectedDueDate ? 'Due Date Note' : 'Status Note'}</label><textarea id="statusNote" rows="4" placeholder="Optional note...">${escapeHtml(selectedNote)}</textarea></div>
     <button class="btn active" id="btnSaveStatus">Save Changes</button>
-    <div class="field" style="margin-top:1rem"><label>Notes</label><ul class="notes-list">${notes}</ul></div>
+    <div class="field" style="margin-top:1rem"><label>Task Notes</label><ul class="notes-list">${notes}</ul></div>
   `);
+  document.querySelectorAll('[data-due-index]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.currentTarget.dataset.dueIndex);
+    openDetail(del, doc, del.dueDates[idx]);
+  }));
   document.querySelectorAll('[data-status]').forEach(btn => btn.addEventListener('click', e => {
     selectedStatus = e.target.dataset.status;
     document.querySelectorAll('[data-status]').forEach(b => b.classList.remove('active'));
@@ -524,15 +584,20 @@ function openDetail(del, doc) {
 
 function saveStatusChange() {
   if (!selectedDeliverable || !selectedDocument) return;
-  const oldStatus = selectedDeliverable.status;
   const note = ($('#statusNote').value || '').trim();
-  selectedDeliverable.status = selectedStatus;
-  if (!Array.isArray(selectedDeliverable.notes)) selectedDeliverable.notes = [];
-  if (note || oldStatus !== selectedStatus) selectedDeliverable.notes.push(`${new Date().toISOString()} | ${selectedStatus} | ${note || `Status changed from ${oldStatus} to ${selectedStatus}`}`);
+  if (selectedDueDate) {
+    selectedDueDate.status = selectedStatus;
+    selectedDueDate.note = note;
+  } else {
+    const oldStatus = selectedDeliverable.status;
+    selectedDeliverable.status = selectedStatus;
+    if (!Array.isArray(selectedDeliverable.notes)) selectedDeliverable.notes = [];
+    if (note || oldStatus !== selectedStatus) selectedDeliverable.notes.push(`${new Date().toISOString()} | ${selectedStatus} | ${note || `Status changed from ${oldStatus} to ${selectedStatus}`}`);
+  }
   touchDocument(selectedDocument);
   saveCache();
   renderRoadmap();
-  closeDetail();
+  openDetail(selectedDeliverable, selectedDocument, selectedDueDate);
 }
 
 function openEditor() {
@@ -557,7 +622,7 @@ function openEditor() {
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card. Dates use "Mon YYYY" (e.g. "Jun 2027"). Save writes all product JSON documents and toggle states to localStorage.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
     const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
@@ -627,6 +692,8 @@ function clearCache() {
   closeDetail();
 }
 
+$('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
+$('#btnClearMonth').addEventListener('click', () => { selectedMonthFilter = null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClearCache').addEventListener('click', clearCache);

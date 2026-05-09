@@ -7,14 +7,17 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane view with years, months, and status-colored deliverable blocks spanning 2026–2032.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
-- **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using the deliverable's status color; no long start-to-end task bars are drawn.
+- **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
+- **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
+- **Month filtering** — click a month column heading to highlight that column green and show only tasks with due dates in that month; clear it with the chip in the header.
+- **Search filtering** — use the header search box to filter tasks by phrase.
 - **Live editing** — click **Edit Data** to paste or update product roadmap JSON and re-render instantly.
 - **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. **Clear Cache** resets to defaults.
-- **Status changes + notes** — click a deliverable, change its status, enter a note. Notes are timestamped and appended to the deliverable history.
-- **Filtering** — filter visible deliverables by status across all enabled products.
+- **Status changes + notes** — click a due-date chip, change that date's status, and enter a date-specific note.
+- **Filtering** — filter visible deliverables by task or due-date status across all enabled products.
 - **Stats dashboard** — at-a-glance counts for enabled products, total deliverables, in-progress, at-risk, blocked/on-hold, completed, and due-this-month.
 - **Dark theme** — clean, modern design.
 
@@ -48,20 +51,23 @@ Each editor card contains one product roadmap JSON document:
       "start": "May 2026",
       "end": "Jun 2026",
       "desc": "Implement OAuth2 and JWT token management for API endpoints.",
-      "dueDates": ["05/15/2026", "06/30/2026"],
+      "dueDates": [
+        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
+        { "date": "06/30/2026", "status": "not-started", "note": "" }
+      ],
       "notes": []
     }
   ]
 }
 ```
 
-Schema status values: `not-started`, `in-progress`, `completed`, `on-hold`, `cancelled`.
+Schema status values: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`, `on-hold`, `cancelled`.
 
-The renderer also keeps backward-compatible visual support for `at-risk` and `blocked`.
+Machine-readable schema: `roadmap.schema.json`.
 
 Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
-Due date format: `"MM/DD/YYYY"` for dates that should render inside a month column. Descriptive strings like `"As needed"` display under the block title and in details.
+Due date format: preferred `dueDates` entries are objects with `date`, `status`, and `note`. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
 
 See `Product-Roadmap.md` for the full schema documentation.
 
@@ -105,7 +111,8 @@ For day-to-day editing, use one product JSON object per editor card.
 | File | Description |
 |---|---|
 | `Product-Roadmap.html` | The interactive roadmap artifact |
-| `Product-Roadmap.md` | JSON schema and workflow documentation |
+| `Product-Roadmap.md` | Schema and workflow documentation |
+| `roadmap.schema.json` | Machine-readable JSON Schema for product roadmap documents |
 
 ## License
 

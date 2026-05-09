@@ -1,6 +1,6 @@
 # Product Roadmap — JSON Schema
 
-This document describes the data format for the `Product-Roadmap.html` interactive roadmap artifact.
+This document describes the data format for the `Product-Roadmap.html` interactive roadmap artifact. The machine-readable JSON Schema is stored in `roadmap.schema.json`.
 
 The roadmap supports the provided **Project Roadmap Schema** for product documents. Timeline range dates use `"Mon YYYY"`; deliverable due dates use the product schema's `dueDates` array.
 
@@ -43,8 +43,8 @@ Each editor card contains one product roadmap JSON object:
       "end": "Jun 2026",
       "desc": "Implement OAuth2 and JWT token management for API endpoints.",
       "dueDates": [
-        "05/15/2026",
-        "06/30/2026"
+        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
+        { "date": "06/30/2026", "status": "not-started", "note": "" }
       ],
       "notes": []
     }
@@ -70,21 +70,30 @@ Each editor card contains one product roadmap JSON object:
 | `id` | **Yes** | string | Unique deliverable identifier, e.g. `bp-001`. The supplied schema pattern is `^[a-z]{2}-\\d{3}$`. |
 | `title` | **Yes** | string | Deliverable title. Displayed in the timeline block and detail panel. |
 | `owner` | **Yes** | string | Owner responsible for this deliverable. |
-| `status` | **Yes** | enum | Schema values: `not-started`, `in-progress`, `completed`, `on-hold`, `cancelled`. The renderer also keeps backward-compatible visual support for `at-risk` and `blocked`. |
+| `status` | **Yes** | enum | Overall task status. Values: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`, `on-hold`, `cancelled`. Individual due-date chips use `dueDates[].status`. |
 | `start` | **Yes** | string | Planned start month in `"Mon YYYY"` format. |
 | `end` | **Yes** | string | Planned end month in `"Mon YYYY"` format. Must be `>=` `start` chronologically. |
 | `desc` | **Yes** | string | Detailed description, requirements, or submission rules. |
-| `dueDates` | **Yes** | array | List of due dates or scheduling notes. `MM/DD/YYYY` dates are parsed into timeline month chips. Descriptive strings are displayed under the block title and in the detail panel. |
+| `dueDates` | **Yes** | array | Preferred list of due date objects with `date`, `status`, and `note`. Legacy `MM/DD/YYYY` strings are migrated automatically. Parseable dates render into timeline month chips. |
 | `notes` | **Yes** | array | Additional comments, attachments, metadata, or status-change notes. |
 
 ---
 
 ## Due Date Rendering
 
-Each deliverable can have one or more values in `dueDates`.
+Each deliverable can have one or more values in `dueDates`. Preferred entries are objects so each date can track status and a note independently:
 
 ```json
-"dueDates": ["05/15/2026", "06/30/2026", "As needed"]
+"dueDates": [
+  { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
+  { "date": "06/30/2026", "status": "not-started", "note": "" }
+]
+```
+
+Legacy string entries are still accepted and migrated by the UI:
+
+```json
+"dueDates": ["05/15/2026", "06/30/2026"]
 ```
 
 Rendering behavior:
@@ -92,8 +101,10 @@ Rendering behavior:
 1. The left side of each row shows the deliverable title and owner.
 2. The timeline does **not** draw a long start-to-end duration bar.
 3. Any `MM/DD/YYYY` due date is converted to its `Mon YYYY` month.
-4. Each parsed due date is rendered as a small due-date chip using the deliverable's status color inside that month column on the deliverable row.
-5. Descriptive strings such as `"As needed"` or `"Weekly from kickoff"` appear in the detail panel, but are not placed in a specific month unless they contain a parseable `MM/DD/YYYY` date.
+4. Each parsed due date is rendered as a small due-date chip using that due date's own `status` color inside the matching month column.
+5. Click a due-date chip to open the drawer for that specific date, update its status, and save a date-specific note.
+6. Click a month heading to filter the roadmap to tasks with due dates in that month and highlight the column green; use **Clear month** to remove the filter.
+7. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, and due dates.
 
 ---
 
@@ -137,13 +148,13 @@ The default timeline supports **January 2026 through December 2032**.
 
 ### Due Dates
 
-`dueDates` accepts strings. `MM/DD/YYYY` strings are parsed into timeline month chips.
+`dueDates` prefers objects with a parseable `date`, a per-date `status`, and a free-text `note`.
 
 Examples:
 
-- `"05/15/2026"` renders in the `May 2026` column
-- `"12/01/2028"` renders in the `Dec 2028` column
-- `"As needed"` displays as text under the block title and in the detail panel
+- `{ "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." }` renders in the `May 2026` column with the in-progress chip color
+- `{ "date": "12/01/2028", "status": "completed", "note": "Accepted." }` renders in the `Dec 2028` column with the completed chip color
+- Legacy `"05/15/2026"` entries are migrated to `{ "date": "05/15/2026", "status": <deliverable status>, "note": "" }`
 
 ---
 
@@ -155,9 +166,11 @@ Examples:
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
 6. Enabled products render together as separate swimlanes.
-7. Due dates display under block titles and as month chips when parseable.
-8. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-9. Click **Clear Cache** to reset to embedded defaults.
+7. Due dates display as month chips when parseable.
+8. Click a due-date chip to edit that specific due date's status and note.
+9. Click a month heading to filter to due dates in that month, or use search to filter tasks by phrase.
+10. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+11. Click **Clear Cache** to reset to embedded defaults.
 
 ---
 
@@ -166,6 +179,6 @@ Examples:
 - Use one JSON card per product.
 - Keep `id` values unique within each product roadmap.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
-- Use `dueDates` for concrete submission dates and scheduling notes.
+- Use `dueDates` for concrete submission dates; each due date can carry its own status and note.
 - Use `desc` for coordination context — blockers, dependencies, definition of done.
 - To change the date range, edit the year loop in the `MONTHS` generator at the top of the HTML file.
