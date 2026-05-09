@@ -144,6 +144,14 @@
   .status-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
   .notes-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
   .notes-list li { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; font-size: 0.8rem; color: var(--muted); }
+  .due-summary { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.6rem; }
+  .due-summary.empty { color: var(--muted); font-size: 0.85rem; }
+  .due-count { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.45rem; }
+  .due-pill-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .due-date-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0.2rem 0.45rem; border: 1px solid; border-radius: 999px; font-size: 0.76rem; line-height: 1; }
+  .due-more { margin-top: 0.5rem; }
+  .due-more summary { color: var(--accent); cursor: pointer; font-size: 0.8rem; }
+  .due-more .due-pill-grid { margin-top: 0.45rem; max-height: 7rem; overflow-y: auto; padding-right: 0.25rem; }
   .doc-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: 1rem; }
   .doc-card-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.75rem; }
   .doc-card-title { display: flex; align-items: center; gap: 0.55rem; font-weight: 600; }
@@ -280,6 +288,33 @@ function dueDatesForMonth(del, monthKey) {
 function formatDueDates(del) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
   return dates.length ? dates.join(' • ') : '';
+}
+function parseDueDate(value) {
+  const match = String(value || '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  return new Date(Number(match[3]), Number(match[1]) - 1, Number(match[2]));
+}
+function compareDueDates(a, b) {
+  const parsedA = parseDueDate(a);
+  const parsedB = parseDueDate(b);
+  if (parsedA && parsedB) return parsedA - parsedB;
+  if (parsedA) return -1;
+  if (parsedB) return 1;
+  return String(a).localeCompare(String(b));
+}
+function renderDueDatesCompact(del) {
+  const dates = Array.isArray(del.dueDates) ? del.dueDates.slice().sort(compareDueDates) : [];
+  if (!dates.length) return '<div class="due-summary empty">No due dates provided.</div>';
+  const limit = 6;
+  const pill = d => `<span class="due-date-pill ${statusClass(del.status)}" title="${escapeHtml(monthKeyFromDueDate(d) || '')}">${escapeHtml(d)}</span>`;
+  const visible = dates.slice(0, limit).map(pill).join('');
+  const hidden = dates.slice(limit).map(pill).join('');
+  return `
+    <div class="due-summary">
+      <div class="due-count">${dates.length} due date${dates.length === 1 ? '' : 's'}</div>
+      <div class="due-pill-grid">${visible}</div>
+      ${hidden ? `<details class="due-more"><summary>Show ${dates.length - limit} more</summary><div class="due-pill-grid">${hidden}</div></details>` : ''}
+    </div>`;
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -465,7 +500,7 @@ function openDetail(del, doc) {
   selectedDocument = doc;
   selectedStatus = del.status;
   const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No notes yet.</li>';
-  const dueDates = (del.dueDates || []).map(d => `<li>${escapeHtml(d)}${monthKeyFromDueDate(d) ? ` <span style="color:var(--muted)">(${escapeHtml(monthKeyFromDueDate(d))})</span>` : ''}</li>`).join('') || '<li>No due dates provided.</li>';
+  const dueDates = renderDueDatesCompact(del);
   openPanel(del.title, `
     <div class="field"><label>Status</label><div class="status-buttons" id="statusButtons">
       ${supportedStatuses().map(s => `<button class="btn small ${s === del.status ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
