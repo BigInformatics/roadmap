@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://biginformatics.github.io/roadmap/roadmap.schema.json",
+  "title": "Product Roadmap Document",
+  "description": "Schema for a single product roadmap JSON document used by Product-Roadmap.html.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "deliverables"],
+  "anyOf": [
+    { "required": ["project"] },
+    { "required": ["product"] }
+  ],
+  "properties": {
+    "project": { "type": "string", "minLength": 1 },
+    "product": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "subtitle": { "type": "string" },
+    "lastUpdated": { "type": "string" },
+    "owner": { "type": "string" },
+    "deliverables": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/deliverable" }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": ["not-started", "in-progress", "at-risk", "completed", "blocked", "on-hold", "cancelled"]
+    },
+    "monthKey": {
+      "type": "string",
+      "pattern": "^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) [0-9]{4}$"
+    },
+    "dateString": {
+      "type": "string",
+      "pattern": "^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/[0-9]{4}$"
+    },
+    "dueDate": {
+      "description": "Per-date schedule item. Status and note belong to this due date, not the whole deliverable.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["date"],
+      "properties": {
+        "date": { "$ref": "#/$defs/dateString" },
+        "status": { "$ref": "#/$defs/status", "default": "not-started" },
+        "note": { "type": "string", "default": "" }
+      }
+    },
+    "deliverable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "start", "end"],
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string", "minLength": 1 },
+        "owner": { "type": "string" },
+        "status": { "$ref": "#/$defs/status", "default": "not-started", "description": "Overall task status. Individual due-date chips use dueDates[].status." },
+        "start": { "$ref": "#/$defs/monthKey" },
+        "end": { "$ref": "#/$defs/monthKey" },
+        "desc": { "type": "string" },
+        "dueDates": {
+          "type": "array",
+          "description": "Preferred format is an array of objects. Legacy string entries are still migrated by the UI.",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/dueDate" },
+              { "$ref": "#/$defs/dateString" }
+            ]
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}
