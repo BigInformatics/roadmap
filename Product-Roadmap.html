@@ -108,16 +108,10 @@
   .del-name { width: var(--name-col); flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; background: rgba(31,40,51,0.75); z-index: 2; }
   .del-name .title { font-weight: 500; }
   .del-name .owner { font-size: 0.7rem; color: var(--muted); }
-  .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 62px; padding: 3px; }
+  .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 42px; padding: 3px; }
   .cell.current-month { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.2); }
 
-  .del-block { position: absolute; top: 4px; min-height: 42px; border-radius: var(--radius); padding: 0.25rem 0.4rem; font-size: 0.7rem; font-weight: 500; cursor: pointer; overflow: hidden; white-space: normal; text-overflow: ellipsis; border: 1px solid transparent; transition: transform 0.15s, box-shadow 0.15s; display: flex; align-items: flex-start; z-index: 3; }
-  .del-block:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 20; overflow: visible; min-width: fit-content; max-width: 360px; }
-  .del-block-content { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-  .del-block-title { display: flex; align-items: center; gap: 0.3rem; line-height: 1.15; }
-  .del-block-dates { font-size: 0.62rem; line-height: 1.2; opacity: 0.9; color: inherit; }
-  .due-chip { display: block; width: 100%; padding: 0.12rem 0.2rem; margin-bottom: 2px; border-radius: 4px; background: rgba(254,202,87,0.14); border: 1px solid rgba(254,202,87,0.35); color: var(--gold); font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
-  .cell .due-chip:first-child { margin-top: 44px; }
+  .due-chip { display: block; width: 100%; padding: 0.18rem 0.25rem; margin-bottom: 2px; border-radius: 4px; background: rgba(254,202,87,0.14); border: 1px solid rgba(254,202,87,0.35); color: var(--gold); font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
   .due-chip:hover { background: rgba(254,202,87,0.28); color: #ffe2a0; overflow: visible; white-space: normal; z-index: 25; position: relative; }
 
   .status-not-started { background: rgba(136, 153, 166, 0.15); color: var(--muted); border-color: rgba(136,153,166,0.3); }
@@ -451,18 +445,6 @@ function renderRoadmap() {
         });
         row.appendChild(cell);
       });
-      const startIdx = monthIndex(del.start);
-      const endIdx = monthIndex(del.end);
-      if (startIdx >= 0 && endIdx >= 0 && endIdx >= startIdx) {
-        const block = document.createElement('div');
-        block.className = 'del-block ' + statusClass(del.status);
-        const dueLabel = formatDueDates(del);
-        block.innerHTML = `<div class="del-block-content"><div class="del-block-title"><span class="status-dot ${escapeHtml(del.status)}"></span><span>${escapeHtml(del.title)}</span></div>${dueLabel ? `<div class="del-block-dates">Due: ${escapeHtml(dueLabel)}</div>` : ''}</div>`;
-        block.style.left = `calc(var(--name-col) + var(--month-col) * ${startIdx} + 4px)`;
-        block.style.width = `calc(var(--month-col) * ${endIdx - startIdx + 1} - 8px)`;
-        block.addEventListener('click', () => openDetail(del, doc));
-        row.appendChild(block);
-      }
       swimlane.appendChild(row);
     });
     body.appendChild(swimlane);

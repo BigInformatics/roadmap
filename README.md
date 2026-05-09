@@ -7,7 +7,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane view with years, months, and status-colored deliverable blocks spanning 2026–2032.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
-- **Due-date rendering** — `dueDates` display under each deliverable block title, and parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column.
+- **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column; no long start-to-end task bars are drawn.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
@@ -67,12 +67,12 @@ See `Product-Roadmap.md` for the full schema documentation.
 
 ## Due Dates
 
-`dueDates` are rendered two ways:
+`dueDates` are rendered as deliverable boxes in the timeline:
 
-1. Under the deliverable block title as `Due: ...`
-2. As small chips in the matching timeline month column when the value is a parseable `MM/DD/YYYY` date
+1. As small chips in the matching timeline month column when the value is a parseable `MM/DD/YYYY` date
+2. No long grey start-to-end duration bar is drawn
 
-Example: `"05/15/2026"` appears under the block title and in the `May 2026` month column.
+Example: `"05/15/2026"` appears as a deliverable chip in the `May 2026` month column.
 
 ## Multi-Product Workflow
 

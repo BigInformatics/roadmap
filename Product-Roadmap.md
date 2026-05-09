@@ -89,10 +89,11 @@ Each deliverable can have one or more values in `dueDates`.
 
 Rendering behavior:
 
-1. All due date strings display **under the deliverable block title** as `Due: ...`.
-2. Any `MM/DD/YYYY` date is converted to its `Mon YYYY` month.
-3. Each parsed due date is rendered as a small due-date chip inside that month column on the deliverable row.
-4. Descriptive strings such as `"As needed"` or `"Weekly from kickoff"` remain visible under the block title and in the detail panel, but are not placed in a specific month unless they contain a parseable `MM/DD/YYYY` date.
+1. The left side of each row shows the deliverable title and owner.
+2. The timeline does **not** draw a long start-to-end duration bar.
+3. Any `MM/DD/YYYY` due date is converted to its `Mon YYYY` month.
+4. Each parsed due date is rendered as a small due-date chip inside that month column on the deliverable row.
+5. Descriptive strings such as `"As needed"` or `"Weekly from kickoff"` appear in the detail panel, but are not placed in a specific month unless they contain a parseable `MM/DD/YYYY` date.
 
 ---
 
