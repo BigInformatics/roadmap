@@ -88,6 +88,19 @@
   .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
 
   .roadmap-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
+  .linear-wrap { overflow-x: visible; }
+  .linear-header, .linear-row { display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
+  .linear-header { position: sticky; top: 0; z-index: 50; background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+  .linear-row { width: 100%; min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
+  .linear-row:hover { filter: brightness(1.15); transform: translateX(2px); }
+  .linear-row.current-week { box-shadow: inset 4px 0 0 var(--gold), inset 0 0 0 1px rgba(254,202,87,0.35); background: var(--gold-bg); }
+  .linear-row.current-week .linear-date { color: var(--gold); }
+  .linear-date { font-weight: 700; color: var(--ink); }
+  .linear-week-label { display: block; color: var(--gold); font-size: 0.7rem; font-weight: 700; margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .linear-task { font-weight: 600; }
+  .linear-meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.18rem; }
+  .linear-contract { color: var(--ink); font-size: 0.88rem; }
+  .linear-status { justify-self: start; border: 1px solid; border-radius: 999px; padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; }
   .timeline-header, .swimlane-header, .deliverable-row { min-width: calc(var(--name-col) + (var(--month-col) * var(--month-count))); }
   .timeline-header { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 50; }
   .th-cell { flex-shrink: 0; padding: 0.4rem 0.2rem; font: inherit; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); background: transparent; border: 0; border-right: 1px solid var(--border); text-align: center; line-height: 1.3; }
@@ -168,6 +181,12 @@
   .doc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
   .help-text { font-size: 0.8rem; color: var(--muted); }
 
+  @media (max-width: 900px) {
+    .linear-header { display: none; }
+    .linear-row { grid-template-columns: 1fr; gap: 0.35rem; align-items: start; }
+    .linear-status { margin-top: 0.25rem; }
+  }
+
   @media (max-width: 768px) {
     header { flex-direction: column; align-items: flex-start; padding: 1rem; }
     .controls { justify-content: flex-start; }
@@ -188,6 +207,7 @@
   <div class="controls">
     <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks..." aria-label="Search tasks">
     <button class="btn filter-chip" id="btnClearMonth" type="button">Clear month</button>
+    <button class="btn active" id="btnViewToggle" type="button">Grid View</button>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
       <option value="in-progress">In Progress</option>
@@ -271,6 +291,7 @@ let currentStatusFilter = 'all';
 let currentSearchQuery = '';
 let selectedMonthFilter = null;
 let selectedStatus = null;
+let currentView = 'grid';
 let selectedDeliverable = null;
 let selectedDocument = null;
 let selectedDueDate = null;
@@ -314,6 +335,31 @@ function parseDueDate(value) {
   const match = dueDateValue(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!match) return null;
   return new Date(Number(match[3]), Number(match[1]) - 1, Number(match[2]));
+}
+function startOfWeek(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+function endOfWeek(date) {
+  const d = startOfWeek(date);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+function isCurrentWeekDate(value) {
+  const parsed = parseDueDate(value);
+  if (!parsed) return false;
+  const now = new Date();
+  return parsed >= startOfWeek(now) && parsed <= endOfWeek(now);
+}
+function compareDueDateValues(a, b) {
+  const parsedA = parseDueDate(a);
+  const parsedB = parseDueDate(b);
+  if (parsedA && parsedB) return parsedA - parsedB;
+  if (parsedA) return -1;
+  if (parsedB) return 1;
+  return dueDateValue(a).localeCompare(dueDateValue(b));
 }
 function compareDueDates(a, b) {
   const parsedA = parseDueDate(a);
@@ -480,8 +526,14 @@ function renderStats() {
 function renderRoadmap() {
   renderHeader();
   renderProductToggles();
+  updateViewControls();
+  if (currentView === 'linear') {
+    renderLinearTimeline();
+    return;
+  }
   renderTimelineHeader();
   const body = $('#roadmapBody');
+  $('#roadmapWrap').classList.remove('linear-wrap');
   body.innerHTML = '';
   const currentIdx = monthIndex(getCurrentMonthKey());
   const docs = enabledDocuments();
@@ -536,6 +588,59 @@ function renderRoadmap() {
       swimlane.appendChild(row);
     });
     body.appendChild(swimlane);
+  });
+  renderStats();
+}
+
+function updateViewControls() {
+  const btn = $('#btnViewToggle');
+  if (!btn) return;
+  btn.textContent = currentView === 'grid' ? 'Grid View' : 'List View';
+  btn.classList.toggle('active', currentView === 'grid');
+}
+function collectDueItems() {
+  const items = [];
+  enabledDocuments().forEach(doc => {
+    (doc.data.deliverables || []).filter(deliverableMatchesFilters).forEach(del => {
+      (Array.isArray(del.dueDates) ? del.dueDates : []).forEach(dueDate => {
+        items.push({ doc, del, dueDate, parsed: parseDueDate(dueDate) });
+      });
+    });
+  });
+  return items.sort((a, b) => compareDueDateValues(a.dueDate, b.dueDate) || productName(a.doc).localeCompare(productName(b.doc)) || a.del.title.localeCompare(b.del.title));
+}
+function renderLinearTimeline() {
+  const wrap = $('#roadmapWrap');
+  const body = $('#roadmapBody');
+  wrap.classList.add('linear-wrap');
+  $('#timelineHeader').innerHTML = `
+    <div class="linear-header">
+      <div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
+    </div>`;
+  body.innerHTML = '';
+  const items = collectDueItems();
+  if (!enabledDocuments().length) {
+    body.innerHTML = '<div class="empty-state">No products are enabled. Toggle products on above or use Edit Data to add roadmap JSON documents.</div>';
+    renderStats();
+    return;
+  }
+  if (!items.length) {
+    body.innerHTML = '<div class="empty-state">No due-date items match the current filters.</div>';
+    renderStats();
+    return;
+  }
+  items.forEach(item => {
+    const status = dueDateStatus(item.dueDate, item.del);
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = `linear-row ${statusClass(status)}${isCurrentWeekDate(item.dueDate) ? ' current-week' : ''}`;
+    row.innerHTML = `
+      <div><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
+      <div><div class="linear-task">${escapeHtml(item.del.title)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}</div></div>
+      <div class="linear-contract">${escapeHtml(productName(item.doc))}</div>
+      <div><span class="linear-status ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span></div>`;
+    row.addEventListener('click', () => openDetail(item.del, item.doc, item.dueDate));
+    body.appendChild(row);
   });
   renderStats();
 }
@@ -735,12 +840,18 @@ function clearCache() {
 }
 
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
+$('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
 $('#btnClearMonth').addEventListener('click', () => { selectedMonthFilter = null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
 $('#btnNow').addEventListener('click', () => {
+  if (currentView === 'linear') {
+    const current = document.querySelector('.linear-row.current-week');
+    if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   const idx = monthIndex(getCurrentMonthKey());
   if (idx < 0) return;
   const wrap = $('#roadmapWrap');

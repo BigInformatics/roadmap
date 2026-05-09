@@ -6,6 +6,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane view with years, months, and status-colored deliverable blocks spanning 2026–2032.
+- **Linear due-date view** — toggle from the grid to a top-to-bottom chronological list of due-date items.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
@@ -13,11 +14,12 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
+- **Current week highlight** — the linear view highlights due-date rows in the current week in gold.
 - **Month filtering** — click a month column heading to highlight that column green and show only tasks with due dates in that month; clear it with the chip in the header.
 - **Search filtering** — use the header search box to filter tasks by phrase.
 - **Live editing** — click **Edit Data** to paste or update product roadmap JSON and re-render instantly.
 - **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. The drawer **Clear Cache** action resets to defaults.
-- **Status changes + notes** — click a due-date chip, change that date's status, and enter a date-specific note.
+- **Status changes + notes** — click a due-date chip or linear list row, change that date's status, and enter a date-specific note.
 - **Filtering** — filter visible deliverables by task or due-date status across all enabled products.
 - **Stats dashboard** — at-a-glance counts for enabled products, total deliverables, in-progress, at-risk, blocked/on-hold, completed, and due-this-month.
 - **Dark theme** — clean, modern design.
@@ -29,8 +31,9 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 3. Add or edit one product JSON document per card, or click **Load JSON Document** to import `.json` files.
 4. Check/uncheck product cards to toggle products on/off.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
-6. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
-7. Click **Clear Cache** in the drawer to reset to embedded defaults.
+6. Use the **Grid View / List View** toggle to switch between the month grid and chronological due-date list.
+7. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
+8. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ## Product JSON Schema
 
@@ -80,6 +83,10 @@ See `Product-Roadmap.md` for the full schema documentation.
 2. No long grey start-to-end duration bar is drawn
 
 Example: `"05/15/2026"` appears as a deliverable chip in the `May 2026` month column.
+
+## Linear Timeline View
+
+Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. Click any row to edit that due date's status and note in the drawer.
 
 ## Multi-Product Workflow
 
