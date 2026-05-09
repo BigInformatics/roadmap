@@ -179,12 +179,19 @@
   .doc-card-title { display: flex; align-items: center; gap: 0.55rem; font-weight: 600; }
   .doc-card-title input { width: auto; accent-color: var(--accent); }
   .doc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+  .doc-summary { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+  .json-editor { display: none; margin-top: 0.75rem; }
+  .json-editor.open { display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+  .form-grid .span-2 { grid-column: 1 / -1; }
   .help-text { font-size: 0.8rem; color: var(--muted); }
 
   @media (max-width: 900px) {
     .linear-header { display: none; }
     .linear-row { grid-template-columns: 1fr; gap: 0.35rem; align-items: start; }
     .linear-status { margin-top: 0.25rem; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .span-2 { grid-column: auto; }
   }
 
   @media (max-width: 768px) {
@@ -710,14 +717,19 @@ function openEditor() {
       <div class="doc-card-header">
         <label class="doc-card-title"><input type="checkbox" ${doc.enabled ? 'checked' : ''} data-edit-enabled="${i}"> ${escapeHtml(productName(doc))}</label>
         <div class="doc-actions">
+          <button class="btn small active" data-add-deliverable="${i}">Add Deliverable</button>
+          <button class="btn small" data-edit-json="${i}" aria-expanded="false">Edit JSON</button>
           <button class="btn small" data-download-doc="${i}">Download</button>
           <button class="btn small danger" data-remove-doc="${i}">Remove</button>
         </div>
       </div>
-      <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
+      <div class="doc-summary">${(doc.data.deliverables || []).length} deliverable${(doc.data.deliverables || []).length === 1 ? '' : 's'} &bull; Owner: ${escapeHtml(doc.data.owner || 'Not set')}</div>
+      <div class="json-editor" data-json-editor="${i}">
+        <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
+      </div>
     </div>`).join('');
   openPanel('Edit Product JSON Documents', `
-    <div class="field"><label>Products</label><div class="help-text">Each card is an independent product roadmap JSON document. Check products on/off to control which swimlanes render together.</div></div>
+    <div class="field"><label>Products</label><div class="help-text">Each card is an independent product roadmap JSON document. JSON is collapsed by default; click Edit JSON only when you need raw data changes.</div></div>
     ${cards || '<div class="empty-state">No product JSON documents yet.</div>'}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
       <button class="btn active" id="btnSaveJson">Save & Render</button>
@@ -730,6 +742,19 @@ function openEditor() {
     </div>
     <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Legacy string due dates are migrated automatically.</div></div>
   `);
+  document.querySelectorAll('[data-add-deliverable]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.currentTarget.dataset.addDeliverable);
+    if (!saveEditorDocuments(false)) return;
+    openAddDeliverable(idx);
+  }));
+  document.querySelectorAll('[data-edit-json]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.currentTarget.dataset.editJson);
+    const editor = document.querySelector(`[data-json-editor="${idx}"]`);
+    const isOpen = editor?.classList.toggle('open');
+    e.currentTarget.textContent = isOpen ? 'Hide JSON' : 'Edit JSON';
+    e.currentTarget.setAttribute('aria-expanded', String(Boolean(isOpen)));
+    if (isOpen) editor.querySelector('textarea')?.focus();
+  }));
   document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
     const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
     downloadJson(doc.data, `${slugify(productName(doc))}.json`);
@@ -797,6 +822,70 @@ function addProductDocument() {
   saveCache();
   renderRoadmap();
   openEditor();
+}
+function nextDeliverableId(doc) {
+  const alpha = slugify(productName(doc)).replace(/[^a-z]/g, '');
+  const prefix = (alpha.slice(0, 2) || 'rd').padEnd(2, 'd');
+  const existing = new Set((doc.data.deliverables || []).map(d => d.id));
+  let i = (doc.data.deliverables || []).length + 1;
+  let id = `${prefix}-${String(i).padStart(3, '0')}`;
+  while (existing.has(id)) id = `${prefix}-${String(++i).padStart(3, '0')}`;
+  return id;
+}
+function openAddDeliverable(docIndex) {
+  const doc = DOCUMENTS[docIndex];
+  if (!doc) { openEditor(); return; }
+  const currentMonth = getCurrentMonthKey();
+  openPanel(`Add Deliverable — ${productName(doc)}`, `
+    <div class="field"><label>Product / Contract</label><div class="value">${escapeHtml(productName(doc))}</div></div>
+    <div class="form-grid">
+      <div class="field span-2"><label>Task</label><input id="newDelTitle" type="text" placeholder="Deliverable title"></div>
+      <div class="field"><label>Due Date</label><input id="newDelDueDate" type="text" placeholder="MM/DD/YYYY"></div>
+      <div class="field"><label>Status</label><select id="newDelStatus">${supportedStatuses().map(s => `<option value="${s}">${statusLabel(s)}</option>`).join('')}</select></div>
+      <div class="field"><label>Owner</label><input id="newDelOwner" type="text" value="${escapeHtml(doc.data.owner || '')}" placeholder="Owner"></div>
+      <div class="field"><label>Start Month</label><input id="newDelStart" type="text" value="${escapeHtml(currentMonth)}" placeholder="Mon YYYY"></div>
+      <div class="field"><label>End Month</label><input id="newDelEnd" type="text" value="${escapeHtml(currentMonth)}" placeholder="Mon YYYY"></div>
+      <div class="field span-2"><label>Description</label><textarea id="newDelDesc" rows="4" placeholder="Optional description or acceptance criteria..."></textarea></div>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
+      <button class="btn active" id="btnSaveNewDeliverable">Add Deliverable</button>
+      <button class="btn" id="btnBackToEditor">Back to JSON Editor</button>
+    </div>
+    <div class="field" style="margin-top:1rem"><div class="help-text">This appends a normalized deliverable to the selected product JSON. You can fine-tune the raw JSON afterward from Edit Data.</div></div>
+  `);
+  $('#btnBackToEditor').addEventListener('click', openEditor);
+  $('#btnSaveNewDeliverable').addEventListener('click', () => saveNewDeliverable(docIndex));
+}
+function saveNewDeliverable(docIndex) {
+  const doc = DOCUMENTS[docIndex];
+  if (!doc) { openEditor(); return; }
+  const title = ($('#newDelTitle').value || '').trim();
+  if (!title) { alert('Task title is required.'); return; }
+  const dueDateText = ($('#newDelDueDate').value || '').trim();
+  const dueDate = dueDateText ? normalizeDueDate({ date: dueDateText, status: $('#newDelStatus').value || 'not-started', note: '' }, $('#newDelStatus').value || 'not-started') : null;
+  const dueMonth = dueDate ? monthKeyFromDueDate(dueDate) : null;
+  const defaultMonth = getCurrentMonthKey();
+  const startValue = ($('#newDelStart').value || '').trim();
+  const endValue = ($('#newDelEnd').value || '').trim();
+  const start = dueMonth && startValue === defaultMonth ? dueMonth : (startValue || dueMonth || defaultMonth);
+  const end = dueMonth && endValue === defaultMonth ? dueMonth : (endValue || dueMonth || start);
+  const deliverable = {
+    id: nextDeliverableId(doc),
+    title,
+    owner: ($('#newDelOwner').value || doc.data.owner || '').trim(),
+    status: $('#newDelStatus').value || 'not-started',
+    start,
+    end,
+    desc: ($('#newDelDesc').value || '').trim(),
+    dueDates: dueDate ? [dueDate] : [],
+    notes: []
+  };
+  if (!Array.isArray(doc.data.deliverables)) doc.data.deliverables = [];
+  doc.data.deliverables.push(deliverable);
+  touchDocument(doc);
+  saveCache();
+  renderRoadmap();
+  openDetail(deliverable, doc, deliverable.dueDates[0] || null);
 }
 async function loadJsonDocumentsFromFiles(event) {
   const input = event.target;
