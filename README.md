@@ -11,6 +11,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
+- **Collapsed raw JSON** — product JSON is hidden by default in the drawer and expands only when you click **Edit JSON**.
 - **Deliverable creation** — add deliverables to any product card, including newly-created empty product JSON documents.
 - **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
@@ -29,7 +30,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add or edit one product JSON document per card, click **Add Deliverable** on a product card, or click **Load JSON Document** to import `.json` files.
+3. Add or edit one product JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
 4. Check/uncheck product cards to toggle products on/off.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
 6. Use the **Grid View / List View** toggle to switch between the month grid and chronological due-date list.
@@ -105,7 +106,7 @@ Downloads use a wrapper so toggle state can be preserved:
 }
 ```
 
-For day-to-day editing, use one product JSON object per editor card. **Add Deliverable** appends a normalized deliverable object to that product, and **Load JSON Document** accepts a single product object, an array of product objects, or the wrapped `{ "documents": [...] }` export format.
+For day-to-day editing, use one product JSON object per editor card. Raw JSON starts collapsed; click **Edit JSON** to reveal it. **Add Deliverable** appends a normalized deliverable object to that product, and **Load JSON Document** accepts a single product object, an array of product objects, or the wrapped `{ "documents": [...] }` export format.
 
 ## Customization
 

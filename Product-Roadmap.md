@@ -14,6 +14,7 @@ In the **Edit Data** drawer:
 
 - Each product gets its own JSON card/text area.
 - Each card contains one product roadmap object using the schema below.
+- Raw JSON is collapsed by default; click **Edit JSON** on a card to reveal the textarea.
 - Use **Add Deliverable** on a product card to append a task to that product, including empty newly-created product JSON documents.
 - Use **Load JSON Document** to import one or more `.json` files when you do not want to paste JSON manually.
 - Use the checkbox on each card to toggle that product on/off.
@@ -135,7 +136,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
 }
 ```
 
-For normal editing, you usually only edit the **product object** inside each card, not the wrapper. **Add Deliverable** appends a normalized deliverable object into the selected product's `deliverables` array. **Load JSON Document** accepts a single product object, an array of product objects, or this wrapped export format.
+For normal editing, you usually only edit the **product object** inside each card, not the wrapper. Raw JSON is hidden by default; use **Edit JSON** only when direct data changes are needed. **Add Deliverable** appends a normalized deliverable object into the selected product's `deliverables` array. **Load JSON Document** accepts a single product object, an array of product objects, or this wrapped export format.
 
 ---
 
@@ -166,7 +167,7 @@ Examples:
 
 1. Open `Product-Roadmap.html` in a browser.
 2. Click **Edit Data**.
-3. Add one product roadmap JSON document per card, click **Add Deliverable** on a product card, or click **Load JSON Document** to import `.json` files.
+3. Add one product roadmap JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
 6. Enabled products render together as separate swimlanes.

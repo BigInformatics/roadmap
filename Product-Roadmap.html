@@ -179,6 +179,9 @@
   .doc-card-title { display: flex; align-items: center; gap: 0.55rem; font-weight: 600; }
   .doc-card-title input { width: auto; accent-color: var(--accent); }
   .doc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+  .doc-summary { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+  .json-editor { display: none; margin-top: 0.75rem; }
+  .json-editor.open { display: block; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
   .form-grid .span-2 { grid-column: 1 / -1; }
   .help-text { font-size: 0.8rem; color: var(--muted); }
@@ -715,14 +718,18 @@ function openEditor() {
         <label class="doc-card-title"><input type="checkbox" ${doc.enabled ? 'checked' : ''} data-edit-enabled="${i}"> ${escapeHtml(productName(doc))}</label>
         <div class="doc-actions">
           <button class="btn small active" data-add-deliverable="${i}">Add Deliverable</button>
+          <button class="btn small" data-edit-json="${i}" aria-expanded="false">Edit JSON</button>
           <button class="btn small" data-download-doc="${i}">Download</button>
           <button class="btn small danger" data-remove-doc="${i}">Remove</button>
         </div>
       </div>
-      <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
+      <div class="doc-summary">${(doc.data.deliverables || []).length} deliverable${(doc.data.deliverables || []).length === 1 ? '' : 's'} &bull; Owner: ${escapeHtml(doc.data.owner || 'Not set')}</div>
+      <div class="json-editor" data-json-editor="${i}">
+        <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
+      </div>
     </div>`).join('');
   openPanel('Edit Product JSON Documents', `
-    <div class="field"><label>Products</label><div class="help-text">Each card is an independent product roadmap JSON document. Check products on/off to control which swimlanes render together.</div></div>
+    <div class="field"><label>Products</label><div class="help-text">Each card is an independent product roadmap JSON document. JSON is collapsed by default; click Edit JSON only when you need raw data changes.</div></div>
     ${cards || '<div class="empty-state">No product JSON documents yet.</div>'}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
       <button class="btn active" id="btnSaveJson">Save & Render</button>
@@ -739,6 +746,14 @@ function openEditor() {
     const idx = Number(e.currentTarget.dataset.addDeliverable);
     if (!saveEditorDocuments(false)) return;
     openAddDeliverable(idx);
+  }));
+  document.querySelectorAll('[data-edit-json]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.currentTarget.dataset.editJson);
+    const editor = document.querySelector(`[data-json-editor="${idx}"]`);
+    const isOpen = editor?.classList.toggle('open');
+    e.currentTarget.textContent = isOpen ? 'Hide JSON' : 'Edit JSON';
+    e.currentTarget.setAttribute('aria-expanded', String(Boolean(isOpen)));
+    if (isOpen) editor.querySelector('textarea')?.focus();
   }));
   document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
     const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
