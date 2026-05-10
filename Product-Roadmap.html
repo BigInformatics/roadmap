@@ -19,11 +19,34 @@
     --gold: #feca57;
     --gold-bg: rgba(254, 202, 87, 0.16);
     --border: #2a3542;
+    --button-hover-ink: #0b0c10;
+    --del-name-bg: rgba(31,40,51,0.75);
     --radius: 6px;
     --shadow: 0 4px 20px rgba(0,0,0,0.4);
     --name-col: 240px;
     --month-col: 55px;
     --month-count: 84;
+    color-scheme: dark;
+  }
+
+  body[data-theme="light"] {
+    --bg: #f6f8fb;
+    --surface: #ffffff;
+    --surface-2: #e9eef5;
+    --ink: #18212f;
+    --muted: #5d6b7a;
+    --accent: #087c78;
+    --accent-dim: #0f766e;
+    --danger: #b42318;
+    --warning: #b7791f;
+    --success: #087f5b;
+    --gold: #b7791f;
+    --gold-bg: rgba(245, 158, 11, 0.16);
+    --border: #d7dee8;
+    --button-hover-ink: #ffffff;
+    --del-name-bg: rgba(255,255,255,0.82);
+    --shadow: 0 4px 20px rgba(24,33,47,0.12);
+    color-scheme: light;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,11 +95,13 @@
     white-space: nowrap;
     min-height: 38px;
   }
-  .btn:hover { background: var(--accent-dim); color: var(--bg); border-color: var(--accent-dim); }
-  .btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+  .btn:hover { background: var(--accent-dim); color: var(--button-hover-ink); border-color: var(--accent-dim); }
+  .btn.active { background: var(--accent); color: var(--button-hover-ink); border-color: var(--accent); font-weight: 600; }
   .btn.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
   .btn.small { padding: 0.35rem 0.65rem; font-size: 0.75rem; min-height: 30px; }
   .btn.ghost { background: transparent; }
+  .theme-toggle { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .theme-toggle svg { width: 1rem; height: 1rem; display: block; }
 
   .main { padding: 2rem; max-width: 100%; margin: 0 auto; }
   .product-toggle-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; max-width: 1600px; }
@@ -128,7 +153,7 @@
 
   .deliverable-row { display: flex; border-bottom: 1px solid var(--border); transition: background 0.15s; position: relative; }
   .deliverable-row:hover { background: rgba(102, 252, 241, 0.03); }
-  .del-name { width: var(--name-col); flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; background: rgba(31,40,51,0.75); z-index: 2; }
+  .del-name { width: var(--name-col); flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; background: var(--del-name-bg); z-index: 2; }
   .del-name .title { font-weight: 500; }
   .del-name .owner { font-size: 0.7rem; color: var(--muted); }
   .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 42px; padding: 3px; }
@@ -239,6 +264,7 @@
       <option value="on-hold">On Hold</option>
       <option value="cancelled">Cancelled</option>
     </select>
+    <button class="btn theme-toggle" id="btnThemeToggle" type="button" aria-label="Switch to light mode"></button>
     <button class="btn" id="btnCopyMarkdown" type="button">Copy Markdown</button>
     <button class="btn" id="btnNow">Jump to Now</button>
     <button class="btn" id="btnEdit">Edit Data</button>
@@ -270,6 +296,7 @@
 
 <script>
 const STORAGE_KEY = 'product-roadmap-v3-documents';
+const THEME_KEY = 'product-roadmap-theme';
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MONTHS = [];
 for (let y = 2026; y <= 2032; y++) for (let i = 0; i < 12; i++) MONTHS.push(`${MONTH_NAMES[i]} ${y}`);
@@ -309,6 +336,7 @@ const DEFAULT_DOCUMENTS = [
 ];
 
 let DOCUMENTS = loadDocuments();
+let currentTheme = loadTheme();
 let currentStatusFilter = 'all';
 let currentSearchQuery = '';
 let selectedMonthFilter = null;
@@ -332,6 +360,26 @@ function productName(doc) { return doc?.data?.project || doc?.data?.product || d
 function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
 function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
+function loadTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'; } catch(e) { return 'dark'; }
+}
+function themeIcon(theme) {
+  if (theme === 'light') return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun-medium-icon lucide-sun-medium"><circle cx="12" cy="12" r="4"/><path d="M12 3v1"/><path d="M12 20v1"/><path d="M3 12h1"/><path d="M20 12h1"/><path d="m18.364 5.636-.707.707"/><path d="m6.343 17.657-.707.707"/><path d="m5.636 5.636.707.707"/><path d="m17.657 17.657.707.707"/></svg><span>Light</span>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon-icon lucide-moon"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><span>Dark</span>';
+}
+function applyTheme(theme) {
+  currentTheme = theme === 'light' ? 'light' : 'dark';
+  document.body.dataset.theme = currentTheme;
+  try { localStorage.setItem(THEME_KEY, currentTheme); } catch(e) { console.warn('Unable to save theme', e); }
+  const btn = $('#btnThemeToggle');
+  if (btn) {
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    btn.innerHTML = themeIcon(currentTheme);
+    btn.setAttribute('aria-label', `Switch to ${nextTheme} mode`);
+    btn.title = `Switch to ${nextTheme} mode`;
+  }
+}
+function toggleTheme() { applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
 function renderNoteIcon(note) {
   if (!note) return '';
   const safeNote = escapeHtml(note);
@@ -1114,6 +1162,7 @@ $('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderR
 $('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
+$('#btnThemeToggle').addEventListener('click', toggleTheme);
 $('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClose').addEventListener('click', closeDetail);
@@ -1133,6 +1182,7 @@ $('#btnNow').addEventListener('click', () => {
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(); });
 
+applyTheme(currentTheme);
 renderRoadmap();
 </script>
 </body>
