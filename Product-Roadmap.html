@@ -239,6 +239,7 @@
       <option value="on-hold">On Hold</option>
       <option value="cancelled">Cancelled</option>
     </select>
+    <button class="btn" id="btnCopyMarkdown" type="button">Copy Markdown</button>
     <button class="btn" id="btnNow">Jump to Now</button>
     <button class="btn" id="btnEdit">Edit Data</button>
   </div>
@@ -385,6 +386,16 @@ function clearDateFilter() {
 function formatDueDates(del) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
   return dates.length ? dates.map(dueDateValue).join(' • ') : '';
+}
+function visibleDueDates(del) {
+  const dates = Array.isArray(del.dueDates) ? del.dueDates.slice().sort(compareDueDates) : [];
+  return dateFilterActive() ? dates.filter(dueDateMatchesDateFilter) : dates;
+}
+function markdownEscape(value) {
+  return String(value ?? '').replace(/\r\n/g, '\n').trim();
+}
+function markdownListItem(value, indent = '') {
+  return `${indent}- ${markdownEscape(value).replace(/\n/g, `\n${indent}  `)}`;
 }
 function parseDueDate(value) {
   const match = dueDateValue(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -580,6 +591,108 @@ function renderStats() {
   }
   const search = $('#taskSearch');
   if (search && search.value !== currentSearchQuery) search.value = currentSearchQuery;
+}
+
+function getVisibleSummaryStats() {
+  let total=0, ip=0, ar=0, bl=0, comp=0, due=0;
+  const thisMonth = getCurrentMonthKey();
+  enabledDocuments().forEach(doc => getVisibleDeliverables(doc).forEach(d => {
+    total++;
+    if (d.status === 'in-progress') ip++;
+    if (d.status === 'at-risk') ar++;
+    if (d.status === 'blocked' || d.status === 'on-hold') bl++;
+    if (d.status === 'completed') comp++;
+    due += dueDatesForMonth(d, thisMonth).length;
+  }));
+  return { products: enabledDocuments().length, total, ip, ar, bl, comp, due };
+}
+
+function buildMarkdownExport() {
+  const first = enabledDocuments()[0]?.data || DOCUMENTS[0]?.data || {};
+  const title = first.title || 'Product Roadmap';
+  const filters = [];
+  if (currentSearchQuery.trim()) filters.push(`Search: ${currentSearchQuery.trim()}`);
+  if (dateFilterActive()) filters.push(`Date: ${dateFilterLabel()}`);
+  if (currentStatusFilter !== 'all') filters.push(`Status: ${statusLabel(currentStatusFilter)}`);
+  filters.push(`View: ${currentView === 'grid' ? 'Grid' : 'List'}`);
+  const stats = getVisibleSummaryStats();
+  const lines = [
+    `# ${markdownEscape(title)}`,
+    '',
+    markdownEscape($('#pageSubtitle')?.textContent || ''),
+    markdownEscape($('#lastUpdated')?.textContent || ''),
+    '',
+    '## Current Filters',
+    ...filters.map(f => markdownListItem(f)),
+    '',
+    '## Summary Stats',
+    markdownListItem(`Products On: ${stats.products}`),
+    markdownListItem(`Deliverables: ${stats.total}`),
+    markdownListItem(`In Progress: ${stats.ip}`),
+    markdownListItem(`At Risk: ${stats.ar}`),
+    markdownListItem(`Blocked / On Hold: ${stats.bl}`),
+    markdownListItem(`Completed: ${stats.comp}`),
+    markdownListItem(`Due This Month: ${stats.due}`),
+    '',
+    '## Tasks and Deliverables'
+  ];
+
+  enabledDocuments().forEach(doc => {
+    const deliverables = getVisibleDeliverables(doc);
+    lines.push('', `### ${markdownEscape(productName(doc))}`);
+    if (doc.data.owner) lines.push(markdownListItem(`Owner: ${doc.data.owner}`));
+    if (!deliverables.length) {
+      lines.push('', '_No matching deliverables._');
+      return;
+    }
+    deliverables.forEach(del => {
+      lines.push('', `#### ${markdownEscape(del.title)}`);
+      lines.push(markdownListItem(`Status: ${statusLabel(del.status)}`));
+      if (del.owner || doc.data.owner) lines.push(markdownListItem(`Owner: ${del.owner || doc.data.owner}`));
+      if (del.start || del.end) lines.push(markdownListItem(`Timeline: ${del.start || '—'} → ${del.end || '—'}`));
+      if (del.desc) lines.push(markdownListItem(`Description: ${del.desc}`));
+      const dueDates = visibleDueDates(del);
+      if (dueDates.length) {
+        lines.push(markdownListItem('Due Dates:'));
+        dueDates.forEach(d => {
+          lines.push(markdownListItem(`${dueDateValue(d)} — ${statusLabel(dueDateStatus(d, del))}`, '  '));
+          if (d.note) lines.push(markdownListItem(`Note: ${d.note}`, '    '));
+        });
+      }
+      if (Array.isArray(del.notes) && del.notes.length) {
+        lines.push(markdownListItem('Task Notes:'));
+        del.notes.forEach(note => lines.push(markdownListItem(note, '  ')));
+      }
+    });
+  });
+  return lines.filter((line, idx, arr) => !(line === '' && arr[idx - 1] === '')).join('\n').trim() + '\n';
+}
+
+async function copyMarkdownToClipboard() {
+  const markdown = buildMarkdownExport();
+  const btn = $('#btnCopyMarkdown');
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(markdown);
+    else {
+      const textarea = document.createElement('textarea');
+      textarea.value = markdown;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = 'Copied Markdown';
+      btn.classList.add('active');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('active'); }, 1500);
+    }
+  } catch(e) {
+    alert('Unable to copy markdown: ' + e.message);
+  }
 }
 
 function renderRoadmap() {
@@ -1001,6 +1114,7 @@ $('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderR
 $('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
+$('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
