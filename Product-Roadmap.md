@@ -20,7 +20,7 @@ In the **Edit Data** drawer:
 - Use the checkbox on each card to toggle that product on/off.
 - Enabled products render together as separate swimlanes on the same timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
-- The header view toggle switches between the month grid and a chronological linear due-date list.
+- The header view toggle switches between the month grid and a chronological linear due-date list. The Month and Year dropdown filters apply to both views.
 
 The page saves the document set and toggle states to `localStorage`.
 
@@ -107,9 +107,10 @@ Rendering behavior:
 3. Any `MM/DD/YYYY` due date is converted to its `Mon YYYY` month.
 4. Each parsed due date is rendered as a small due-date chip using that due date's own `status` color inside the matching month column.
 5. Click a due-date chip to open the drawer for that specific date, update its status, and save a date-specific note.
-6. Click a month heading to filter the roadmap to tasks with due dates in that month and highlight the column green; use **Clear month** to remove the filter.
-7. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, and due dates.
-8. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
+6. Click a month heading to filter the roadmap to tasks with due dates in that month/year and highlight the column green; use **Clear date** to remove the filter.
+7. Use the header Month and Year dropdowns to filter both the grid and linear list. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
+8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, and due dates.
+9. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
 
 ---
 

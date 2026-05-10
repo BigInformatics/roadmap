@@ -57,6 +57,7 @@
 
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
   .search-box { min-width: 220px; max-width: 320px; }
+  .date-select { min-width: 120px; }
   .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
   .filter-chip.active { display: inline-flex; align-items: center; }
   .btn, select.btn {
@@ -213,7 +214,13 @@
   </div>
   <div class="controls">
     <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks..." aria-label="Search tasks">
-    <button class="btn filter-chip" id="btnClearMonth" type="button">Clear month</button>
+    <select class="btn date-select" id="yearFilter" aria-label="Filter by year">
+      <option value="">All Years</option>
+    </select>
+    <select class="btn date-select" id="monthFilter" aria-label="Filter by month">
+      <option value="">All Months</option>
+    </select>
+    <button class="btn filter-chip" id="btnClearMonth" type="button">Clear date</button>
     <button class="btn active" id="btnViewToggle" type="button">Grid View</button>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
@@ -297,6 +304,8 @@ let DOCUMENTS = loadDocuments();
 let currentStatusFilter = 'all';
 let currentSearchQuery = '';
 let selectedMonthFilter = null;
+let selectedYearFilter = '';
+let selectedMonthNameFilter = '';
 let selectedStatus = null;
 let currentView = 'grid';
 let selectedDeliverable = null;
@@ -306,6 +315,8 @@ let selectedDueDate = null;
 function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
 function monthIndex(m) { return MONTHS.indexOf(m); }
+function years() { return [...new Set(MONTHS.map(m => m.split(' ')[1]))]; }
+function monthNamesForFilter() { return MONTH_NAMES; }
 function statusClass(s) { return 'status-' + s; }
 function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
 function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
@@ -333,6 +344,31 @@ function monthKeyFromDueDate(value) {
 }
 function dueDatesForMonth(del, monthKey) {
   return (Array.isArray(del.dueDates) ? del.dueDates : []).filter(d => monthKeyFromDueDate(d) === monthKey);
+}
+function dateFilterActive() { return Boolean(selectedYearFilter || selectedMonthNameFilter); }
+function monthKeyMatchesDateFilter(monthKey) {
+  if (!dateFilterActive()) return true;
+  if (!monthKey) return false;
+  const [month, year] = monthKey.split(' ');
+  return (!selectedYearFilter || year === selectedYearFilter) && (!selectedMonthNameFilter || month === selectedMonthNameFilter);
+}
+function dueDateMatchesDateFilter(dueDate) { return monthKeyMatchesDateFilter(monthKeyFromDueDate(dueDate)); }
+function dateFilterLabel() {
+  if (selectedYearFilter && selectedMonthNameFilter) return `${selectedMonthNameFilter} ${selectedYearFilter}`;
+  if (selectedYearFilter) return selectedYearFilter;
+  if (selectedMonthNameFilter) return `${selectedMonthNameFilter} (all years)`;
+  return '';
+}
+function syncDateFilterFromMonthKey(monthKey) {
+  const [month, year] = monthKey.split(' ');
+  selectedMonthFilter = monthKey;
+  selectedMonthNameFilter = month;
+  selectedYearFilter = year;
+}
+function clearDateFilter() {
+  selectedMonthFilter = null;
+  selectedYearFilter = '';
+  selectedMonthNameFilter = '';
 }
 function formatDueDates(del) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
@@ -406,8 +442,8 @@ function deliverableMatchesSearch(del) {
 }
 function deliverableMatchesFilters(del) {
   const statusOk = currentStatusFilter === 'all' || del.status === currentStatusFilter || (del.dueDates || []).some(d => dueDateStatus(d, del) === currentStatusFilter);
-  const monthOk = !selectedMonthFilter || dueDatesForMonth(del, selectedMonthFilter).length > 0;
-  return statusOk && monthOk && deliverableMatchesSearch(del);
+  const dateOk = !dateFilterActive() || (del.dueDates || []).some(dueDateMatchesDateFilter);
+  return statusOk && dateOk && deliverableMatchesSearch(del);
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -487,13 +523,15 @@ function renderTimelineHeader() {
   h.innerHTML = '<div class="th-cell">Product / Deliverable</div>';
   MONTHS.forEach((m, idx) => {
     const [month, year] = m.split(' ');
+    const selected = monthKeyMatchesDateFilter(m) && dateFilterActive();
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'th-cell month-selectable' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
+    el.className = 'th-cell month-selectable' + (idx === currentIdx ? ' current-month' : '') + (selected ? ' selected-month' : '');
     el.innerHTML = `<span>${month}</span>${month === 'Jan' ? `<span class="year-tag">${year}</span>` : ''}`;
     el.title = `Filter to tasks due in ${m}`;
     el.addEventListener('click', () => {
-      selectedMonthFilter = selectedMonthFilter === m ? null : m;
+      if (selectedMonthFilter === m && selectedYearFilter === year && selectedMonthNameFilter === month) clearDateFilter();
+      else syncDateFilterFromMonthKey(m);
       renderRoadmap();
     });
     h.appendChild(el);
@@ -521,10 +559,12 @@ function renderStats() {
   $('#statBlocked').textContent = bl;
   $('#statCompleted').textContent = comp;
   $('#statDueThisMonth').textContent = due;
+  syncDateFilterControls();
   const monthBtn = $('#btnClearMonth');
   if (monthBtn) {
-    monthBtn.textContent = selectedMonthFilter ? `Clear ${selectedMonthFilter}` : 'Clear month';
-    monthBtn.classList.toggle('active', Boolean(selectedMonthFilter));
+    const label = dateFilterLabel();
+    monthBtn.textContent = label ? `Clear ${label}` : 'Clear date';
+    monthBtn.classList.toggle('active', dateFilterActive());
   }
   const search = $('#taskSearch');
   if (search && search.value !== currentSearchQuery) search.value = currentSearchQuery;
@@ -566,7 +606,7 @@ function renderRoadmap() {
     if (!deliverables.length) {
       const empty = document.createElement('div');
       empty.className = 'deliverable-row';
-      empty.innerHTML = `<div class="del-name"><div class="title">No matching deliverables</div><div class="owner">${currentStatusFilter === 'all' ? 'Add items in Edit Data' : 'Change the status filter'}</div></div>` + MONTHS.map((m, idx) => `<div class="cell${idx === currentIdx ? ' current-month' : ''}"></div>`).join('');
+      empty.innerHTML = `<div class="del-name"><div class="title">No matching deliverables</div><div class="owner">${currentStatusFilter === 'all' ? 'Add items in Edit Data' : 'Change the filters'}</div></div>` + MONTHS.map((m, idx) => `<div class="cell${idx === currentIdx ? ' current-month' : ''}${monthKeyMatchesDateFilter(m) && dateFilterActive() ? ' selected-month' : ''}"></div>`).join('');
       swimlane.appendChild(empty);
     }
 
@@ -580,8 +620,9 @@ function renderRoadmap() {
       row.appendChild(nameCell);
       MONTHS.forEach((m, idx) => {
         const cell = document.createElement('div');
-        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
-        dueDatesForMonth(del, m).forEach(dueDate => {
+        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (monthKeyMatchesDateFilter(m) && dateFilterActive() ? ' selected-month' : '');
+        const cellDueDates = dateFilterActive() && !monthKeyMatchesDateFilter(m) ? [] : dueDatesForMonth(del, m);
+        cellDueDates.forEach(dueDate => {
           const chip = document.createElement('button');
           chip.type = 'button';
           chip.className = `due-chip ${statusClass(dueDateStatus(dueDate, del))}`;
@@ -605,11 +646,24 @@ function updateViewControls() {
   btn.textContent = currentView === 'grid' ? 'Grid View' : 'List View';
   btn.classList.toggle('active', currentView === 'grid');
 }
+function populateDateFilterControls() {
+  const year = $('#yearFilter');
+  const month = $('#monthFilter');
+  if (year && year.options.length <= 1) years().forEach(y => year.add(new Option(y, y)));
+  if (month && month.options.length <= 1) monthNamesForFilter().forEach(m => month.add(new Option(m, m)));
+}
+function syncDateFilterControls() {
+  populateDateFilterControls();
+  const year = $('#yearFilter');
+  const month = $('#monthFilter');
+  if (year && year.value !== selectedYearFilter) year.value = selectedYearFilter;
+  if (month && month.value !== selectedMonthNameFilter) month.value = selectedMonthNameFilter;
+}
 function collectDueItems() {
   const items = [];
   enabledDocuments().forEach(doc => {
     (doc.data.deliverables || []).filter(deliverableMatchesFilters).forEach(del => {
-      (Array.isArray(del.dueDates) ? del.dueDates : []).forEach(dueDate => {
+      (Array.isArray(del.dueDates) ? del.dueDates : []).filter(dueDate => !dateFilterActive() || dueDateMatchesDateFilter(dueDate)).forEach(dueDate => {
         items.push({ doc, del, dueDate, parsed: parseDueDate(dueDate) });
       });
     });
@@ -930,7 +984,9 @@ function clearCache() {
 
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
-$('#btnClearMonth').addEventListener('click', () => { selectedMonthFilter = null; renderRoadmap(); });
+$('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderRoadmap(); });
+$('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
+$('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClose').addEventListener('click', closeDetail);
