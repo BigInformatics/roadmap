@@ -69,7 +69,7 @@ Each editor card contains one product roadmap JSON document:
 
 Schema status values: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`, `on-hold`, `cancelled`.
 
-Machine-readable schema: `roadmap.schema.json`.
+Machine-readable schema: `roadmap.schema.json`. It validates a single product object, an array of product objects, or the wrapped `{ "documents": [...] }` export format.
 
 Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
@@ -123,7 +123,7 @@ For day-to-day editing, use one product JSON object per editor card. Raw JSON st
 |---|---|
 | `Product-Roadmap.html` | The interactive roadmap artifact |
 | `Product-Roadmap.md` | Schema and workflow documentation |
-| `roadmap.schema.json` | Machine-readable JSON Schema for product roadmap documents |
+| `roadmap.schema.json` | Machine-readable JSON Schema for roadmap product objects, arrays, and wrapped exports |
 
 ## License
 

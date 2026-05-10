@@ -2,7 +2,7 @@
 
 This document describes the data format for the `Product-Roadmap.html` interactive roadmap artifact. The machine-readable JSON Schema is stored in `roadmap.schema.json`.
 
-The roadmap supports the provided **Project Roadmap Schema** for product documents. Timeline range dates use `"Mon YYYY"`; deliverable due dates use the product schema's `dueDates` array.
+The roadmap schema supports every JSON shape the app imports/exports: a single product roadmap object, an array of product roadmap objects, or the wrapped `{ "documents": [...] }` export that preserves enabled/toggle state. Timeline range dates use `"Mon YYYY"`; deliverable due dates use the product schema's `dueDates` array.
 
 ---
 
@@ -71,7 +71,7 @@ Each editor card contains one product roadmap JSON object:
 
 | Field | Required | Type | Description |
 |---|---|---|---|
-| `id` | **Yes** | string | Unique deliverable identifier, e.g. `bp-001`. The supplied schema pattern is `^[a-z]{2}-\\d{3}$`. |
+| `id` | **Yes** | string | Unique deliverable identifier within the product roadmap. The UI can generate values like `bp-003`; existing data may use shorter IDs like `bp-1`. |
 | `title` | **Yes** | string | Deliverable title. Displayed in the timeline block and detail panel. |
 | `owner` | **Yes** | string | Owner responsible for this deliverable. |
 | `status` | **Yes** | enum | Overall task status. Values: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`, `on-hold`, `cancelled`. Individual due-date chips use `dueDates[].status`. |
@@ -116,7 +116,7 @@ Rendering behavior:
 
 ## Saved Document Set
 
-When you download all roadmap data, the export uses this wrapper so product toggle state can be preserved:
+When you download all roadmap data, the export uses this wrapper so product toggle state can be preserved. `roadmap.schema.json` validates this wrapper as well as single-product objects and arrays of product objects:
 
 ```json
 {
@@ -137,7 +137,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
 }
 ```
 
-For normal editing, you usually only edit the **product object** inside each card, not the wrapper. Raw JSON is hidden by default; use **Edit JSON** only when direct data changes are needed. **Add Deliverable** appends a normalized deliverable object into the selected product's `deliverables` array. **Load JSON Document** accepts a single product object, an array of product objects, or this wrapped export format.
+For normal editing, you usually only edit the **product object** inside each card, not the wrapper. Raw JSON is hidden by default; use **Edit JSON** only when direct data changes are needed. **Add Deliverable** appends a normalized deliverable object into the selected product's `deliverables` array. **Load JSON Document** accepts every top-level shape covered by `roadmap.schema.json`: a single product object, an array of product objects, or this wrapped export format.
 
 ---
 
@@ -154,7 +154,7 @@ The default timeline supports **January 2026 through December 2032**.
 
 ### Due Dates
 
-`dueDates` prefers objects with a parseable `date`, a per-date `status`, and a free-text `note`.
+`dueDates` prefers objects with a parseable `date`, a per-date `status`, and a free-text `note`. If `status` or `note` are omitted, the UI normalizes them with a fallback status and empty note.
 
 Examples:
 
@@ -175,7 +175,7 @@ Examples:
 7. Use the view toggle to switch between grid view and the chronological linear due-date view.
 8. Due dates display as month chips when parseable.
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
-10. Click a month heading to filter to due dates in that month, or use search to filter tasks by phrase.
+10. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase.
 11. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
 12. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
