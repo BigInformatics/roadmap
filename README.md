@@ -17,7 +17,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
 - **Current week highlight** — the linear view highlights due-date rows in the current week in gold.
-- **Month filtering** — click a month column heading to highlight that column green and show only tasks with due dates in that month; clear it with the chip in the header.
+- **Month/year filtering** — use the header Month and Year dropdowns to filter both grid and list views. A selected year with All Months shows every due date in that year; selecting a month and year narrows to that month. Month headings still filter directly to that month/year and highlight matching columns green.
 - **Search filtering** — use the header search box to filter tasks by phrase.
 - **Live editing** — click **Edit Data** to paste or update product roadmap JSON, add deliverables, and re-render instantly.
 - **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. The drawer **Clear Cache** action resets to defaults.
@@ -33,7 +33,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 3. Add or edit one product JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
 4. Check/uncheck product cards to toggle products on/off.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
-6. Use the **Grid View / List View** toggle to switch between the month grid and chronological due-date list.
+6. Use the header Month/Year filters and **Grid View / List View** toggle to filter either the month grid or chronological due-date list.
 7. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
 8. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
@@ -69,7 +69,7 @@ Each editor card contains one product roadmap JSON document:
 
 Schema status values: `not-started`, `in-progress`, `at-risk`, `blocked`, `completed`, `on-hold`, `cancelled`.
 
-Machine-readable schema: `roadmap.schema.json`.
+Machine-readable schema: `roadmap.schema.json`. It validates a single product object, an array of product objects, or the wrapped `{ "documents": [...] }` export format.
 
 Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
@@ -88,7 +88,7 @@ Example: `"05/15/2026"` appears as a deliverable chip in the `May 2026` month co
 
 ## Linear Timeline View
 
-Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. Click any row to edit that due date's status and note in the drawer.
+Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. The same Month and Year dropdowns filter this list; selecting a year with All Months shows every due date in that year. Click any row to edit that due date's status and note in the drawer.
 
 ## Multi-Product Workflow
 
@@ -123,7 +123,7 @@ For day-to-day editing, use one product JSON object per editor card. Raw JSON st
 |---|---|
 | `Product-Roadmap.html` | The interactive roadmap artifact |
 | `Product-Roadmap.md` | Schema and workflow documentation |
-| `roadmap.schema.json` | Machine-readable JSON Schema for product roadmap documents |
+| `roadmap.schema.json` | Machine-readable JSON Schema for roadmap product objects, arrays, and wrapped exports |
 
 ## License
 

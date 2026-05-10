@@ -57,6 +57,7 @@
 
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
   .search-box { min-width: 220px; max-width: 320px; }
+  .date-select { min-width: 120px; }
   .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
   .filter-chip.active { display: inline-flex; align-items: center; }
   .btn, select.btn {
@@ -88,10 +89,12 @@
   .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
 
   .roadmap-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
-  .linear-wrap { overflow-x: visible; }
+  .linear-wrap { overflow-x: hidden; }
+  .linear-wrap .timeline-header { display: block; min-width: 100%; }
+  .linear-wrap .linear-header, .linear-wrap .linear-row { width: 100%; min-width: 0; box-sizing: border-box; }
   .linear-header, .linear-row { display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
   .linear-header { position: sticky; top: 0; z-index: 50; background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-  .linear-row { width: 100%; min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
+  .linear-row { min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
   .linear-row:hover { filter: brightness(1.15); transform: translateX(2px); }
   .linear-row.current-week { box-shadow: inset 4px 0 0 var(--gold), inset 0 0 0 1px rgba(254,202,87,0.35); background: var(--gold-bg); }
   .linear-row.current-week .linear-date { color: var(--gold); }
@@ -131,8 +134,13 @@
   .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 42px; padding: 3px; }
   .cell.current-month { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.2); }
 
-  .due-chip { display: block; width: 100%; padding: 0.18rem 0.25rem; margin-bottom: 2px; border-radius: 4px; font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
+  .due-chip { display: flex; align-items: center; justify-content: center; gap: 0.15rem; width: 100%; padding: 0.18rem 0.25rem; margin-bottom: 2px; border-radius: 4px; font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
   .due-chip:hover { filter: brightness(1.25); overflow: visible; white-space: normal; z-index: 25; position: relative; }
+  .note-icon { display: inline-flex; align-items: center; justify-content: center; color: #bababa; flex-shrink: 0; vertical-align: text-bottom; }
+  .note-icon svg { width: 0.9em; height: 0.9em; display: block; }
+  .due-chip .note-icon { font-size: 0.8rem; }
+  .linear-date-wrap { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+  .linear-date-wrap .note-icon { font-size: 1rem; }
 
   .status-not-started { background: rgba(136, 153, 166, 0.15); color: var(--muted); border-color: rgba(136,153,166,0.3); }
   .status-in-progress { background: rgba(102, 252, 241, 0.12); color: var(--accent); border-color: rgba(102,252,241,0.3); }
@@ -170,7 +178,7 @@
   .due-pill-grid { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .due-date-pill { display: inline-flex; align-items: center; min-height: 24px; padding: 0.2rem 0.45rem; border: 1px solid; border-radius: 999px; font-size: 0.76rem; line-height: 1; cursor: pointer; }
   .due-date-pill.active { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .due-note { color: var(--muted); font-size: 0.72rem; margin-left: 0.3rem; }
+  .due-note { margin-left: 0.3rem; }
   .due-more { margin-top: 0.5rem; }
   .due-more summary { color: var(--accent); cursor: pointer; font-size: 0.8rem; }
   .due-more .due-pill-grid { margin-top: 0.45rem; max-height: 7rem; overflow-y: auto; padding-right: 0.25rem; }
@@ -213,7 +221,13 @@
   </div>
   <div class="controls">
     <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks..." aria-label="Search tasks">
-    <button class="btn filter-chip" id="btnClearMonth" type="button">Clear month</button>
+    <select class="btn date-select" id="yearFilter" aria-label="Filter by year">
+      <option value="">All Years</option>
+    </select>
+    <select class="btn date-select" id="monthFilter" aria-label="Filter by month">
+      <option value="">All Months</option>
+    </select>
+    <button class="btn filter-chip" id="btnClearMonth" type="button">Clear date</button>
     <button class="btn active" id="btnViewToggle" type="button">Grid View</button>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
@@ -225,6 +239,7 @@
       <option value="on-hold">On Hold</option>
       <option value="cancelled">Cancelled</option>
     </select>
+    <button class="btn" id="btnCopyMarkdown" type="button">Copy Markdown</button>
     <button class="btn" id="btnNow">Jump to Now</button>
     <button class="btn" id="btnEdit">Edit Data</button>
   </div>
@@ -297,6 +312,8 @@ let DOCUMENTS = loadDocuments();
 let currentStatusFilter = 'all';
 let currentSearchQuery = '';
 let selectedMonthFilter = null;
+let selectedYearFilter = '';
+let selectedMonthNameFilter = '';
 let selectedStatus = null;
 let currentView = 'grid';
 let selectedDeliverable = null;
@@ -306,6 +323,8 @@ let selectedDueDate = null;
 function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
 function monthIndex(m) { return MONTHS.indexOf(m); }
+function years() { return [...new Set(MONTHS.map(m => m.split(' ')[1]))]; }
+function monthNamesForFilter() { return MONTH_NAMES; }
 function statusClass(s) { return 'status-' + s; }
 function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
 function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
@@ -313,6 +332,11 @@ function productName(doc) { return doc?.data?.project || doc?.data?.product || d
 function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
 function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
+function renderNoteIcon(note) {
+  if (!note) return '';
+  const safeNote = escapeHtml(note);
+  return `<span class="note-icon" title="${safeNote}" aria-label="Note: ${safeNote}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bababa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sticky-note-icon lucide-sticky-note"><title>${safeNote}</title><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/></svg></span>`;
+}
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
 function normalizeDueDate(item, fallbackStatus = 'not-started') {
   if (item && typeof item === 'object') {
@@ -334,9 +358,44 @@ function monthKeyFromDueDate(value) {
 function dueDatesForMonth(del, monthKey) {
   return (Array.isArray(del.dueDates) ? del.dueDates : []).filter(d => monthKeyFromDueDate(d) === monthKey);
 }
+function dateFilterActive() { return Boolean(selectedYearFilter || selectedMonthNameFilter); }
+function monthKeyMatchesDateFilter(monthKey) {
+  if (!dateFilterActive()) return true;
+  if (!monthKey) return false;
+  const [month, year] = monthKey.split(' ');
+  return (!selectedYearFilter || year === selectedYearFilter) && (!selectedMonthNameFilter || month === selectedMonthNameFilter);
+}
+function dueDateMatchesDateFilter(dueDate) { return monthKeyMatchesDateFilter(monthKeyFromDueDate(dueDate)); }
+function dateFilterLabel() {
+  if (selectedYearFilter && selectedMonthNameFilter) return `${selectedMonthNameFilter} ${selectedYearFilter}`;
+  if (selectedYearFilter) return selectedYearFilter;
+  if (selectedMonthNameFilter) return `${selectedMonthNameFilter} (all years)`;
+  return '';
+}
+function syncDateFilterFromMonthKey(monthKey) {
+  const [month, year] = monthKey.split(' ');
+  selectedMonthFilter = monthKey;
+  selectedMonthNameFilter = month;
+  selectedYearFilter = year;
+}
+function clearDateFilter() {
+  selectedMonthFilter = null;
+  selectedYearFilter = '';
+  selectedMonthNameFilter = '';
+}
 function formatDueDates(del) {
   const dates = Array.isArray(del.dueDates) ? del.dueDates : [];
   return dates.length ? dates.map(dueDateValue).join(' • ') : '';
+}
+function visibleDueDates(del) {
+  const dates = Array.isArray(del.dueDates) ? del.dueDates.slice().sort(compareDueDates) : [];
+  return dateFilterActive() ? dates.filter(dueDateMatchesDateFilter) : dates;
+}
+function markdownEscape(value) {
+  return String(value ?? '').replace(/\r\n/g, '\n').trim();
+}
+function markdownListItem(value, indent = '') {
+  return `${indent}- ${markdownEscape(value).replace(/\n/g, `\n${indent}  `)}`;
 }
 function parseDueDate(value) {
   const match = dueDateValue(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -383,7 +442,7 @@ function renderDueDatesCompact(del, activeDueDate = selectedDueDate) {
   const pill = d => {
     const idx = del.dueDates.indexOf(d);
     const active = activeDueDate === d ? ' active' : '';
-    const note = d.note ? '<span class="due-note">note</span>' : '';
+    const note = d.note ? `<span class="due-note">${renderNoteIcon(d.note)}</span>` : '';
     return `<button type="button" class="due-date-pill ${statusClass(dueDateStatus(d, del))}${active}" data-due-index="${idx}" title="${escapeHtml(d.note || monthKeyFromDueDate(d) || '')}">${escapeHtml(dueDateValue(d))}${note}</button>`;
   };
   const visible = dates.slice(0, limit).map(pill).join('');
@@ -406,8 +465,8 @@ function deliverableMatchesSearch(del) {
 }
 function deliverableMatchesFilters(del) {
   const statusOk = currentStatusFilter === 'all' || del.status === currentStatusFilter || (del.dueDates || []).some(d => dueDateStatus(d, del) === currentStatusFilter);
-  const monthOk = !selectedMonthFilter || dueDatesForMonth(del, selectedMonthFilter).length > 0;
-  return statusOk && monthOk && deliverableMatchesSearch(del);
+  const dateOk = !dateFilterActive() || (del.dueDates || []).some(dueDateMatchesDateFilter);
+  return statusOk && dateOk && deliverableMatchesSearch(del);
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -487,13 +546,15 @@ function renderTimelineHeader() {
   h.innerHTML = '<div class="th-cell">Product / Deliverable</div>';
   MONTHS.forEach((m, idx) => {
     const [month, year] = m.split(' ');
+    const selected = monthKeyMatchesDateFilter(m) && dateFilterActive();
     const el = document.createElement('button');
     el.type = 'button';
-    el.className = 'th-cell month-selectable' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
+    el.className = 'th-cell month-selectable' + (idx === currentIdx ? ' current-month' : '') + (selected ? ' selected-month' : '');
     el.innerHTML = `<span>${month}</span>${month === 'Jan' ? `<span class="year-tag">${year}</span>` : ''}`;
     el.title = `Filter to tasks due in ${m}`;
     el.addEventListener('click', () => {
-      selectedMonthFilter = selectedMonthFilter === m ? null : m;
+      if (selectedMonthFilter === m && selectedYearFilter === year && selectedMonthNameFilter === month) clearDateFilter();
+      else syncDateFilterFromMonthKey(m);
       renderRoadmap();
     });
     h.appendChild(el);
@@ -521,13 +582,117 @@ function renderStats() {
   $('#statBlocked').textContent = bl;
   $('#statCompleted').textContent = comp;
   $('#statDueThisMonth').textContent = due;
+  syncDateFilterControls();
   const monthBtn = $('#btnClearMonth');
   if (monthBtn) {
-    monthBtn.textContent = selectedMonthFilter ? `Clear ${selectedMonthFilter}` : 'Clear month';
-    monthBtn.classList.toggle('active', Boolean(selectedMonthFilter));
+    const label = dateFilterLabel();
+    monthBtn.textContent = label ? `Clear ${label}` : 'Clear date';
+    monthBtn.classList.toggle('active', dateFilterActive());
   }
   const search = $('#taskSearch');
   if (search && search.value !== currentSearchQuery) search.value = currentSearchQuery;
+}
+
+function getVisibleSummaryStats() {
+  let total=0, ip=0, ar=0, bl=0, comp=0, due=0;
+  const thisMonth = getCurrentMonthKey();
+  enabledDocuments().forEach(doc => getVisibleDeliverables(doc).forEach(d => {
+    total++;
+    if (d.status === 'in-progress') ip++;
+    if (d.status === 'at-risk') ar++;
+    if (d.status === 'blocked' || d.status === 'on-hold') bl++;
+    if (d.status === 'completed') comp++;
+    due += dueDatesForMonth(d, thisMonth).length;
+  }));
+  return { products: enabledDocuments().length, total, ip, ar, bl, comp, due };
+}
+
+function buildMarkdownExport() {
+  const first = enabledDocuments()[0]?.data || DOCUMENTS[0]?.data || {};
+  const title = first.title || 'Product Roadmap';
+  const filters = [];
+  if (currentSearchQuery.trim()) filters.push(`Search: ${currentSearchQuery.trim()}`);
+  if (dateFilterActive()) filters.push(`Date: ${dateFilterLabel()}`);
+  if (currentStatusFilter !== 'all') filters.push(`Status: ${statusLabel(currentStatusFilter)}`);
+  filters.push(`View: ${currentView === 'grid' ? 'Grid' : 'List'}`);
+  const stats = getVisibleSummaryStats();
+  const lines = [
+    `# ${markdownEscape(title)}`,
+    '',
+    markdownEscape($('#pageSubtitle')?.textContent || ''),
+    markdownEscape($('#lastUpdated')?.textContent || ''),
+    '',
+    '## Current Filters',
+    ...filters.map(f => markdownListItem(f)),
+    '',
+    '## Summary Stats',
+    markdownListItem(`Products On: ${stats.products}`),
+    markdownListItem(`Deliverables: ${stats.total}`),
+    markdownListItem(`In Progress: ${stats.ip}`),
+    markdownListItem(`At Risk: ${stats.ar}`),
+    markdownListItem(`Blocked / On Hold: ${stats.bl}`),
+    markdownListItem(`Completed: ${stats.comp}`),
+    markdownListItem(`Due This Month: ${stats.due}`),
+    '',
+    '## Tasks and Deliverables'
+  ];
+
+  enabledDocuments().forEach(doc => {
+    const deliverables = getVisibleDeliverables(doc);
+    lines.push('', `### ${markdownEscape(productName(doc))}`);
+    if (doc.data.owner) lines.push(markdownListItem(`Owner: ${doc.data.owner}`));
+    if (!deliverables.length) {
+      lines.push('', '_No matching deliverables._');
+      return;
+    }
+    deliverables.forEach(del => {
+      lines.push('', `#### ${markdownEscape(del.title)}`);
+      lines.push(markdownListItem(`Status: ${statusLabel(del.status)}`));
+      if (del.owner || doc.data.owner) lines.push(markdownListItem(`Owner: ${del.owner || doc.data.owner}`));
+      if (del.start || del.end) lines.push(markdownListItem(`Timeline: ${del.start || '—'} → ${del.end || '—'}`));
+      if (del.desc) lines.push(markdownListItem(`Description: ${del.desc}`));
+      const dueDates = visibleDueDates(del);
+      if (dueDates.length) {
+        lines.push(markdownListItem('Due Dates:'));
+        dueDates.forEach(d => {
+          lines.push(markdownListItem(`${dueDateValue(d)} — ${statusLabel(dueDateStatus(d, del))}`, '  '));
+          if (d.note) lines.push(markdownListItem(`Note: ${d.note}`, '    '));
+        });
+      }
+      if (Array.isArray(del.notes) && del.notes.length) {
+        lines.push(markdownListItem('Task Notes:'));
+        del.notes.forEach(note => lines.push(markdownListItem(note, '  ')));
+      }
+    });
+  });
+  return lines.filter((line, idx, arr) => !(line === '' && arr[idx - 1] === '')).join('\n').trim() + '\n';
+}
+
+async function copyMarkdownToClipboard() {
+  const markdown = buildMarkdownExport();
+  const btn = $('#btnCopyMarkdown');
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(markdown);
+    else {
+      const textarea = document.createElement('textarea');
+      textarea.value = markdown;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      textarea.remove();
+    }
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = 'Copied Markdown';
+      btn.classList.add('active');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('active'); }, 1500);
+    }
+  } catch(e) {
+    alert('Unable to copy markdown: ' + e.message);
+  }
 }
 
 function renderRoadmap() {
@@ -566,7 +731,7 @@ function renderRoadmap() {
     if (!deliverables.length) {
       const empty = document.createElement('div');
       empty.className = 'deliverable-row';
-      empty.innerHTML = `<div class="del-name"><div class="title">No matching deliverables</div><div class="owner">${currentStatusFilter === 'all' ? 'Add items in Edit Data' : 'Change the status filter'}</div></div>` + MONTHS.map((m, idx) => `<div class="cell${idx === currentIdx ? ' current-month' : ''}"></div>`).join('');
+      empty.innerHTML = `<div class="del-name"><div class="title">No matching deliverables</div><div class="owner">${currentStatusFilter === 'all' ? 'Add items in Edit Data' : 'Change the filters'}</div></div>` + MONTHS.map((m, idx) => `<div class="cell${idx === currentIdx ? ' current-month' : ''}${monthKeyMatchesDateFilter(m) && dateFilterActive() ? ' selected-month' : ''}"></div>`).join('');
       swimlane.appendChild(empty);
     }
 
@@ -580,12 +745,13 @@ function renderRoadmap() {
       row.appendChild(nameCell);
       MONTHS.forEach((m, idx) => {
         const cell = document.createElement('div');
-        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (m === selectedMonthFilter ? ' selected-month' : '');
-        dueDatesForMonth(del, m).forEach(dueDate => {
+        cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (monthKeyMatchesDateFilter(m) && dateFilterActive() ? ' selected-month' : '');
+        const cellDueDates = dateFilterActive() && !monthKeyMatchesDateFilter(m) ? [] : dueDatesForMonth(del, m);
+        cellDueDates.forEach(dueDate => {
           const chip = document.createElement('button');
           chip.type = 'button';
           chip.className = `due-chip ${statusClass(dueDateStatus(dueDate, del))}`;
-          chip.textContent = dueDateValue(dueDate);
+          chip.innerHTML = `${escapeHtml(dueDateValue(dueDate))}${renderNoteIcon(dueDate.note)}`;
           chip.title = `${del.title} due ${dueDateValue(dueDate)}${dueDate.note ? ` — ${dueDate.note}` : ''}`;
           chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc, dueDate); });
           cell.appendChild(chip);
@@ -605,11 +771,24 @@ function updateViewControls() {
   btn.textContent = currentView === 'grid' ? 'Grid View' : 'List View';
   btn.classList.toggle('active', currentView === 'grid');
 }
+function populateDateFilterControls() {
+  const year = $('#yearFilter');
+  const month = $('#monthFilter');
+  if (year && year.options.length <= 1) years().forEach(y => year.add(new Option(y, y)));
+  if (month && month.options.length <= 1) monthNamesForFilter().forEach(m => month.add(new Option(m, m)));
+}
+function syncDateFilterControls() {
+  populateDateFilterControls();
+  const year = $('#yearFilter');
+  const month = $('#monthFilter');
+  if (year && year.value !== selectedYearFilter) year.value = selectedYearFilter;
+  if (month && month.value !== selectedMonthNameFilter) month.value = selectedMonthNameFilter;
+}
 function collectDueItems() {
   const items = [];
   enabledDocuments().forEach(doc => {
     (doc.data.deliverables || []).filter(deliverableMatchesFilters).forEach(del => {
-      (Array.isArray(del.dueDates) ? del.dueDates : []).forEach(dueDate => {
+      (Array.isArray(del.dueDates) ? del.dueDates : []).filter(dueDate => !dateFilterActive() || dueDateMatchesDateFilter(dueDate)).forEach(dueDate => {
         items.push({ doc, del, dueDate, parsed: parseDueDate(dueDate) });
       });
     });
@@ -620,6 +799,7 @@ function renderLinearTimeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
   wrap.classList.add('linear-wrap');
+  wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
     <div class="linear-header">
       <div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
@@ -642,7 +822,7 @@ function renderLinearTimeline() {
     row.type = 'button';
     row.className = `linear-row ${statusClass(status)}${isCurrentWeekDate(item.dueDate) ? ' current-week' : ''}`;
     row.innerHTML = `
-      <div><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
+      <div><span class="linear-date-wrap"><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${renderNoteIcon(item.dueDate.note)}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
       <div><div class="linear-task">${escapeHtml(item.del.title)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}</div></div>
       <div class="linear-contract">${escapeHtml(productName(item.doc))}</div>
       <div><span class="linear-status ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span></div>`;
@@ -708,7 +888,7 @@ function saveStatusChange() {
   touchDocument(selectedDocument);
   saveCache();
   renderRoadmap();
-  openDetail(selectedDeliverable, selectedDocument, selectedDueDate);
+  closeDetail();
 }
 
 function openEditor() {
@@ -930,8 +1110,11 @@ function clearCache() {
 
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
-$('#btnClearMonth').addEventListener('click', () => { selectedMonthFilter = null; renderRoadmap(); });
+$('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderRoadmap(); });
+$('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
+$('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
+$('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
