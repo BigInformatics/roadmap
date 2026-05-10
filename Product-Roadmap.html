@@ -89,10 +89,12 @@
   .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.25rem; }
 
   .roadmap-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow-x: auto; box-shadow: var(--shadow); }
-  .linear-wrap { overflow-x: visible; }
+  .linear-wrap { overflow-x: hidden; }
+  .linear-wrap .timeline-header { display: block; min-width: 100%; }
+  .linear-wrap .linear-header, .linear-wrap .linear-row { width: 100%; min-width: 0; box-sizing: border-box; }
   .linear-header, .linear-row { display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
   .linear-header { position: sticky; top: 0; z-index: 50; background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
-  .linear-row { width: 100%; min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
+  .linear-row { min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
   .linear-row:hover { filter: brightness(1.15); transform: translateX(2px); }
   .linear-row.current-week { box-shadow: inset 4px 0 0 var(--gold), inset 0 0 0 1px rgba(254,202,87,0.35); background: var(--gold-bg); }
   .linear-row.current-week .linear-date { color: var(--gold); }
@@ -674,6 +676,7 @@ function renderLinearTimeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
   wrap.classList.add('linear-wrap');
+  wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
     <div class="linear-header">
       <div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
