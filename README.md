@@ -10,7 +10,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
-- **Multiple product JSON documents** — each product has its own JSON card in the edit drawer.
+- **Multiple product JSON documents** — each product has its own JSON card in the edit drawer; optional product `order` controls display sequence.
 - **Collapsed raw JSON** — product JSON is hidden by default in the drawer and expands only when you click **Edit JSON**.
 - **Deliverable creation** — add deliverables to any product card, including newly-created empty product JSON documents.
 - **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
@@ -49,6 +49,7 @@ Each editor card contains one product roadmap JSON document:
   "subtitle": "Interactive Deliverables & Timeline",
   "lastUpdated": "2026-05-08 14:30:00 ET",
   "owner": "Engineering Team",
+  "order": 1,
   "deliverables": [
     {
       "id": "bp-001",
@@ -77,6 +78,8 @@ Machine-readable schema: `roadmap.schema.json`. It validates a single product ob
 Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
 Due date format: preferred `dueDates` entries are objects with `date`, `status`, and `note`. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
+
+Optional product metadata: `order` may be a number; lower numbers render first across product toggles, grid swimlanes, and list/list-view grouping.
 
 Optional task metadata: `tags` may be an array such as `["api", "security"]` or a comma-separated string; `favorite` may be `true` to star a task.
 
@@ -115,7 +118,7 @@ For day-to-day editing, use one product JSON object per editor card. Raw JSON st
 
 ## Customization
 
-- **Products** — add one product JSON document per editor card.
+- **Products** — add one product JSON document per editor card. Add optional `order` numbers (`1`, `2`, `3`, …) when you want a fixed product sequence.
 - **Deliverables** — click **Add Deliverable** on a product card to append a new task with owner, status, start/end month, due date, description, optional comma-separated tags, and optional favorite star.
 - **Visibility** — use product checkboxes to toggle swimlanes on/off.
 - **Title/Subtitle** — set `title` and `subtitle` in product JSON. The first enabled product controls the page title.

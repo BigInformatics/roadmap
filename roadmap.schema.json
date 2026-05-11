@@ -198,6 +198,15 @@
         "owner": {
           "type": "string"
         },
+        "order": {
+          "type": "number",
+          "description": "Optional product display order. Lower numbers render first in product toggles, grid swimlanes, and list view grouping.",
+          "examples": [
+            1,
+            2,
+            10
+          ]
+        },
         "deliverables": {
           "type": "array",
           "items": {

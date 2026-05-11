@@ -373,7 +373,14 @@ function statusClass(s) { return 'status-' + s; }
 function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
 function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
 function productName(doc) { return doc?.data?.project || doc?.data?.product || doc?.name || 'Roadmap'; }
-function enabledDocuments() { return DOCUMENTS.filter(d => d.enabled); }
+function productOrder(doc, fallback = 0) {
+  const value = Number(doc?.data?.order);
+  return Number.isFinite(value) ? value : 100000 + fallback;
+}
+function sortDocumentsByOrder(docs) {
+  return docs.map((doc, idx) => ({ doc, idx })).sort((a, b) => productOrder(a.doc, a.idx) - productOrder(b.doc, b.idx) || productName(a.doc).localeCompare(productName(b.doc)) || a.idx - b.idx).map(item => item.doc);
+}
+function enabledDocuments() { return sortDocumentsByOrder(DOCUMENTS.filter(d => d.enabled)); }
 function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function slugify(v) { return String(v || 'roadmap').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'roadmap'; }
 function loadTheme() {
@@ -576,6 +583,7 @@ function normalizeDocument(item, index = 0) {
       subtitle: data.subtitle || 'Interactive Deliverables & Timeline',
       lastUpdated: data.lastUpdated || '',
       owner: data.owner || '',
+      order: Number.isFinite(Number(data.order)) ? Number(data.order) : undefined,
       deliverables: Array.isArray(data.deliverables) ? data.deliverables.map((d, dIdx) => ({
         id: d.id || `${slugify(data.project || data.product || `roadmap-${index + 1}`)}-${String(dIdx + 1).padStart(3, '0')}`,
         title: d.title || `Deliverable ${dIdx + 1}`,
@@ -620,7 +628,7 @@ function renderHeader() {
 function renderProductToggles() {
   const bar = $('#productToggleBar');
   bar.innerHTML = '';
-  DOCUMENTS.forEach((doc, idx) => {
+  DOCUMENTS.map((doc, idx) => ({ doc, idx })).sort((a, b) => productOrder(a.doc, a.idx) - productOrder(b.doc, b.idx) || productName(a.doc).localeCompare(productName(b.doc)) || a.idx - b.idx).forEach(({ doc, idx }) => {
     const label = document.createElement('label');
     label.className = 'toggle-pill' + (doc.enabled ? ' enabled' : '');
     label.innerHTML = `<input type="checkbox" ${doc.enabled ? 'checked' : ''} data-doc-toggle="${idx}"> ${escapeHtml(productName(doc))}`;
@@ -1045,7 +1053,7 @@ function openEditor() {
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Optional product field: "order" number controls product display order. Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-add-deliverable]').forEach(btn => btn.addEventListener('click', e => {
     const idx = Number(e.currentTarget.dataset.addDeliverable);
@@ -1122,7 +1130,7 @@ function ensureUniqueDocumentIds(docs) {
 }
 function addProductDocument() {
   if (!saveEditorDocuments(false)) return;
-  DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', deliverables: [] }, DOCUMENTS.length));
+  DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', order: DOCUMENTS.length + 1, deliverables: [] }, DOCUMENTS.length));
   DOCUMENTS = ensureUniqueDocumentIds(DOCUMENTS);
   saveCache();
   renderRoadmap();

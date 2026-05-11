@@ -37,6 +37,7 @@ Each editor card contains one product roadmap JSON object:
   "subtitle": "Interactive Deliverables & Timeline",
   "lastUpdated": "2026-05-08 14:30:00 ET",
   "owner": "Engineering Team",
+  "order": 1,
   "deliverables": [
     {
       "id": "bp-001",
@@ -65,6 +66,7 @@ Each editor card contains one product roadmap JSON object:
 | `subtitle` | **Yes** | string | Document/page subtitle. With multiple products enabled, the page shows the enabled product count. |
 | `lastUpdated` | **Yes** | string | Last update timestamp, e.g. `YYYY-MM-DD HH:mm:ss ET`. Auto-updated on save. |
 | `owner` | **Yes** | string | Primary owner or contractor responsible for the roadmap. |
+| `order` | No | number | Optional product display order. Lower numbers render first in product toggles, grid swimlanes, and list-view grouping. Products without `order` keep a stable fallback order after ordered products. |
 | `deliverables` | **Yes** | array | List of deliverables. |
 
 ---
@@ -135,6 +137,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
         "subtitle": "Interactive Deliverables & Timeline",
         "lastUpdated": "2026-05-08 14:30:00 ET",
         "owner": "Engineering Team",
+        "order": 1,
         "deliverables": []
       }
     }
@@ -180,10 +183,11 @@ Examples:
 7. Use the view toggle to switch between grid view and the chronological linear due-date view.
 8. Due dates display as month chips when parseable.
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
-10. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase or tag.
-11. Toggle **Favorites** to show starred tasks only.
-12. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-13. Click **Clear Cache** in the drawer to reset to embedded defaults.
+10. Add optional product-level `order` values when you need a fixed sequence across multiple product documents.
+11. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase or tag.
+12. Toggle **Favorites** to show starred tasks only.
+13. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+14. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ---
 
@@ -191,6 +195,7 @@ Examples:
 
 - Use one JSON card per product.
 - Keep `id` values unique within each product roadmap.
+- Use product-level `order` values to control display order when loading multiple product documents.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
 - Use `dueDates` for concrete submission dates; each due date can carry its own status and note.
 - Use optional `tags` for searchable labels and optional `favorite: true` for starred tasks.
