@@ -46,6 +46,8 @@ Each editor card contains one product roadmap JSON object:
       "start": "May 2026",
       "end": "Jun 2026",
       "desc": "Implement OAuth2 and JWT token management for API endpoints.",
+      "tags": ["api", "security"],
+      "favorite": true,
       "dueDates": [
         { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
         { "date": "06/30/2026", "status": "not-started", "note": "" }
@@ -78,6 +80,8 @@ Each editor card contains one product roadmap JSON object:
 | `start` | **Yes** | string | Planned start month in `"Mon YYYY"` format. |
 | `end` | **Yes** | string | Planned end month in `"Mon YYYY"` format. Must be `>=` `start` chronologically. |
 | `desc` | **Yes** | string | Detailed description, requirements, or submission rules. |
+| `tags` | No | array or string | Optional labels for filtering. Arrays such as `["api", "security"]` and comma-separated strings are normalized by the UI. The header **Tags** toggle makes the search box match tags only. |
+| `favorite` | No | boolean | Optional task star. `true` marks a task as a favorite; the header **Favorites** toggle filters to favorites only. |
 | `dueDates` | **Yes** | array | Preferred list of due date objects with `date`, `status`, and `note`. Legacy `MM/DD/YYYY` strings are migrated automatically. Parseable dates render into timeline month chips. |
 | `notes` | **Yes** | array | Additional comments, attachments, metadata, or status-change notes. |
 
@@ -109,8 +113,9 @@ Rendering behavior:
 5. Click a due-date chip to open the drawer for that specific date, update its status, and save a date-specific note.
 6. Click a month heading to filter the roadmap to tasks with due dates in that month/year and highlight the column green; use **Clear date** to remove the filter.
 7. Use the header Month and Year dropdowns to filter both the grid and linear list. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
-8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, and due dates.
-9. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
+8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only.
+9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in both grid and linear views.
+10. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
 
 ---
 
@@ -175,9 +180,10 @@ Examples:
 7. Use the view toggle to switch between grid view and the chronological linear due-date view.
 8. Due dates display as month chips when parseable.
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
-10. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase.
-11. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-12. Click **Clear Cache** in the drawer to reset to embedded defaults.
+10. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase or tag.
+11. Toggle **Favorites** to show starred tasks only.
+12. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+13. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ---
 
@@ -187,5 +193,6 @@ Examples:
 - Keep `id` values unique within each product roadmap.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
 - Use `dueDates` for concrete submission dates; each due date can carry its own status and note.
+- Use optional `tags` for searchable labels and optional `favorite: true` for starred tasks.
 - Use `desc` for coordination context — blockers, dependencies, definition of done.
 - To change the date range, edit the year loop in the `MONTHS` generator at the top of the HTML file.

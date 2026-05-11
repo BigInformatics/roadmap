@@ -81,6 +81,8 @@
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
   .search-box { min-width: 220px; max-width: 320px; }
   .date-select { min-width: 120px; }
+  .icon-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .icon-btn svg { width: 1rem; height: 1rem; display: block; flex-shrink: 0; }
   .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
   .filter-chip.active { display: inline-flex; align-items: center; }
   .btn, select.btn {
@@ -125,7 +127,7 @@
   .linear-row.current-week .linear-date { color: var(--gold); }
   .linear-date { font-weight: 700; color: var(--ink); }
   .linear-week-label { display: block; color: var(--gold); font-size: 0.7rem; font-weight: 700; margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.04em; }
-  .linear-task { font-weight: 600; }
+  .linear-task { font-weight: 600; display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
   .linear-meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.18rem; }
   .linear-contract { color: var(--ink); font-size: 0.88rem; }
   .linear-status { justify-self: start; border: 1px solid; border-radius: 999px; padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; }
@@ -154,8 +156,17 @@
   .deliverable-row { display: flex; border-bottom: 1px solid var(--border); transition: background 0.15s; position: relative; }
   .deliverable-row:hover { background: rgba(102, 252, 241, 0.03); }
   .del-name { width: var(--name-col); flex-shrink: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; gap: 0.15rem; background: var(--del-name-bg); z-index: 2; }
-  .del-name .title { font-weight: 500; }
+  .del-title-row { display: flex; align-items: center; gap: 0.35rem; min-width: 0; }
+  .del-name .title { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .del-name .owner { font-size: 0.7rem; color: var(--muted); }
+  .favorite-toggle { appearance: none; background: transparent; border: 0; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+  .favorite-toggle svg { width: 1rem; height: 1rem; display: block; }
+  .favorite-toggle.active svg { fill: rgba(224,165,0,0.28); stroke: #e0a500; }
+  .favorite-toggle:hover svg { stroke: #e0a500; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.1rem; }
+  .tag-pill { display: inline-flex; align-items: center; gap: 0.2rem; border: 1px solid rgba(0,189,126,0.35); color: var(--success); background: rgba(0,189,126,0.08); border-radius: 999px; padding: 0.1rem 0.38rem; font-size: 0.66rem; line-height: 1.2; }
+  .tag-pill svg, .tag-icon svg { width: 0.72rem; height: 0.72rem; display: block; flex-shrink: 0; }
+  .chip-meta-icons { display: inline-flex; align-items: center; gap: 0.18rem; margin-left: 0.2rem; vertical-align: middle; }
   .cell { width: var(--month-col); flex-shrink: 0; border-right: 1px solid var(--border); position: relative; min-height: 42px; padding: 3px; }
   .cell.current-month { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.2); }
 
@@ -191,6 +202,7 @@
   .close-btn:hover { color: var(--ink); }
   .field { margin-bottom: 1rem; }
   .field label { display: block; font-size: 0.75rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; letter-spacing: 0.03em; }
+  .field .toggle-pill { display: inline-flex; text-transform: none; letter-spacing: 0; margin-bottom: 0; }
   .field .value { font-size: 0.9rem; }
   .editable, textarea, input { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; width: 100%; color: var(--ink); font-family: inherit; font-size: 0.85rem; resize: vertical; }
   textarea.editable { min-height: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
@@ -245,7 +257,9 @@
     </div>
   </div>
   <div class="controls">
-    <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks..." aria-label="Search tasks">
+    <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks or tags..." aria-label="Search tasks or tags">
+    <button class="btn icon-btn" id="btnTagSearch" type="button" aria-pressed="false" title="Search tags only"></button>
+    <button class="btn icon-btn" id="btnFavoritesOnly" type="button" aria-pressed="false" title="Show favorites only"></button>
     <select class="btn date-select" id="yearFilter" aria-label="Filter by year">
       <option value="">All Years</option>
     </select>
@@ -339,6 +353,8 @@ let DOCUMENTS = loadDocuments();
 let currentTheme = loadTheme();
 let currentStatusFilter = 'all';
 let currentSearchQuery = '';
+let tagSearchOnly = false;
+let favoritesOnly = false;
 let selectedMonthFilter = null;
 let selectedYearFilter = '';
 let selectedMonthNameFilter = '';
@@ -384,6 +400,29 @@ function renderNoteIcon(note) {
   if (!note) return '';
   const safeNote = escapeHtml(note);
   return `<span class="note-icon" title="${safeNote}" aria-label="Note: ${safeNote}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bababa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sticky-note-icon lucide-sticky-note"><title>${safeNote}</title><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/></svg></span>`;
+}
+function tagIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bd7e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag-icon lucide-tag"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>'; }
+function starIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e0a500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>'; }
+function normalizeTags(value) {
+  if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
+  if (typeof value === 'string') return value.split(',').map(v => v.trim()).filter(Boolean);
+  return [];
+}
+function tagText(del) { return normalizeTags(del.tags).join(' '); }
+function renderTagPills(tags) {
+  const normalized = normalizeTags(tags);
+  if (!normalized.length) return '';
+  return `<div class="tag-list">${normalized.map(tag => `<span class="tag-pill">${tagIcon()}${escapeHtml(tag)}</span>`).join('')}</div>`;
+}
+function chipMetaIcons(del) {
+  const tags = normalizeTags(del.tags);
+  const icons = [];
+  if (tags.length) icons.push(`<span class="tag-icon" title="Tags: ${escapeHtml(tags.join(', '))}">${tagIcon()}</span>`);
+  if (del.favorite) icons.push(`<span class="favorite-toggle active" title="Favorite">${starIcon()}</span>`);
+  return icons.length ? `<span class="chip-meta-icons">${icons.join('')}</span>` : '';
+}
+function favoriteButton(del, doc) {
+  return `<button type="button" class="favorite-toggle${del.favorite ? ' active' : ''}" data-favorite-id="${escapeHtml(del.id)}" title="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}" aria-label="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}">${starIcon()}</button>`;
 }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
 function normalizeDueDate(item, fallbackStatus = 'not-started') {
@@ -505,8 +544,11 @@ function renderDueDatesCompact(del, activeDueDate = selectedDueDate) {
 function deliverableMatchesSearch(del) {
   const q = currentSearchQuery.trim().toLowerCase();
   if (!q) return true;
+  const tags = normalizeTags(del.tags);
+  const tagHaystack = tags.join(' ').toLowerCase();
+  if (tagSearchOnly) return tagHaystack.includes(q);
   const dueText = (del.dueDates || []).map(d => [dueDateValue(d), dueDateStatus(d, del), d.note || ''].join(' ')).join(' ');
-  const haystack = [del.title, del.owner, del.status, del.start, del.end, del.desc, dueText, ...(del.notes || [])]
+  const haystack = [del.title, del.owner, del.status, del.start, del.end, del.desc, tagHaystack, dueText, ...(del.notes || [])]
     .join(' ')
     .toLowerCase();
   return haystack.includes(q);
@@ -514,7 +556,8 @@ function deliverableMatchesSearch(del) {
 function deliverableMatchesFilters(del) {
   const statusOk = currentStatusFilter === 'all' || del.status === currentStatusFilter || (del.dueDates || []).some(d => dueDateStatus(d, del) === currentStatusFilter);
   const dateOk = !dateFilterActive() || (del.dueDates || []).some(dueDateMatchesDateFilter);
-  return statusOk && dateOk && deliverableMatchesSearch(del);
+  const favoriteOk = !favoritesOnly || Boolean(del.favorite);
+  return statusOk && dateOk && favoriteOk && deliverableMatchesSearch(del);
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -541,6 +584,8 @@ function normalizeDocument(item, index = 0) {
         start: d.start || '',
         end: d.end || d.start || '',
         desc: d.desc || '',
+        tags: normalizeTags(d.tags),
+        favorite: Boolean(d.favorite),
         dueDates: Array.isArray(d.dueDates) ? d.dueDates.map(item => normalizeDueDate(item, d.status || 'not-started')).filter(item => item.date) : [],
         notes: Array.isArray(d.notes) ? d.notes : []
       })) : []
@@ -659,7 +704,8 @@ function buildMarkdownExport() {
   const first = enabledDocuments()[0]?.data || DOCUMENTS[0]?.data || {};
   const title = first.title || 'Product Roadmap';
   const filters = [];
-  if (currentSearchQuery.trim()) filters.push(`Search: ${currentSearchQuery.trim()}`);
+  if (currentSearchQuery.trim()) filters.push(`${tagSearchOnly ? 'Tag search' : 'Search'}: ${currentSearchQuery.trim()}`);
+  if (favoritesOnly) filters.push('Favorites only');
   if (dateFilterActive()) filters.push(`Date: ${dateFilterLabel()}`);
   if (currentStatusFilter !== 'all') filters.push(`Status: ${statusLabel(currentStatusFilter)}`);
   filters.push(`View: ${currentView === 'grid' ? 'Grid' : 'List'}`);
@@ -694,8 +740,9 @@ function buildMarkdownExport() {
       return;
     }
     deliverables.forEach(del => {
-      lines.push('', `#### ${markdownEscape(del.title)}`);
+      lines.push('', `#### ${del.favorite ? '★ ' : ''}${markdownEscape(del.title)}`);
       lines.push(markdownListItem(`Status: ${statusLabel(del.status)}`));
+      if (normalizeTags(del.tags).length) lines.push(markdownListItem(`Tags: ${normalizeTags(del.tags).join(', ')}`));
       if (del.owner || doc.data.owner) lines.push(markdownListItem(`Owner: ${del.owner || doc.data.owner}`));
       if (del.start || del.end) lines.push(markdownListItem(`Timeline: ${del.start || '—'} → ${del.end || '—'}`));
       if (del.desc) lines.push(markdownListItem(`Description: ${del.desc}`));
@@ -789,7 +836,8 @@ function renderRoadmap() {
       row.dataset.id = del.id;
       const nameCell = document.createElement('div');
       nameCell.className = 'del-name';
-      nameCell.innerHTML = `<div class="title">${escapeHtml(del.title)}</div>${del.owner ? `<div class="owner">${escapeHtml(del.owner)}</div>` : ''}`;
+      nameCell.innerHTML = `<div class="del-title-row">${favoriteButton(del, doc)}<div class="title">${escapeHtml(del.title)}</div></div>${del.owner ? `<div class="owner">${escapeHtml(del.owner)}</div>` : ''}${renderTagPills(del.tags)}`;
+      nameCell.querySelector('[data-favorite-id]')?.addEventListener('click', evt => { evt.stopPropagation(); toggleFavorite(del, doc); });
       row.appendChild(nameCell);
       MONTHS.forEach((m, idx) => {
         const cell = document.createElement('div');
@@ -799,8 +847,9 @@ function renderRoadmap() {
           const chip = document.createElement('button');
           chip.type = 'button';
           chip.className = `due-chip ${statusClass(dueDateStatus(dueDate, del))}`;
-          chip.innerHTML = `${escapeHtml(dueDateValue(dueDate))}${renderNoteIcon(dueDate.note)}`;
-          chip.title = `${del.title} due ${dueDateValue(dueDate)}${dueDate.note ? ` — ${dueDate.note}` : ''}`;
+          chip.innerHTML = `${escapeHtml(dueDateValue(dueDate))}${renderNoteIcon(dueDate.note)}${chipMetaIcons(del)}`;
+          const tags = normalizeTags(del.tags);
+          chip.title = `${del.title} due ${dueDateValue(dueDate)}${tags.length ? ` — tags: ${tags.join(', ')}` : ''}${dueDate.note ? ` — ${dueDate.note}` : ''}`;
           chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc, dueDate); });
           cell.appendChild(chip);
         });
@@ -815,9 +864,23 @@ function renderRoadmap() {
 
 function updateViewControls() {
   const btn = $('#btnViewToggle');
-  if (!btn) return;
-  btn.textContent = currentView === 'grid' ? 'Grid View' : 'List View';
-  btn.classList.toggle('active', currentView === 'grid');
+  if (btn) {
+    btn.textContent = currentView === 'grid' ? 'Grid View' : 'List View';
+    btn.classList.toggle('active', currentView === 'grid');
+  }
+  const tagBtn = $('#btnTagSearch');
+  if (tagBtn) {
+    tagBtn.innerHTML = `${tagIcon()}<span>Tags</span>`;
+    tagBtn.classList.toggle('active', tagSearchOnly);
+    tagBtn.setAttribute('aria-pressed', String(tagSearchOnly));
+    tagBtn.title = tagSearchOnly ? 'Searching tags only' : 'Search all task fields';
+  }
+  const favBtn = $('#btnFavoritesOnly');
+  if (favBtn) {
+    favBtn.innerHTML = `${starIcon()}<span>Favorites</span>`;
+    favBtn.classList.toggle('active', favoritesOnly);
+    favBtn.setAttribute('aria-pressed', String(favoritesOnly));
+  }
 }
 function populateDateFilterControls() {
   const year = $('#yearFilter');
@@ -866,18 +929,28 @@ function renderLinearTimeline() {
   }
   items.forEach(item => {
     const status = dueDateStatus(item.dueDate, item.del);
-    const row = document.createElement('button');
-    row.type = 'button';
+    const row = document.createElement('div');
     row.className = `linear-row ${statusClass(status)}${isCurrentWeekDate(item.dueDate) ? ' current-week' : ''}`;
+    row.setAttribute('role', 'button');
+    row.tabIndex = 0;
     row.innerHTML = `
       <div><span class="linear-date-wrap"><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${renderNoteIcon(item.dueDate.note)}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
-      <div><div class="linear-task">${escapeHtml(item.del.title)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}</div></div>
+      <div><div class="linear-task">${favoriteButton(item.del, item.doc)}<span>${escapeHtml(item.del.title)}</span>${chipMetaIcons(item.del)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}${normalizeTags(item.del.tags).length ? ` • ${normalizeTags(item.del.tags).join(', ')}` : ''}</div></div>
       <div class="linear-contract">${escapeHtml(productName(item.doc))}</div>
       <div><span class="linear-status ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span></div>`;
+    row.querySelector('[data-favorite-id]')?.addEventListener('click', evt => { evt.stopPropagation(); toggleFavorite(item.del, item.doc); });
     row.addEventListener('click', () => openDetail(item.del, item.doc, item.dueDate));
+    row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item.del, item.doc, item.dueDate); } });
     body.appendChild(row);
   });
   renderStats();
+}
+
+function toggleFavorite(del, doc) {
+  del.favorite = !del.favorite;
+  touchDocument(doc);
+  saveCache();
+  renderRoadmap();
 }
 
 function openPanel(title, html) {
@@ -902,6 +975,8 @@ function openDetail(del, doc, dueDate = null) {
     </div></div>
     <div class="field"><label>Product</label><div class="value">${escapeHtml(productName(doc))}</div></div>
     <div class="field"><label>Owner</label><div class="value">${escapeHtml(del.owner || doc.data.owner || '')}</div></div>
+    <div class="field"><label>Favorite</label><label class="toggle-pill ${del.favorite ? 'enabled' : ''}"><input id="taskFavorite" type="checkbox" ${del.favorite ? 'checked' : ''}> Favorite task</label></div>
+    <div class="field"><label>Tags</label><input id="taskTags" type="text" value="${escapeHtml(normalizeTags(del.tags).join(', '))}" placeholder="Comma-separated tags"><div class="help-text">Tags are optional. Use the Tags search toggle to make the search box match tags only.</div></div>
     <div class="field"><label>Timeline</label><div class="value">${escapeHtml(del.start)} &rarr; ${escapeHtml(del.end)}</div></div>
     <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
@@ -924,6 +999,8 @@ function openDetail(del, doc, dueDate = null) {
 function saveStatusChange() {
   if (!selectedDeliverable || !selectedDocument) return;
   const note = ($('#statusNote').value || '').trim();
+  selectedDeliverable.tags = normalizeTags($('#taskTags')?.value || '');
+  selectedDeliverable.favorite = Boolean($('#taskFavorite')?.checked);
   if (selectedDueDate) {
     selectedDueDate.status = selectedStatus;
     selectedDueDate.note = note;
@@ -968,7 +1045,7 @@ function openEditor() {
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Legacy string due dates are migrated automatically.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-add-deliverable]').forEach(btn => btn.addEventListener('click', e => {
     const idx = Number(e.currentTarget.dataset.addDeliverable);
@@ -1071,6 +1148,8 @@ function openAddDeliverable(docIndex) {
       <div class="field"><label>Due Date</label><input id="newDelDueDate" type="text" placeholder="MM/DD/YYYY"></div>
       <div class="field"><label>Status</label><select id="newDelStatus">${supportedStatuses().map(s => `<option value="${s}">${statusLabel(s)}</option>`).join('')}</select></div>
       <div class="field"><label>Owner</label><input id="newDelOwner" type="text" value="${escapeHtml(doc.data.owner || '')}" placeholder="Owner"></div>
+      <div class="field"><label>Favorite</label><label class="toggle-pill"><input id="newDelFavorite" type="checkbox"> Favorite task</label></div>
+      <div class="field span-2"><label>Tags</label><input id="newDelTags" type="text" placeholder="Comma-separated tags"></div>
       <div class="field"><label>Start Month</label><input id="newDelStart" type="text" value="${escapeHtml(currentMonth)}" placeholder="Mon YYYY"></div>
       <div class="field"><label>End Month</label><input id="newDelEnd" type="text" value="${escapeHtml(currentMonth)}" placeholder="Mon YYYY"></div>
       <div class="field span-2"><label>Description</label><textarea id="newDelDesc" rows="4" placeholder="Optional description or acceptance criteria..."></textarea></div>
@@ -1105,6 +1184,8 @@ function saveNewDeliverable(docIndex) {
     start,
     end,
     desc: ($('#newDelDesc').value || '').trim(),
+    tags: normalizeTags($('#newDelTags').value || ''),
+    favorite: Boolean($('#newDelFavorite')?.checked),
     dueDates: dueDate ? [dueDate] : [],
     notes: []
   };
@@ -1157,6 +1238,8 @@ function clearCache() {
 }
 
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
+$('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchOnly; renderRoadmap(); });
+$('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
 $('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderRoadmap(); });
 $('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });

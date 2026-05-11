@@ -116,6 +116,27 @@
         "desc": {
           "type": "string"
         },
+        "tags": {
+          "description": "Optional comma-separated string or array of labels. The UI normalizes tags and can search them with the Tags toggle.",
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "default": []
+        },
+        "favorite": {
+          "description": "Optional flag for starring a task. Favorites can be filtered from the header.",
+          "type": "boolean",
+          "default": false
+        },
         "dueDates": {
           "type": "array",
           "items": {

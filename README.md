@@ -18,7 +18,8 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
 - **Current week highlight** — the linear view highlights due-date rows in the current week in gold.
 - **Month/year filtering** — use the header Month and Year dropdowns to filter both grid and list views. A selected year with All Months shows every due date in that year; selecting a month and year narrows to that month. Month headings still filter directly to that month/year and highlight matching columns green.
-- **Search filtering** — use the header search box to filter tasks by phrase.
+- **Search filtering** — use the header search box to filter tasks by phrase, including optional task tags; toggle **Tags** to search tags only.
+- **Favorites filtering** — optional `favorite: true` tasks can be starred and filtered with the header **Favorites** toggle in both grid and list views.
 - **Live editing** — click **Edit Data** to paste or update product roadmap JSON, add deliverables, and re-render instantly.
 - **localStorage caching** — save your product JSON documents and toggle states locally; survives page reloads. The drawer **Clear Cache** action resets to defaults.
 - **Status changes + notes** — click a due-date chip or linear list row, change that date's status, and enter a date-specific note.
@@ -57,6 +58,8 @@ Each editor card contains one product roadmap JSON document:
       "start": "May 2026",
       "end": "Jun 2026",
       "desc": "Implement OAuth2 and JWT token management for API endpoints.",
+      "tags": ["api", "security"],
+      "favorite": true,
       "dueDates": [
         { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
         { "date": "06/30/2026", "status": "not-started", "note": "" }
@@ -75,6 +78,8 @@ Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
 Due date format: preferred `dueDates` entries are objects with `date`, `status`, and `note`. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
 
+Optional task metadata: `tags` may be an array such as `["api", "security"]` or a comma-separated string; `favorite` may be `true` to star a task.
+
 See `Product-Roadmap.md` for the full schema documentation.
 
 ## Due Dates
@@ -88,7 +93,7 @@ Example: `"05/15/2026"` appears as a deliverable chip in the `May 2026` month co
 
 ## Linear Timeline View
 
-Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. The same Month and Year dropdowns filter this list; selecting a year with All Months shows every due date in that year. Click any row to edit that due date's status and note in the drawer.
+Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. Tags and favorite stars are shown in this view too. The same Month and Year dropdowns, tag search, and Favorites toggle filter this list; selecting a year with All Months shows every due date in that year. Click any row to edit that due date's status and note in the drawer.
 
 ## Multi-Product Workflow
 
@@ -111,7 +116,7 @@ For day-to-day editing, use one product JSON object per editor card. Raw JSON st
 ## Customization
 
 - **Products** — add one product JSON document per editor card.
-- **Deliverables** — click **Add Deliverable** on a product card to append a new task with owner, status, start/end month, due date, and description.
+- **Deliverables** — click **Add Deliverable** on a product card to append a new task with owner, status, start/end month, due date, description, optional comma-separated tags, and optional favorite star.
 - **Visibility** — use product checkboxes to toggle swimlanes on/off.
 - **Title/Subtitle** — set `title` and `subtitle` in product JSON. The first enabled product controls the page title.
 - **Date range** — edit the year loop in the `MONTHS` generator at the top of the HTML (default: 2026–2032).
