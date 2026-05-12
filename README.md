@@ -14,7 +14,9 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Collapsed raw JSON** — product JSON is hidden by default in the drawer and expands only when you click **Edit JSON**.
 - **Deliverable creation** — add deliverables to any product card, including newly-created empty product JSON documents.
 - **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
-- **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline.
+- **Product toggles** — turn product roadmaps on/off and render enabled products together on one timeline; use **Check All / Uncheck All** to change the full list at once.
+- **Grid section collapse** — collapse or expand all product swimlanes at once, or use an individual product header chevron.
+- **Empty-state onboarding** — with no JSON loaded, start from large **Open existing roadmap document** and **Create a new product roadmap** actions instead of embedded example data.
 - **Current month highlight** — the present month is highlighted in gold on the timeline.
 - **Current week highlight** — the linear view highlights due-date rows in the current week in gold.
 - **Month/year filtering** — use the header Month and Year dropdowns to filter both grid and list views. A selected year with All Months shows every due date in that year; selecting a month and year narrows to that month. Month headings still filter directly to that month/year and highlight matching columns green.
@@ -30,13 +32,14 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 ## Quick Start
 
 1. Open `Product-Roadmap.html` in a browser.
-2. Click **Edit Data**.
-3. Add or edit one product JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
-4. Check/uncheck product cards to toggle products on/off.
+2. Use the empty-state buttons to **Open an existing roadmap document** or **Create a new product roadmap**.
+3. In the edit drawer, add or edit one product JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
+4. Check/uncheck product cards to toggle products on/off, or use **Check All / Uncheck All** at the end of the product list.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
-6. Use the header Month/Year filters and **Grid View / List View** toggle to filter either the month grid or chronological due-date list.
-7. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
-8. Click **Clear Cache** in the drawer to reset to embedded defaults.
+6. Use the header Month/Year filters and **Grid View / List View** toggle to filter either the month grid or chronological due-date list. In grid view, use **Collapse All / Expand All** or each product header chevron to manage product sections.
+7. Use the icon-only **Copy Markdown** button to copy the currently displayed roadmap as a chronological Markdown table.
+8. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
+9. Click **Clear Cache** in the drawer to reset to an empty starting state.
 
 ## Product JSON Schema
 
