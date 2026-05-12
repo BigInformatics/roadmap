@@ -886,16 +886,18 @@ function updateViewControls() {
   }
   const tagBtn = $('#btnTagSearch');
   if (tagBtn) {
-    tagBtn.innerHTML = `${tagIcon()}<span class="btn-label">Tags</span>`;
+    tagBtn.innerHTML = tagIcon();
     tagBtn.classList.toggle('active', tagSearchOnly);
     tagBtn.setAttribute('aria-pressed', String(tagSearchOnly));
+    tagBtn.setAttribute('aria-label', tagSearchOnly ? 'Search all task fields' : 'Search tags only');
     tagBtn.title = tagSearchOnly ? 'Searching tags only' : 'Search all task fields';
   }
   const favBtn = $('#btnFavoritesOnly');
   if (favBtn) {
-    favBtn.innerHTML = `${starIcon()}<span class="btn-label">Favorites</span>`;
+    favBtn.innerHTML = starIcon();
     favBtn.classList.toggle('active', favoritesOnly);
     favBtn.setAttribute('aria-pressed', String(favoritesOnly));
+    favBtn.setAttribute('aria-label', favoritesOnly ? 'Show all tasks' : 'Show favorites only');
     favBtn.title = favoritesOnly ? 'Showing favorites only' : 'Show favorites only';
   }
   const collapseBtn = $('#btnCollapseAll');
