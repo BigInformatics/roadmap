@@ -107,6 +107,12 @@
   }
   .btn:hover { background: var(--accent-dim); color: var(--button-hover-ink); border-color: var(--accent-dim); }
   .btn.active { background: var(--accent); color: var(--button-hover-ink); border-color: var(--accent); font-weight: 600; }
+  body[data-theme="light"] #btnTagSearch:not(.active):hover,
+  body[data-theme="light"] #btnFavoritesOnly:not(.active):hover {
+    background: var(--surface-2);
+    color: var(--ink);
+    border-color: var(--border);
+  }
   .btn.danger:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
   .btn.small { padding: 0.35rem 0.65rem; font-size: 0.75rem; min-height: 30px; }
   .btn.ghost { background: transparent; }
