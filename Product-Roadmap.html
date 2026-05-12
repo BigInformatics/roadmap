@@ -79,9 +79,12 @@
   .last-updated { color: var(--gold); font-size: 0.75rem; }
 
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .utility-controls { margin-left: auto; display: inline-flex; gap: 0.45rem; align-items: center; }
   .search-box { min-width: 220px; max-width: 320px; }
   .date-select { min-width: 120px; }
-  .icon-btn { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
+  .btn.icon-only { width: 38px; padding: 0.5rem; }
+  .btn.icon-only .btn-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .icon-btn svg { width: 1rem; height: 1rem; display: block; flex-shrink: 0; }
   .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
   .filter-chip.active { display: inline-flex; align-items: center; }
@@ -106,7 +109,7 @@
   .theme-toggle svg { width: 1rem; height: 1rem; display: block; }
 
   .main { padding: 2rem; max-width: 100%; margin: 0 auto; }
-  .product-toggle-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; max-width: 1600px; }
+  .product-toggle-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; max-width: 1600px; align-items: center; }
   .toggle-pill { display: inline-flex; align-items: center; gap: 0.45rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer; color: var(--muted); }
   .toggle-pill input { width: auto; accent-color: var(--accent); }
   .toggle-pill.enabled { color: var(--ink); border-color: rgba(102,252,241,0.35); background: rgba(102,252,241,0.07); }
@@ -152,6 +155,12 @@
   .progress-mini { height: 6px; background: var(--bg); border-radius: 3px; width: 120px; overflow: hidden; }
   .progress-mini-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
   .empty-state { padding: 2rem; color: var(--muted); }
+  .empty-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; padding: 2rem; }
+  .empty-action-btn { display: flex; min-height: 150px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.65rem; text-align: left; font-size: 1rem; border-style: dashed; }
+  .empty-action-btn strong { color: var(--ink); font-size: 1.2rem; }
+  .empty-action-btn span { color: var(--muted); white-space: normal; }
+  .swimlane.collapsed .deliverable-row { display: none; }
+  .product-collapse-btn { width: 1.55rem; min-height: 1.55rem; padding: 0; }
 
   .deliverable-row { display: flex; border-bottom: 1px solid var(--border); transition: background 0.15s; position: relative; }
   .deliverable-row:hover { background: rgba(102, 252, 241, 0.03); }
@@ -159,11 +168,11 @@
   .del-title-row { display: flex; align-items: center; gap: 0.35rem; min-width: 0; }
   .del-name .title { font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .del-name .owner { font-size: 0.7rem; color: var(--muted); }
-  .favorite-toggle { appearance: none; background: transparent; border: 0; color: #bababa; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 1.1rem; height: 1.1rem; flex-shrink: 0; }
+  .favorite-toggle { appearance: none; background: transparent; border: 0; color: #bababa; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; width: 1.1rem; height: 1.1rem; flex-shrink: 0; opacity: 0.5; }
   .favorite-toggle svg { width: 1rem; height: 1rem; display: block; stroke: currentColor; }
-  .favorite-toggle.active { color: #e0a500; }
+  .favorite-toggle.active { color: #e0a500; opacity: 1; }
   .favorite-toggle.active svg { fill: rgba(224,165,0,0.28); stroke: currentColor; }
-  .favorite-toggle:hover { color: #e0a500; }
+  .favorite-toggle:hover { color: #e0a500; opacity: 1; }
   .tag-list { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-top: 0.1rem; }
   .tag-pill { display: inline-flex; align-items: center; gap: 0.2rem; border: 1px solid rgba(0,189,126,0.35); color: var(--success); background: rgba(0,189,126,0.08); border-radius: 999px; padding: 0.1rem 0.38rem; font-size: 0.66rem; line-height: 1.2; }
   .tag-pill svg, .tag-icon svg { width: 0.72rem; height: 0.72rem; display: block; flex-shrink: 0; }
@@ -269,6 +278,7 @@
     </select>
     <button class="btn filter-chip" id="btnClearMonth" type="button">Clear date</button>
     <button class="btn active" id="btnViewToggle" type="button">Grid View</button>
+    <button class="btn" id="btnCollapseAll" type="button">Collapse All</button>
     <select class="btn" id="statusFilter">
       <option value="all">All Statuses</option>
       <option value="in-progress">In Progress</option>
@@ -279,10 +289,12 @@
       <option value="on-hold">On Hold</option>
       <option value="cancelled">Cancelled</option>
     </select>
-    <button class="btn theme-toggle" id="btnThemeToggle" type="button" aria-label="Switch to light mode"></button>
-    <button class="btn" id="btnCopyMarkdown" type="button">Copy Markdown</button>
-    <button class="btn" id="btnNow">Jump to Now</button>
-    <button class="btn" id="btnEdit">Edit Data</button>
+    <div class="utility-controls">
+      <button class="btn theme-toggle icon-only" id="btnThemeToggle" type="button" aria-label="Switch to light mode"></button>
+      <button class="btn icon-btn icon-only" id="btnCopyMarkdown" type="button" aria-label="Copy Markdown" title="Copy Markdown"></button>
+      <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
+      <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
+    </div>
   </div>
 </header>
 
@@ -301,6 +313,7 @@
     <div class="timeline-header" id="timelineHeader"></div>
     <div id="roadmapBody"></div>
   </div>
+  <input id="globalJsonFileInput" type="file" accept="application/json,.json" multiple hidden>
 </div>
 
 <div class="overlay" id="overlay"></div>
@@ -317,38 +330,7 @@ const MONTHS = [];
 for (let y = 2026; y <= 2032; y++) for (let i = 0; i < 12; i++) MONTHS.push(`${MONTH_NAMES[i]} ${y}`);
 document.documentElement.style.setProperty('--month-count', MONTHS.length);
 
-const DEFAULT_DOCUMENTS = [
-  {
-    id: 'backend-platform',
-    enabled: true,
-    data: {
-      project: 'Backend Platform',
-      title: 'Product Roadmap',
-      subtitle: 'Interactive Deliverables & Timeline',
-      lastUpdated: '2026-05-08 10:00:00 ET',
-      owner: 'Engineering Team',
-      deliverables: [
-        { id: 'bp-1', title: 'API Authentication', owner: 'Engineering Team', status: 'in-progress', start: 'May 2026', end: 'Jun 2026', desc: 'Implement OAuth2 and JWT token management for API endpoints.', dueDates: [{ date: '05/15/2026', status: 'in-progress', note: 'Token endpoint handoff.' }, { date: '06/30/2026', status: 'not-started', note: '' }], notes: [] },
-        { id: 'bp-2', title: 'Database Migration', owner: 'Engineering Team', status: 'not-started', start: 'Jul 2026', end: 'Aug 2026', desc: 'Migrate primary database to a new cluster with a staged cutover plan.', dueDates: [{ date: '07/15/2026', status: 'not-started', note: '' }, { date: '08/28/2026', status: 'not-started', note: '' }], notes: [] }
-      ]
-    }
-  },
-  {
-    id: 'web-application',
-    enabled: true,
-    data: {
-      project: 'Web Application',
-      title: 'Product Roadmap',
-      subtitle: 'Interactive Deliverables & Timeline',
-      lastUpdated: '2026-05-08 10:00:00 ET',
-      owner: 'Frontend Team',
-      deliverables: [
-        { id: 'wa-1', title: 'Dashboard Redesign', owner: 'Frontend Team', status: 'completed', start: 'May 2026', end: 'May 2026', desc: 'Refresh the dashboard with improved hierarchy and responsive layout.', dueDates: [{ date: '05/29/2026', status: 'completed', note: 'Released.' }], notes: [] },
-        { id: 'wa-2', title: 'Settings Panel', owner: 'Frontend Team', status: 'in-progress', start: 'Jun 2026', end: 'Jul 2026', desc: 'Build a settings and preferences interface with validation.', dueDates: [{ date: '06/15/2026', status: 'in-progress', note: '' }, { date: '07/31/2026', status: 'not-started', note: '' }], notes: [] }
-      ]
-    }
-  }
-];
+const DEFAULT_DOCUMENTS = [];
 
 let DOCUMENTS = loadDocuments();
 let currentTheme = loadTheme();
@@ -364,6 +346,7 @@ let currentView = 'grid';
 let selectedDeliverable = null;
 let selectedDocument = null;
 let selectedDueDate = null;
+let collapsedProducts = new Set();
 
 function $(sel) { return document.querySelector(sel); }
 function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
@@ -388,8 +371,8 @@ function loadTheme() {
   try { return localStorage.getItem(THEME_KEY) === 'light' ? 'light' : 'dark'; } catch(e) { return 'dark'; }
 }
 function themeIcon(theme) {
-  if (theme === 'light') return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun-medium-icon lucide-sun-medium"><circle cx="12" cy="12" r="4"/><path d="M12 3v1"/><path d="M12 20v1"/><path d="M3 12h1"/><path d="M20 12h1"/><path d="m18.364 5.636-.707.707"/><path d="m6.343 17.657-.707.707"/><path d="m5.636 5.636.707.707"/><path d="m17.657 17.657.707.707"/></svg><span>Light</span>';
-  return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon-icon lucide-moon"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><span>Dark</span>';
+  if (theme === 'light') return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun-medium-icon lucide-sun-medium"><circle cx="12" cy="12" r="4"/><path d="M12 3v1"/><path d="M12 20v1"/><path d="M3 12h1"/><path d="M20 12h1"/><path d="m18.364 5.636-.707.707"/><path d="m6.343 17.657-.707.707"/><path d="m5.636 5.636.707.707"/><path d="m17.657 17.657.707.707"/></svg><span class="btn-label">Light</span>';
+  return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon-icon lucide-moon"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg><span class="btn-label">Dark</span>';
 }
 function applyTheme(theme) {
   currentTheme = theme === 'light' ? 'light' : 'dark';
@@ -410,6 +393,10 @@ function renderNoteIcon(note) {
   return `<span class="note-icon" title="${safeNote}" aria-label="Note: ${safeNote}"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#bababa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sticky-note-icon lucide-sticky-note"><title>${safeNote}</title><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/><path d="M15 3v5a1 1 0 0 0 1 1h5"/></svg></span>`;
 }
 function tagIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bd7e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag-icon lucide-tag"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>'; }
+function copyIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>'; }
+function locateIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="2" x2="5" y1="12" y2="12"/><line x1="19" x2="22" y1="12" y2="12"/><line x1="12" x2="12" y1="2" y2="5"/><line x1="12" x2="12" y1="19" y2="22"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/></svg>'; }
+function editIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a1 1 0 0 1 3 3l-9.013 9.014a2 2 0 0 1-.853.505l-2.873.84.84-2.873a2 2 0 0 1 .506-.852z"/></svg>'; }
+function chevronIcon(collapsed) { return collapsed ? '▸' : '▾'; }
 function starIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>'; }
 function normalizeTags(value) {
   if (Array.isArray(value)) return value.map(v => String(v).trim()).filter(Boolean);
@@ -635,6 +622,20 @@ function renderProductToggles() {
     label.innerHTML = `<input type="checkbox" ${doc.enabled ? 'checked' : ''} data-doc-toggle="${idx}"> ${escapeHtml(productName(doc))}`;
     bar.appendChild(label);
   });
+  if (DOCUMENTS.length) {
+    const allEnabled = DOCUMENTS.every(doc => doc.enabled);
+    const toggleAll = document.createElement('button');
+    toggleAll.type = 'button';
+    toggleAll.className = 'btn small';
+    toggleAll.id = 'btnToggleAllProducts';
+    toggleAll.textContent = allEnabled ? 'Uncheck All' : 'Check All';
+    toggleAll.addEventListener('click', () => {
+      DOCUMENTS.forEach(doc => { doc.enabled = !allEnabled; });
+      saveCache();
+      renderRoadmap();
+    });
+    bar.appendChild(toggleAll);
+  }
   document.querySelectorAll('[data-doc-toggle]').forEach(input => input.addEventListener('change', e => {
     DOCUMENTS[Number(e.target.dataset.docToggle)].enabled = e.target.checked;
     saveCache();
@@ -709,6 +710,9 @@ function getVisibleSummaryStats() {
   return { products: enabledDocuments().length, total, ip, ar, bl, comp, due };
 }
 
+function markdownTableCell(value) {
+  return markdownEscape(value).replace(/\n/g, '<br>').replace(/\|/g, '\\|') || '—';
+}
 function buildMarkdownExport() {
   const first = enabledDocuments()[0]?.data || DOCUMENTS[0]?.data || {};
   const title = first.title || 'Product Roadmap';
@@ -725,50 +729,21 @@ function buildMarkdownExport() {
     markdownEscape($('#pageSubtitle')?.textContent || ''),
     markdownEscape($('#lastUpdated')?.textContent || ''),
     '',
-    '## Current Filters',
-    ...filters.map(f => markdownListItem(f)),
+    `**Current filters:** ${filters.join(' • ') || 'None'}`,
+    `**Summary:** Products On ${stats.products} • Deliverables ${stats.total} • In Progress ${stats.ip} • At Risk ${stats.ar} • Blocked / On Hold ${stats.bl} • Completed ${stats.comp} • Due This Month ${stats.due}`,
     '',
-    '## Summary Stats',
-    markdownListItem(`Products On: ${stats.products}`),
-    markdownListItem(`Deliverables: ${stats.total}`),
-    markdownListItem(`In Progress: ${stats.ip}`),
-    markdownListItem(`At Risk: ${stats.ar}`),
-    markdownListItem(`Blocked / On Hold: ${stats.bl}`),
-    markdownListItem(`Completed: ${stats.comp}`),
-    markdownListItem(`Due This Month: ${stats.due}`),
+    '## Chronological Roadmap',
     '',
-    '## Tasks and Deliverables'
+    '| Due Date | Task | Product | Status | Owner | Tags | Notes |',
+    '|---|---|---|---|---|---|---|'
   ];
-
-  enabledDocuments().forEach(doc => {
-    const deliverables = getVisibleDeliverables(doc);
-    lines.push('', `### ${markdownEscape(productName(doc))}`);
-    if (doc.data.owner) lines.push(markdownListItem(`Owner: ${doc.data.owner}`));
-    if (!deliverables.length) {
-      lines.push('', '_No matching deliverables._');
-      return;
-    }
-    deliverables.forEach(del => {
-      lines.push('', `#### ${del.favorite ? '★ ' : ''}${markdownEscape(del.title)}`);
-      lines.push(markdownListItem(`Status: ${statusLabel(del.status)}`));
-      if (normalizeTags(del.tags).length) lines.push(markdownListItem(`Tags: ${normalizeTags(del.tags).join(', ')}`));
-      if (del.owner || doc.data.owner) lines.push(markdownListItem(`Owner: ${del.owner || doc.data.owner}`));
-      if (del.start || del.end) lines.push(markdownListItem(`Timeline: ${del.start || '—'} → ${del.end || '—'}`));
-      if (del.desc) lines.push(markdownListItem(`Description: ${del.desc}`));
-      const dueDates = visibleDueDates(del);
-      if (dueDates.length) {
-        lines.push(markdownListItem('Due Dates:'));
-        dueDates.forEach(d => {
-          lines.push(markdownListItem(`${dueDateValue(d)} — ${statusLabel(dueDateStatus(d, del))}`, '  '));
-          if (d.note) lines.push(markdownListItem(`Note: ${d.note}`, '    '));
-        });
-      }
-      if (Array.isArray(del.notes) && del.notes.length) {
-        lines.push(markdownListItem('Task Notes:'));
-        del.notes.forEach(note => lines.push(markdownListItem(note, '  ')));
-      }
-    });
+  const rows = collectDueItems();
+  rows.forEach(({ doc, del, dueDate }) => {
+    const tags = normalizeTags(del.tags).join(', ');
+    const notes = [dueDate.note ? `Due: ${dueDate.note}` : '', ...(Array.isArray(del.notes) ? del.notes.map(n => `Task: ${n}`) : [])].filter(Boolean).join('<br>');
+    lines.push(`| ${markdownTableCell(dueDateValue(dueDate))} | ${markdownTableCell(`${del.favorite ? '★ ' : ''}${del.title}`)} | ${markdownTableCell(productName(doc))} | ${markdownTableCell(statusLabel(dueDateStatus(dueDate, del)))} | ${markdownTableCell(del.owner || doc.data.owner || '')} | ${markdownTableCell(tags)} | ${markdownTableCell(notes)} |`);
   });
+  if (!rows.length) lines.push('| — | No matching due-date items. | — | — | — | — | — |');
   return lines.filter((line, idx, arr) => !(line === '' && arr[idx - 1] === '')).join('\n').trim() + '\n';
 }
 
@@ -789,14 +764,36 @@ async function copyMarkdownToClipboard() {
       textarea.remove();
     }
     if (btn) {
-      const original = btn.textContent;
-      btn.textContent = 'Copied Markdown';
       btn.classList.add('active');
-      setTimeout(() => { btn.textContent = original; btn.classList.remove('active'); }, 1500);
+      const originalTitle = btn.title;
+      btn.title = 'Copied Markdown';
+      btn.setAttribute('aria-label', 'Copied Markdown');
+      setTimeout(() => { btn.title = originalTitle || 'Copy Markdown'; btn.setAttribute('aria-label', 'Copy Markdown'); btn.classList.remove('active'); }, 1500);
     }
   } catch(e) {
     alert('Unable to copy markdown: ' + e.message);
   }
+}
+
+function toggleProductCollapsed(docId) {
+  if (collapsedProducts.has(docId)) collapsedProducts.delete(docId);
+  else collapsedProducts.add(docId);
+  renderRoadmap();
+}
+function setAllProductsCollapsed(collapsed) {
+  collapsedProducts = collapsed ? new Set(enabledDocuments().map(doc => doc.id)) : new Set();
+  renderRoadmap();
+}
+
+function renderNoDocumentsActions() {
+  return `<div class="empty-actions">
+    <button class="btn empty-action-btn" id="btnOpenExistingRoadmap" type="button"><strong>Open an existing roadmap document</strong><span>Load one or more JSON roadmap files from your computer.</span></button>
+    <button class="btn empty-action-btn" id="btnCreateNewRoadmap" type="button"><strong>Create a new product roadmap</strong><span>Start with an empty product JSON document you can edit immediately.</span></button>
+  </div>`;
+}
+function attachNoDocumentsActions() {
+  $('#btnOpenExistingRoadmap')?.addEventListener('click', () => $('#globalJsonFileInput').click());
+  $('#btnCreateNewRoadmap')?.addEventListener('click', () => addProductDocument(false));
 }
 
 function renderRoadmap() {
@@ -815,7 +812,8 @@ function renderRoadmap() {
   const docs = enabledDocuments();
 
   if (!docs.length) {
-    body.innerHTML = '<div class="empty-state">No products are enabled. Toggle products on above or use Edit Data to add roadmap JSON documents.</div>';
+    body.innerHTML = renderNoDocumentsActions();
+    attachNoDocumentsActions();
     renderStats();
     return;
   }
@@ -829,7 +827,11 @@ function renderRoadmap() {
     swimlane.className = 'swimlane';
     const hdr = document.createElement('div');
     hdr.className = 'swimlane-header';
-    hdr.innerHTML = `<div class="product-name">${escapeHtml(productName(doc))}<span class="product-meta">${escapeHtml(data.owner || '')} &bull; ${completed}/${(data.deliverables || []).length} done</span></div><div class="product-bar"><div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div><span style="font-size:0.75rem;color:var(--muted)">${progress}%</span></div>`;
+    const collapsed = collapsedProducts.has(doc.id);
+    swimlane.classList.toggle('collapsed', collapsed);
+    hdr.innerHTML = `<div class="product-name"><button type="button" class="btn small product-collapse-btn" data-collapse-product="${escapeHtml(doc.id)}" aria-label="${collapsed ? 'Expand' : 'Collapse'} ${escapeHtml(productName(doc))}">${chevronIcon(collapsed)}</button>${escapeHtml(productName(doc))}<span class="product-meta">${escapeHtml(data.owner || '')} &bull; ${completed}/${(data.deliverables || []).length} done</span></div><div class="product-bar"><div class="progress-mini"><div class="progress-mini-fill" style="width:${progress}%"></div></div><span style="font-size:0.75rem;color:var(--muted)">${progress}%</span></div>`;
+    hdr.querySelector('[data-collapse-product]')?.addEventListener('click', e => { e.stopPropagation(); toggleProductCollapsed(doc.id); });
+    hdr.addEventListener('dblclick', () => toggleProductCollapsed(doc.id));
     swimlane.appendChild(hdr);
 
     if (!deliverables.length) {
@@ -879,17 +881,30 @@ function updateViewControls() {
   }
   const tagBtn = $('#btnTagSearch');
   if (tagBtn) {
-    tagBtn.innerHTML = `${tagIcon()}<span>Tags</span>`;
+    tagBtn.innerHTML = `${tagIcon()}<span class="btn-label">Tags</span>`;
     tagBtn.classList.toggle('active', tagSearchOnly);
     tagBtn.setAttribute('aria-pressed', String(tagSearchOnly));
     tagBtn.title = tagSearchOnly ? 'Searching tags only' : 'Search all task fields';
   }
   const favBtn = $('#btnFavoritesOnly');
   if (favBtn) {
-    favBtn.innerHTML = `${starIcon()}<span>Favorites</span>`;
+    favBtn.innerHTML = `${starIcon()}<span class="btn-label">Favorites</span>`;
     favBtn.classList.toggle('active', favoritesOnly);
     favBtn.setAttribute('aria-pressed', String(favoritesOnly));
+    favBtn.title = favoritesOnly ? 'Showing favorites only' : 'Show favorites only';
   }
+  const collapseBtn = $('#btnCollapseAll');
+  if (collapseBtn) {
+    const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id));
+    collapseBtn.textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+    collapseBtn.style.display = currentView === 'grid' && enabledDocuments().length ? '' : 'none';
+  }
+  const copyBtn = $('#btnCopyMarkdown');
+  if (copyBtn) copyBtn.innerHTML = `${copyIcon()}<span class="btn-label">Copy Markdown</span>`;
+  const nowBtn = $('#btnNow');
+  if (nowBtn) nowBtn.innerHTML = `${locateIcon()}<span class="btn-label">Jump to Now</span>`;
+  const editBtn = $('#btnEdit');
+  if (editBtn) editBtn.innerHTML = `${editIcon()}<span class="btn-label">Edit Data</span>`;
 }
 function populateDateFilterControls() {
   const year = $('#yearFilter');
@@ -927,7 +942,8 @@ function renderLinearTimeline() {
   body.innerHTML = '';
   const items = collectDueItems();
   if (!enabledDocuments().length) {
-    body.innerHTML = '<div class="empty-state">No products are enabled. Toggle products on above or use Edit Data to add roadmap JSON documents.</div>';
+    body.innerHTML = renderNoDocumentsActions();
+    attachNoDocumentsActions();
     renderStats();
     return;
   }
@@ -990,7 +1006,7 @@ function openDetail(del, doc, dueDate = null) {
     <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>${selectedDueDate ? 'Due Date Note' : 'Status Note'}</label><textarea id="statusNote" rows="4" placeholder="Optional note...">${escapeHtml(selectedNote)}</textarea></div>
-    <button class="btn active" id="btnSaveStatus">Save Changes</button>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn active" id="btnSaveStatus">Save Changes</button><button class="btn" id="btnCancelStatus">Cancel</button></div>
     <div class="field" style="margin-top:1rem"><label>Task Notes</label><ul class="notes-list">${notes}</ul></div>
   `);
   document.querySelectorAll('[data-due-index]').forEach(btn => btn.addEventListener('click', e => {
@@ -1003,6 +1019,13 @@ function openDetail(del, doc, dueDate = null) {
     e.target.classList.add('active');
   }));
   $('#btnSaveStatus').addEventListener('click', saveStatusChange);
+  $('#btnCancelStatus').addEventListener('click', closeDetail);
+  ['#statusNote', '#taskTags'].forEach(sel => {
+    const input = $(sel);
+    input?.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveStatusChange(); }
+    });
+  });
 }
 
 function saveStatusChange() {
@@ -1047,6 +1070,7 @@ function openEditor() {
     ${cards || '<div class="empty-state">No product JSON documents yet.</div>'}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:1rem">
       <button class="btn active" id="btnSaveJson">Save & Render</button>
+      <button class="btn" id="btnCancelEditor">Cancel</button>
       <button class="btn" id="btnAddDoc">Add Product JSON</button>
       <button class="btn" id="btnLoadJson">Load JSON Document</button>
       <input id="jsonFileInput" type="file" accept="application/json,.json" multiple hidden>
@@ -1082,6 +1106,7 @@ function openEditor() {
     openEditor();
   }));
   $('#btnSaveJson').addEventListener('click', () => saveEditorDocuments());
+  $('#btnCancelEditor').addEventListener('click', closeDetail);
   $('#btnAddDoc').addEventListener('click', addProductDocument);
   $('#btnLoadJson').addEventListener('click', () => $('#jsonFileInput').click());
   $('#jsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
@@ -1129,8 +1154,8 @@ function ensureUniqueDocumentIds(docs) {
     return { ...doc, id };
   });
 }
-function addProductDocument() {
-  if (!saveEditorDocuments(false)) return;
+function addProductDocument(fromEditor = true) {
+  if (fromEditor && !saveEditorDocuments(false)) return;
   DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', order: DOCUMENTS.length + 1, deliverables: [] }, DOCUMENTS.length));
   DOCUMENTS = ensureUniqueDocumentIds(DOCUMENTS);
   saveCache();
@@ -1250,6 +1275,7 @@ $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.
 $('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchOnly; renderRoadmap(); });
 $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
+$('#btnCollapseAll').addEventListener('click', () => { const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id)); setAllProductsCollapsed(!allCollapsed); });
 $('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderRoadmap(); });
 $('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
@@ -1257,6 +1283,7 @@ $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.tar
 $('#btnThemeToggle').addEventListener('click', toggleTheme);
 $('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
 $('#btnEdit').addEventListener('click', openEditor);
+$('#globalJsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
 $('#btnNow').addEventListener('click', () => {
