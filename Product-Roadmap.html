@@ -79,7 +79,6 @@
   .last-updated { color: var(--gold); font-size: 0.75rem; }
 
   .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
-  .control-row-secondary { flex-basis: 100%; display: flex; gap: 0.45rem; align-items: center; justify-content: flex-end; }
   .utility-controls { margin-left: auto; display: inline-flex; gap: 0.45rem; align-items: center; }
   .search-box { min-width: 220px; max-width: 320px; }
   .date-select { min-width: 120px; }
@@ -92,8 +91,8 @@
   #btnEdit { color: var(--success); }
   #btnCopyMarkdown:hover, #btnNow:hover, #btnEdit:hover,
   #btnCopyMarkdown.active, #btnNow.active, #btnEdit.active { color: var(--button-hover-ink); }
-  .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: none; }
-  .filter-chip.active { display: inline-flex; align-items: center; }
+  .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: inline-flex; align-items: center; }
+  .filter-chip.active { border-color: var(--success); }
   .btn, select.btn {
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -108,6 +107,8 @@
   }
   .btn:hover { background: var(--accent-dim); color: var(--button-hover-ink); border-color: var(--accent-dim); }
   .btn.active { background: var(--accent); color: var(--button-hover-ink); border-color: var(--accent); font-weight: 600; }
+  .btn:disabled, .btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.38; filter: grayscale(0.35); }
+  .btn:disabled:hover, .btn[aria-disabled="true"]:hover { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
   body[data-theme="light"] #btnTagSearch:not(.active):hover,
   body[data-theme="light"] #btnFavoritesOnly:not(.active):hover {
     background: var(--surface-2);
@@ -300,14 +301,12 @@
       <option value="cancelled">Cancelled</option>
     </select>
     <div class="utility-controls">
-      <button class="btn theme-toggle icon-only" id="btnThemeToggle" type="button" aria-label="Switch to light mode"></button>
       <button class="btn icon-btn icon-only" id="btnCopyMarkdown" type="button" aria-label="Copy Markdown" title="Copy Markdown"></button>
-      <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
-      <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
-    </div>
-    <div class="control-row-secondary">
       <button class="btn icon-btn icon-only active" id="btnViewToggle" type="button" aria-label="Grid View" title="Grid View"></button>
       <button class="btn icon-btn icon-only" id="btnCollapseAll" type="button" aria-label="Collapse All" title="Collapse All"></button>
+      <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
+      <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
+      <button class="btn theme-toggle icon-only" id="btnThemeToggle" type="button" aria-label="Switch to light mode"></button>
     </div>
   </div>
 </header>
@@ -707,8 +706,12 @@ function renderStats() {
   const monthBtn = $('#btnClearMonth');
   if (monthBtn) {
     const label = dateFilterLabel();
+    const active = dateFilterActive();
     monthBtn.textContent = label ? `Clear ${label}` : 'Clear date';
-    monthBtn.classList.toggle('active', dateFilterActive());
+    monthBtn.classList.toggle('active', active);
+    monthBtn.disabled = !active;
+    monthBtn.setAttribute('aria-label', active ? monthBtn.textContent : 'Clear date unavailable');
+    monthBtn.title = active ? monthBtn.textContent : 'No date filter to clear';
   }
   const search = $('#taskSearch');
   if (search && search.value !== currentSearchQuery) search.value = currentSearchQuery;
@@ -918,17 +921,25 @@ function updateViewControls() {
   }
   const collapseBtn = $('#btnCollapseAll');
   if (collapseBtn) {
-    const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id));
+    const hasEnabledDocs = enabledDocuments().length > 0;
+    const allCollapsed = hasEnabledDocs && enabledDocuments().every(doc => collapsedProducts.has(doc.id));
     const label = allCollapsed ? 'Expand All' : 'Collapse All';
+    const disabled = currentView !== 'grid' || !hasEnabledDocs;
     collapseBtn.innerHTML = `${allCollapsed ? expandIcon() : collapseIcon()}<span class="btn-label">${label}</span>`;
-    collapseBtn.setAttribute('aria-label', label);
-    collapseBtn.title = label;
-    collapseBtn.style.display = currentView === 'grid' && enabledDocuments().length ? '' : 'none';
+    collapseBtn.setAttribute('aria-label', disabled ? `${label} unavailable` : label);
+    collapseBtn.title = disabled ? `${label} unavailable outside grid view` : label;
+    collapseBtn.disabled = disabled;
   }
   const copyBtn = $('#btnCopyMarkdown');
   if (copyBtn) copyBtn.innerHTML = `${copyIcon()}<span class="btn-label">Copy Markdown</span>`;
   const nowBtn = $('#btnNow');
-  if (nowBtn) nowBtn.innerHTML = `${locateIcon()}<span class="btn-label">Jump to Now</span>`;
+  if (nowBtn) {
+    const disabled = currentView === 'grid';
+    nowBtn.innerHTML = `${locateIcon()}<span class="btn-label">Jump to Now</span>`;
+    nowBtn.disabled = disabled;
+    nowBtn.setAttribute('aria-label', disabled ? 'Jump to Now unavailable in grid view' : 'Jump to Now');
+    nowBtn.title = disabled ? 'Jump to Now is available in list view' : 'Jump to Now';
+  }
   const editBtn = $('#btnEdit');
   if (editBtn) editBtn.innerHTML = `${editIcon()}<span class="btn-label">Edit Data</span>`;
 }
@@ -1301,7 +1312,11 @@ $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.
 $('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchOnly; renderRoadmap(); });
 $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
-$('#btnCollapseAll').addEventListener('click', () => { const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id)); setAllProductsCollapsed(!allCollapsed); });
+$('#btnCollapseAll').addEventListener('click', () => {
+  if ($('#btnCollapseAll').disabled) return;
+  const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id));
+  setAllProductsCollapsed(!allCollapsed);
+});
 $('#btnClearMonth').addEventListener('click', () => { clearDateFilter(); renderRoadmap(); });
 $('#yearFilter').addEventListener('change', e => { selectedYearFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
 $('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.target.value; selectedMonthFilter = selectedYearFilter && selectedMonthNameFilter ? `${selectedMonthNameFilter} ${selectedYearFilter}` : null; renderRoadmap(); });
@@ -1313,6 +1328,7 @@ $('#globalJsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles)
 $('#btnClose').addEventListener('click', closeDetail);
 $('#overlay').addEventListener('click', closeDetail);
 $('#btnNow').addEventListener('click', () => {
+  if ($('#btnNow').disabled || currentView === 'grid') return;
   if (currentView === 'linear') {
     const current = document.querySelector('.linear-row.current-week');
     if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
