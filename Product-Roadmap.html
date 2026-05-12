@@ -232,6 +232,10 @@
   .status-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
   .notes-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
   .notes-list li { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.5rem; font-size: 0.8rem; color: var(--muted); }
+  .action-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+  .action-list li { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.65rem; font-size: 0.82rem; color: var(--muted); }
+  .action-list strong { display: block; color: var(--ink); font-size: 0.86rem; margin-bottom: 0.15rem; }
+  .action-timestamp { display: block; color: var(--gold); font-size: 0.72rem; margin-top: 0.25rem; }
   .due-summary { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.6rem; }
   .due-summary.empty { color: var(--muted); font-size: 0.85rem; }
   .due-count { color: var(--muted); font-size: 0.78rem; margin-bottom: 0.45rem; }
@@ -437,9 +441,20 @@ function favoriteButton(del, doc) {
   return `<button type="button" class="favorite-toggle${del.favorite ? ' active' : ''}" data-favorite-id="${escapeHtml(del.id)}" title="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}" aria-label="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}">${starIcon()}</button>`;
 }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
+function normalizeDueDateAction(item) {
+  if (!item || typeof item !== 'object') return null;
+  const name = String(item.name || item.Name || '').trim();
+  const note = String(item.note || item.Note || '').trim();
+  const timestamp = String(item.timestamp || item.Timestamp || item.createdAt || '').trim();
+  if (!name && !note) return null;
+  return { name, note, timestamp };
+}
 function normalizeDueDate(item, fallbackStatus = 'not-started') {
   if (item && typeof item === 'object') {
-    return { date: String(item.date || '').trim(), status: item.status || fallbackStatus, note: item.note || '' };
+    const actions = Array.isArray(item.actions) ? item.actions.map(normalizeDueDateAction).filter(Boolean) : [];
+    const normalized = { date: String(item.date || '').trim(), status: item.status || fallbackStatus, note: item.note || '' };
+    if (Array.isArray(item.actions)) normalized.actions = actions;
+    return normalized;
   }
   return { date: String(item || '').trim(), status: fallbackStatus, note: '' };
 }
@@ -542,7 +557,9 @@ function renderDueDatesCompact(del, activeDueDate = selectedDueDate) {
     const idx = del.dueDates.indexOf(d);
     const active = activeDueDate === d ? ' active' : '';
     const note = d.note ? `<span class="due-note">${renderNoteIcon(d.note)}</span>` : '';
-    return `<button type="button" class="due-date-pill ${statusClass(dueDateStatus(d, del))}${active}" data-due-index="${idx}" title="${escapeHtml(d.note || monthKeyFromDueDate(d) || '')}">${escapeHtml(dueDateValue(d))}${note}</button>`;
+    const actionCount = Array.isArray(d.actions) ? d.actions.length : 0;
+    const actionLabel = actionCount ? ` • ${actionCount} action${actionCount === 1 ? '' : 's'}` : '';
+    return `<button type="button" class="due-date-pill ${statusClass(dueDateStatus(d, del))}${active}" data-due-index="${idx}" title="${escapeHtml(`${d.note || monthKeyFromDueDate(d) || ''}${actionLabel}`)}">${escapeHtml(dueDateValue(d))}${note}${actionCount ? `<span class="due-note">${actionCount}</span>` : ''}</button>`;
   };
   const visible = dates.slice(0, limit).map(pill).join('');
   const hidden = dates.slice(limit).map(pill).join('');
@@ -553,13 +570,32 @@ function renderDueDatesCompact(del, activeDueDate = selectedDueDate) {
       ${hidden ? `<details class="due-more"><summary>Show ${dates.length - limit} more</summary><div class="due-pill-grid">${hidden}</div></details>` : ''}
     </div>`;
 }
+function renderDueDateActions(dueDate) {
+  const actions = Array.isArray(dueDate?.actions) ? dueDate.actions : [];
+  const items = actions.length ? actions.map(action => `
+    <li>
+      <strong>${escapeHtml(action.name || 'Action')}</strong>
+      <div>${escapeHtml(action.note || '')}</div>
+      ${action.timestamp ? `<span class="action-timestamp">${escapeHtml(action.timestamp)}</span>` : ''}
+    </li>`).join('') : '<li>No actions yet.</li>';
+  return `
+    <div class="field"><label>Actions</label><ul class="action-list">${items}</ul></div>
+    <div class="form-grid">
+      <div class="field"><label>New Action Name</label><input id="newActionName" type="text" placeholder="Action name"></div>
+      <div class="field"><label>New Action Note</label><textarea id="newActionNote" rows="2" placeholder="Optional action note"></textarea></div>
+    </div>
+    <div class="help-text" style="margin-top:-0.4rem;margin-bottom:1rem">Actions are optional. New entries are attached to this due date and timestamped when you save.</div>`;
+}
 function deliverableMatchesSearch(del) {
   const q = currentSearchQuery.trim().toLowerCase();
   if (!q) return true;
   const tags = normalizeTags(del.tags);
   const tagHaystack = tags.join(' ').toLowerCase();
   if (tagSearchOnly) return tagHaystack.includes(q);
-  const dueText = (del.dueDates || []).map(d => [dueDateValue(d), dueDateStatus(d, del), d.note || ''].join(' ')).join(' ');
+  const dueText = (del.dueDates || []).map(d => {
+    const actions = (Array.isArray(d.actions) ? d.actions : []).map(action => [action.name, action.note, action.timestamp].join(' ')).join(' ');
+    return [dueDateValue(d), dueDateStatus(d, del), d.note || '', actions].join(' ');
+  }).join(' ');
   const haystack = [del.title, del.owner, del.status, del.start, del.end, del.desc, tagHaystack, dueText, ...(del.notes || [])]
     .join(' ')
     .toLowerCase();
@@ -761,7 +797,8 @@ function buildMarkdownExport() {
   const rows = collectDueItems();
   rows.forEach(({ doc, del, dueDate }) => {
     const tags = normalizeTags(del.tags).join(', ');
-    const notes = [dueDate.note ? `Due: ${dueDate.note}` : '', ...(Array.isArray(del.notes) ? del.notes.map(n => `Task: ${n}`) : [])].filter(Boolean).join('<br>');
+    const actions = (Array.isArray(dueDate.actions) ? dueDate.actions : []).map(action => `Action: ${action.name || 'Action'}${action.note ? ` — ${action.note}` : ''}${action.timestamp ? ` (${action.timestamp})` : ''}`);
+    const notes = [dueDate.note ? `Due: ${dueDate.note}` : '', ...actions, ...(Array.isArray(del.notes) ? del.notes.map(n => `Task: ${n}`) : [])].filter(Boolean).join('<br>');
     lines.push(`| ${markdownTableCell(dueDateValue(dueDate))} | ${markdownTableCell(`${del.favorite ? '★ ' : ''}${del.title}`)} | ${markdownTableCell(productName(doc))} | ${markdownTableCell(statusLabel(dueDateStatus(dueDate, del)))} | ${markdownTableCell(del.owner || doc.data.owner || '')} | ${markdownTableCell(tags)} | ${markdownTableCell(notes)} |`);
   });
   if (!rows.length) lines.push('| — | No matching due-date items. | — | — | — | — | — |');
@@ -1031,6 +1068,7 @@ function openDetail(del, doc, dueDate = null) {
   const notes = (del.notes || []).map(n => `<li>${escapeHtml(n)}</li>`).join('') || '<li>No task notes yet.</li>';
   const dueDates = renderDueDatesCompact(del, selectedDueDate);
   const selectedNote = selectedDueDate ? selectedDueDate.note || '' : '';
+  const actionSection = selectedDueDate ? renderDueDateActions(selectedDueDate) : '';
   openPanel(del.title, `
     <div class="field"><label>${selectedDueDate ? `Due Date Status: ${escapeHtml(dueDateValue(selectedDueDate))}` : 'Task Status'}</label><div class="status-buttons" id="statusButtons">
       ${supportedStatuses().map(s => `<button class="btn small ${s === selectedStatus ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
@@ -1043,6 +1081,7 @@ function openDetail(del, doc, dueDate = null) {
     <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>${selectedDueDate ? 'Due Date Note' : 'Status Note'}</label><textarea id="statusNote" rows="4" placeholder="Optional note...">${escapeHtml(selectedNote)}</textarea></div>
+    ${actionSection}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn active" id="btnSaveStatus">Save Changes</button><button class="btn" id="btnCancelStatus">Cancel</button></div>
     <div class="field" style="margin-top:1rem"><label>Task Notes</label><ul class="notes-list">${notes}</ul></div>
   `);
@@ -1073,6 +1112,12 @@ function saveStatusChange() {
   if (selectedDueDate) {
     selectedDueDate.status = selectedStatus;
     selectedDueDate.note = note;
+    const actionName = ($('#newActionName')?.value || '').trim();
+    const actionNote = ($('#newActionNote')?.value || '').trim();
+    if (actionName || actionNote) {
+      if (!Array.isArray(selectedDueDate.actions)) selectedDueDate.actions = [];
+      selectedDueDate.actions.push({ name: actionName, note: actionNote, timestamp: getEasternTimestamp() });
+    }
   } else {
     const oldStatus = selectedDeliverable.status;
     selectedDeliverable.status = selectedStatus;
@@ -1115,7 +1160,7 @@ function openEditor() {
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Optional product field: "order" number controls product display order. Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "..." }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Optional product field: "order" number controls product display order. Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "...", "actions": [{ "name": "Follow up", "note": "Owner confirmed scope.", "timestamp": "2026-05-12 14:30:00 ET" }] }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-add-deliverable]').forEach(btn => btn.addEventListener('click', e => {
     const idx = Number(e.currentTarget.dataset.addDeliverable);

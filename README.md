@@ -9,7 +9,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Linear due-date view** — toggle from the grid to a top-to-bottom chronological list of due-date items.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
-- **Per-date status + notes** — each `dueDates[]` item can store its own `status` and `note`; legacy string due dates are migrated automatically.
+- **Per-date status, notes, and actions** — each `dueDates[]` item can store its own `status`, `note`, and optional timestamped `actions`; legacy string due dates are migrated automatically.
 - **Multiple product JSON documents** — each product has its own JSON card in the edit drawer; optional product `order` controls display sequence.
 - **Collapsed raw JSON** — product JSON is hidden by default in the drawer and expands only when you click **Edit JSON**.
 - **Deliverable creation** — add deliverables to any product card, including newly-created empty product JSON documents.
@@ -65,8 +65,10 @@ Each editor card contains one product roadmap JSON document:
       "tags": ["api", "security"],
       "favorite": true,
       "dueDates": [
-        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
-        { "date": "06/30/2026", "status": "not-started", "note": "" }
+        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff.", "actions": [
+          { "name": "Architecture review", "note": "Security sign-off captured.", "timestamp": "2026-05-12 14:30:00 ET" }
+        ] },
+        { "date": "06/30/2026", "status": "not-started", "note": "", "actions": [] }
       ],
       "notes": []
     }
@@ -80,7 +82,7 @@ Machine-readable schema: `roadmap.schema.json`. It validates a single product ob
 
 Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
-Due date format: preferred `dueDates` entries are objects with `date`, `status`, and `note`. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
+Due date format: preferred `dueDates` entries are objects with `date`, `status`, `note`, and optional `actions`. Each `actions[]` entry can include `name`, `note`, and `timestamp`; entries added in the UI are timestamped automatically. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
 
 Optional product metadata: `order` may be a number; lower numbers render first across product toggles, grid swimlanes, and list/list-view grouping.
 

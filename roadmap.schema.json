@@ -43,8 +43,28 @@
         "12/01/2028"
       ]
     },
+    "dueDateAction": {
+      "description": "Optional action captured against a single due date. UI-created actions are timestamped at save time.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": ""
+        },
+        "note": {
+          "type": "string",
+          "default": ""
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Entry timestamp, usually YYYY-MM-DD HH:mm:ss ET.",
+          "default": ""
+        }
+      }
+    },
     "dueDate": {
-      "description": "Per-date schedule item. Status and note belong to this due date, not the whole deliverable.",
+      "description": "Per-date schedule item. Status, note, and actions belong to this due date, not the whole deliverable.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -61,6 +81,13 @@
         "note": {
           "type": "string",
           "default": ""
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/dueDateAction"
+          },
+          "default": []
         }
       }
     },
