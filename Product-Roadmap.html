@@ -579,7 +579,7 @@ function renderDueDateActions(dueDate) {
       ${action.timestamp ? `<span class="action-timestamp">${escapeHtml(action.timestamp)}</span>` : ''}
     </li>`).join('') : '<li>No actions yet.</li>';
   return `
-    <div class="field"><label>Actions</label></div>
+    <div class="field" style="padding-top:1rem"><label>Actions</label></div>
     <div class="field"><label>Name</label><input id="newActionName" type="text" placeholder="Action name"></div>
     <div class="field"><label>Note</label><textarea id="newActionNote" rows="3" placeholder="Optional action note"></textarea></div>
     <div class="help-text" style="margin-top:-0.4rem;margin-bottom:1rem">Actions are optional. New entries are attached to this due date and timestamped when you save.</div>
