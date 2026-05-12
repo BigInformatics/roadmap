@@ -50,8 +50,10 @@ Each editor card contains one product roadmap JSON object:
       "tags": ["api", "security"],
       "favorite": true,
       "dueDates": [
-        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
-        { "date": "06/30/2026", "status": "not-started", "note": "" }
+        { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff.", "actions": [
+          { "name": "Architecture review", "note": "Security sign-off captured.", "timestamp": "2026-05-12 14:30:00 ET" }
+        ] },
+        { "date": "06/30/2026", "status": "not-started", "note": "", "actions": [] }
       ],
       "notes": []
     }
@@ -84,19 +86,26 @@ Each editor card contains one product roadmap JSON object:
 | `desc` | **Yes** | string | Detailed description, requirements, or submission rules. |
 | `tags` | No | array or string | Optional labels for filtering. Arrays such as `["api", "security"]` and comma-separated strings are normalized by the UI. The header **Tags** toggle makes the search box match tags only. |
 | `favorite` | No | boolean | Optional task star. `true` marks a task as a favorite; the header **Favorites** toggle filters to favorites only. |
-| `dueDates` | **Yes** | array | Preferred list of due date objects with `date`, `status`, and `note`. Legacy `MM/DD/YYYY` strings are migrated automatically. Parseable dates render into timeline month chips. |
+| `dueDates` | **Yes** | array | Preferred list of due date objects with `date`, `status`, `note`, and optional `actions`. Legacy `MM/DD/YYYY` strings are migrated automatically. Parseable dates render into timeline month chips. |
 | `notes` | **Yes** | array | Additional comments, attachments, metadata, or status-change notes. |
 
 ---
 
 ## Due Date Rendering
 
-Each deliverable can have one or more values in `dueDates`. Preferred entries are objects so each date can track status and a note independently:
+Each deliverable can have one or more values in `dueDates`. Preferred entries are objects so each date can track status, a note, and optional timestamped actions independently:
 
 ```json
 "dueDates": [
-  { "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." },
-  { "date": "06/30/2026", "status": "not-started", "note": "" }
+  {
+    "date": "05/15/2026",
+    "status": "in-progress",
+    "note": "Token endpoint handoff.",
+    "actions": [
+      { "name": "Architecture review", "note": "Security sign-off captured.", "timestamp": "2026-05-12 14:30:00 ET" }
+    ]
+  },
+  { "date": "06/30/2026", "status": "not-started", "note": "", "actions": [] }
 ]
 ```
 
@@ -112,7 +121,7 @@ Rendering behavior:
 2. The timeline does **not** draw a long start-to-end duration bar.
 3. Any `MM/DD/YYYY` due date is converted to its `Mon YYYY` month.
 4. Each parsed due date is rendered as a small due-date chip using that due date's own `status` color inside the matching month column.
-5. Click a due-date chip to open the drawer for that specific date, update its status, and save a date-specific note.
+5. Click a due-date chip to open the drawer for that specific date, update its status, save a date-specific note, and optionally add a due-date action with name, note, and automatic timestamp.
 6. Click a month heading to filter the roadmap to tasks with due dates in that month/year and highlight the column green; use **Clear date** to remove the filter.
 7. Use the header Month and Year dropdowns to filter both the grid and linear list. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
 8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only.
@@ -162,12 +171,12 @@ The default timeline supports **January 2026 through December 2032**.
 
 ### Due Dates
 
-`dueDates` prefers objects with a parseable `date`, a per-date `status`, and a free-text `note`. If `status` or `note` are omitted, the UI normalizes them with a fallback status and empty note.
+`dueDates` prefers objects with a parseable `date`, a per-date `status`, a free-text `note`, and optional `actions`. Each `actions[]` entry supports `name`, `note`, and `timestamp`; actions added from the UI are stamped automatically when saved. If `status` or `note` are omitted, the UI normalizes them with a fallback status and empty note.
 
 Examples:
 
 - `{ "date": "05/15/2026", "status": "in-progress", "note": "Token endpoint handoff." }` renders in the `May 2026` column with the in-progress chip color
-- `{ "date": "12/01/2028", "status": "completed", "note": "Accepted." }` renders in the `Dec 2028` column with the completed chip color
+- `{ "date": "12/01/2028", "status": "completed", "note": "Accepted.", "actions": [{ "name": "Notify stakeholders", "note": "Shared completion summary.", "timestamp": "2026-05-12 14:30:00 ET" }] }` renders in the `Dec 2028` column with the completed chip color
 - Legacy `"05/15/2026"` entries are migrated to `{ "date": "05/15/2026", "status": <deliverable status>, "note": "" }`
 
 ---
