@@ -579,12 +579,11 @@ function renderDueDateActions(dueDate) {
       ${action.timestamp ? `<span class="action-timestamp">${escapeHtml(action.timestamp)}</span>` : ''}
     </li>`).join('') : '<li>No actions yet.</li>';
   return `
-    <div class="field"><label>Actions</label><ul class="action-list">${items}</ul></div>
-    <div class="form-grid">
-      <div class="field"><label>New Action Name</label><input id="newActionName" type="text" placeholder="Action name"></div>
-      <div class="field"><label>New Action Note</label><textarea id="newActionNote" rows="2" placeholder="Optional action note"></textarea></div>
-    </div>
-    <div class="help-text" style="margin-top:-0.4rem;margin-bottom:1rem">Actions are optional. New entries are attached to this due date and timestamped when you save.</div>`;
+    <div class="field"><label>Actions</label></div>
+    <div class="field"><label>Name</label><input id="newActionName" type="text" placeholder="Action name"></div>
+    <div class="field"><label>Note</label><textarea id="newActionNote" rows="3" placeholder="Optional action note"></textarea></div>
+    <div class="help-text" style="margin-top:-0.4rem;margin-bottom:1rem">Actions are optional. New entries are attached to this due date and timestamped when you save.</div>
+    <div class="field"><label>Action History</label><ul class="action-list">${items}</ul></div>`;
 }
 function deliverableMatchesSearch(del) {
   const q = currentSearchQuery.trim().toLowerCase();
@@ -1081,8 +1080,8 @@ function openDetail(del, doc, dueDate = null) {
     <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>${selectedDueDate ? 'Due Date Note' : 'Status Note'}</label><textarea id="statusNote" rows="4" placeholder="Optional note...">${escapeHtml(selectedNote)}</textarea></div>
-    ${actionSection}
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn active" id="btnSaveStatus">Save Changes</button><button class="btn" id="btnCancelStatus">Cancel</button></div>
+    ${actionSection}
     <div class="field" style="margin-top:1rem"><label>Task Notes</label><ul class="notes-list">${notes}</ul></div>
   `);
   document.querySelectorAll('[data-due-index]').forEach(btn => btn.addEventListener('click', e => {
