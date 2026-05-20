@@ -30,11 +30,13 @@ class ProductColorFeatureTests(unittest.TestCase):
         self.assertIn('style="--product-color:${escapeHtml(productColor(item.doc))}"', html)
         self.assertIn("linear-product-bar", html)
 
-    def test_view_toggle_shows_destination_icon_and_label(self):
+    def test_direct_view_buttons_show_icons_and_active_state(self):
         html = text(HTML)
-        self.assertIn("function nextViewMode()", html)
-        self.assertIn("const targetView = nextViewMode();", html)
-        self.assertIn("viewIcon(targetView)", html)
+        self.assertIn('data-view-mode="grid"', html)
+        self.assertIn('data-view-mode="linear"', html)
+        self.assertIn('data-view-mode="timeline"', html)
+        self.assertIn("viewIcon(view)", html)
+        self.assertIn("btn.classList.toggle('active', currentView === view)", html)
         self.assertIn("Grid View", html)
         self.assertIn("List View", html)
 

@@ -49,10 +49,12 @@ class TimelineViewFeatureTests(unittest.TestCase):
     def test_timeline_supports_zoomed_timeframes_and_horizontal_scroll(self):
         html = html_text()
         self.assertIn('id="timelineWindow"', html)
+        self.assertIn('value="month"', html)
         self.assertIn('value="quarter"', html)
         self.assertIn('value="year"', html)
         self.assertIn('value="all"', html)
         self.assertIn("let timelineWindow = 'all';", html)
+        self.assertIn("timelineWindow === 'month' ? 1", html)
         self.assertIn("function timelineVisibleDomain", html)
         self.assertIn("function shiftTimelineWindow", html)
         self.assertIn("data-timeline-pan=\"prev\"", html)
@@ -60,6 +62,16 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("timeline-scroll-canvas", html)
         self.assertIn("fullDomain[1].getMonth() - months, 1", html)
         self.assertIn("item.parsed >= domain[0] && item.parsed < domain[1]", html)
+
+    def test_list_view_is_default_and_view_buttons_are_direct(self):
+        html = html_text()
+        self.assertIn("let currentView = 'linear';", html)
+        self.assertIn('data-view-mode="grid"', html)
+        self.assertIn('data-view-mode="linear"', html)
+        self.assertIn('data-view-mode="timeline"', html)
+        self.assertIn("document.querySelectorAll('[data-view-mode]')", html)
+        self.assertNotIn("function nextViewMode()", html)
+        self.assertNotIn("btnViewToggle", html)
 
 
 if __name__ == "__main__":

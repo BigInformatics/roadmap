@@ -345,8 +345,11 @@
         <option value="all">All Time</option>
         <option value="year">1 Year</option>
         <option value="quarter">1 Quarter</option>
+        <option value="month">1 Month</option>
       </select>
-      <button class="btn icon-btn icon-only active" id="btnViewToggle" type="button" aria-label="Grid View" title="Grid View"></button>
+      <button class="btn icon-btn icon-only" type="button" data-view-mode="grid" aria-label="Grid View" title="Grid View"></button>
+      <button class="btn icon-btn icon-only active" type="button" data-view-mode="linear" aria-label="List View" title="List View"></button>
+      <button class="btn icon-btn icon-only" type="button" data-view-mode="timeline" aria-label="Timeline View" title="Timeline View"></button>
       <button class="btn icon-btn icon-only" id="btnCollapseAll" type="button" aria-label="Collapse All" title="Collapse All"></button>
       <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
       <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
@@ -401,7 +404,7 @@ let selectedMonthFilter = null;
 let selectedYearFilter = '';
 let selectedMonthNameFilter = '';
 let selectedStatus = null;
-let currentView = 'grid';
+let currentView = 'linear';
 let timelineGrouping = 'unified';
 let timelineWindow = 'all';
 let timelineWindowStart = null;
@@ -1002,22 +1005,18 @@ function renderRoadmap() {
   renderStats();
 }
 
-function nextViewMode() {
-  const sequence = ['grid', 'linear', 'timeline'];
-  return sequence[(sequence.indexOf(currentView) + 1) % sequence.length] || 'grid';
-}
 function viewLabel(view) { return view === 'timeline' ? 'Timeline View' : view === 'linear' ? 'List View' : 'Grid View'; }
 function viewIcon(view) { return view === 'timeline' ? timelineViewIcon() : view === 'linear' ? listIcon() : gridIcon(); }
 function updateViewControls() {
-  const btn = $('#btnViewToggle');
-  if (btn) {
-    const targetView = nextViewMode();
-    const label = `Switch to ${viewLabel(targetView)}`;
-    btn.innerHTML = `${viewIcon(targetView)}<span class="btn-label">${label}</span>`;
-    btn.classList.toggle('active', currentView === 'grid');
+  document.querySelectorAll('[data-view-mode]').forEach(btn => {
+    const view = btn.dataset.viewMode;
+    const label = viewLabel(view);
+    btn.innerHTML = `${viewIcon(view)}<span class="btn-label">${label}</span>`;
+    btn.classList.toggle('active', currentView === view);
     btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', String(currentView === view));
     btn.title = label;
-  }
+  });
   const tagBtn = $('#btnTagSearch');
   if (tagBtn) {
     tagBtn.innerHTML = tagIcon();
@@ -1131,7 +1130,7 @@ function timelineDateDomain(items) {
   max.setMonth(max.getMonth() + 1, 1);
   return [min, max];
 }
-function timelineWindowMonths() { return timelineWindow === 'quarter' ? 3 : timelineWindow === 'year' ? 12 : null; }
+function timelineWindowMonths() { return timelineWindow === 'month' ? 1 : timelineWindow === 'quarter' ? 3 : timelineWindow === 'year' ? 12 : null; }
 function clampTimelineWindowStart(start, fullDomain) {
   const months = timelineWindowMonths();
   if (!months) return null;
@@ -1199,7 +1198,7 @@ function renderD3Timeline() {
   const visibleItems = items.filter(item => item.parsed >= domain[0] && item.parsed < domain[1]);
   const groups = groupTimelineItems(visibleItems);
   const baseWidth = wrap.clientWidth || 920;
-  const width = Math.max(1100, baseWidth, (timelineWindow === 'quarter' ? 2200 : timelineWindow === 'year' ? 1800 : 1100));
+  const width = Math.max(1100, baseWidth, (timelineWindow === 'month' ? 2600 : timelineWindow === 'quarter' ? 2200 : timelineWindow === 'year' ? 1800 : 1100));
   const margin = { top: 42, right: 34, bottom: 42, left: timelineGrouping === 'product' ? 154 : 34 };
   const laneHeight = 118;
   const height = margin.top + margin.bottom + Math.max(1, groups.length) * laneHeight;
@@ -1640,9 +1639,9 @@ function clearCache() {
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
 $('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchOnly; renderRoadmap(); });
 $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
-$('#btnViewToggle').addEventListener('click', () => { currentView = nextViewMode(); renderRoadmap(); });
+document.querySelectorAll('[data-view-mode]').forEach(btn => btn.addEventListener('click', e => { currentView = e.currentTarget.dataset.viewMode || 'linear'; renderRoadmap(); }));
 $('#timelineGrouping').addEventListener('change', e => { timelineGrouping = e.target.value === 'product' ? 'product' : 'unified'; renderRoadmap(); });
-$('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
+$('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter', 'month'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
 $('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; timelineWindowStart = null; renderRoadmap(); });
 $('#btnCollapseAll').addEventListener('click', () => {
   if ($('#btnCollapseAll').disabled) return;
