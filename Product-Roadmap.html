@@ -148,6 +148,26 @@
   .linear-meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.18rem; }
   .linear-contract { color: var(--ink); font-size: 0.88rem; }
   .linear-status { justify-self: start; border: 1px solid; border-radius: 999px; padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; }
+  .d3-wrap { overflow-x: hidden; }
+  .d3-wrap .timeline-header { display: block; min-width: 100%; }
+  .d3-timeline-toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.75rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; }
+  .d3-timeline-title { color: var(--ink); font-weight: 700; }
+  .d3-timeline-actions { display: inline-flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .timeline-scroll-canvas { overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; }
+  .d3-timeline-canvas { padding: 1rem; min-height: 320px; }
+  .d3-timeline-svg { width: 100%; min-height: 320px; display: block; overflow: visible; }
+  .timeline-axis line, .timeline-axis path { stroke: var(--border); }
+  .timeline-axis text { fill: var(--muted); font-size: 0.72rem; }
+  .timeline-lane-line { stroke: var(--border); stroke-width: 1; stroke-dasharray: 4 5; }
+  .timeline-group-label { fill: var(--muted); font-size: 0.76rem; font-weight: 700; }
+  .timeline-node { cursor: pointer; transition: opacity 0.15s, transform 0.15s; }
+  .timeline-node:hover { opacity: 0.85; }
+  .timeline-node-dot { stroke: var(--surface); stroke-width: 3; filter: drop-shadow(0 2px 7px rgba(0,0,0,0.35)); }
+  .timeline-node-card { fill: var(--surface-2); stroke: var(--border); rx: 8; }
+  .timeline-node-title { fill: var(--ink); font-size: 0.74rem; font-weight: 700; }
+  .timeline-node-meta { fill: var(--muted); font-size: 0.66rem; }
+  .timeline-today { stroke: var(--gold); stroke-width: 2; stroke-dasharray: 6 5; }
+  .timeline-empty { padding: 2rem; color: var(--muted); }
   .timeline-header, .swimlane-header, .deliverable-row { min-width: calc(var(--name-col) + (var(--month-col) * var(--month-count))); }
   .timeline-header { display: flex; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 50; }
   .th-cell { flex-shrink: 0; padding: 0.4rem 0.2rem; font: inherit; font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); background: transparent; border: 0; border-right: 1px solid var(--border); text-align: center; line-height: 1.3; }
@@ -295,6 +315,9 @@
     <input class="search-box" id="taskSearch" type="search" placeholder="Search tasks or tags..." aria-label="Search tasks or tags">
     <button class="btn icon-btn" id="btnTagSearch" type="button" aria-pressed="false" title="Search tags only"></button>
     <button class="btn icon-btn" id="btnFavoritesOnly" type="button" aria-pressed="false" title="Show favorites only"></button>
+    <select class="btn date-select" id="tagFilter" aria-label="Filter by tag">
+      <option value="">All Tags</option>
+    </select>
     <select class="btn date-select" id="yearFilter" aria-label="Filter by year">
       <option value="">All Years</option>
     </select>
@@ -314,7 +337,19 @@
     </select>
     <div class="utility-controls">
       <button class="btn icon-btn icon-only" id="btnCopyMarkdown" type="button" aria-label="Copy Markdown" title="Copy Markdown"></button>
-      <button class="btn icon-btn icon-only active" id="btnViewToggle" type="button" aria-label="Grid View" title="Grid View"></button>
+      <select class="btn date-select" id="timelineGrouping" aria-label="Timeline grouping">
+        <option value="unified">Unified</option>
+        <option value="product">By Product</option>
+      </select>
+      <select class="btn date-select" id="timelineWindow" aria-label="Timeline timeframe">
+        <option value="all">All Time</option>
+        <option value="year">1 Year</option>
+        <option value="quarter">1 Quarter</option>
+        <option value="month">1 Month</option>
+      </select>
+      <button class="btn icon-btn icon-only" type="button" data-view-mode="grid" aria-label="Grid View" title="Grid View"></button>
+      <button class="btn icon-btn icon-only active" type="button" data-view-mode="linear" aria-label="List View" title="List View"></button>
+      <button class="btn icon-btn icon-only" type="button" data-view-mode="timeline" aria-label="Timeline View" title="Timeline View"></button>
       <button class="btn icon-btn icon-only" id="btnCollapseAll" type="button" aria-label="Collapse All" title="Collapse All"></button>
       <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
       <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
@@ -364,11 +399,15 @@ let currentStatusFilter = 'all';
 let currentSearchQuery = '';
 let tagSearchOnly = false;
 let favoritesOnly = false;
+let selectedTagFilter = '';
 let selectedMonthFilter = null;
 let selectedYearFilter = '';
 let selectedMonthNameFilter = '';
 let selectedStatus = null;
-let currentView = 'grid';
+let currentView = 'linear';
+let timelineGrouping = 'unified';
+let timelineWindow = 'all';
+let timelineWindowStart = null;
 let selectedDeliverable = null;
 let selectedDocument = null;
 let selectedDueDate = null;
@@ -434,6 +473,7 @@ function editIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24"
 function chevronIcon(collapsed) { return collapsed ? '▸' : '▾'; }
 function gridIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-grid-icon lucide-layout-grid"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>'; }
 function listIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-icon lucide-list"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>'; }
+function timelineViewIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-no-axes-gantt-icon lucide-chart-no-axes-gantt"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>'; }
 function collapseIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-up-icon lucide-chevrons-up"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg>'; }
 function expandIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-down-icon lucide-chevrons-down"><path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/></svg>'; }
 function starIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>'; }
@@ -447,6 +487,15 @@ function renderTagPills(tags) {
   const normalized = normalizeTags(tags);
   if (!normalized.length) return '';
   return `<div class="tag-list">${normalized.map(tag => `<span class="tag-pill">${tagIcon()}${escapeHtml(tag)}</span>`).join('')}</div>`;
+}
+function availableTags() {
+  const tags = new Set();
+  enabledDocuments().forEach(doc => (doc.data.deliverables || []).forEach(del => normalizeTags(del.tags).forEach(tag => tags.add(tag))));
+  return [...tags].sort((a, b) => a.localeCompare(b));
+}
+function deliverableMatchesSelectedTag(del) {
+  if (!selectedTagFilter) return true;
+  return normalizeTags(del.tags).some(tag => tag.toLowerCase() === selectedTagFilter.toLowerCase());
 }
 function chipMetaIcons(del) {
   const tags = normalizeTags(del.tags);
@@ -622,7 +671,8 @@ function deliverableMatchesFilters(del) {
   const statusOk = currentStatusFilter === 'all' || del.status === currentStatusFilter || (del.dueDates || []).some(d => dueDateStatus(d, del) === currentStatusFilter);
   const dateOk = !dateFilterActive() || (del.dueDates || []).some(dueDateMatchesDateFilter);
   const favoriteOk = !favoritesOnly || Boolean(del.favorite);
-  return statusOk && dateOk && favoriteOk && deliverableMatchesSearch(del);
+  const tagOk = deliverableMatchesSelectedTag(del);
+  return statusOk && dateOk && favoriteOk && tagOk && deliverableMatchesSearch(del);
 }
 function getEasternTimestamp() {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date());
@@ -757,6 +807,7 @@ function renderStats() {
   $('#statCompleted').textContent = comp;
   $('#statDueThisMonth').textContent = due;
   syncDateFilterControls();
+  populateTagFilterControls();
   const monthBtn = $('#btnClearMonth');
   if (monthBtn) {
     const label = dateFilterLabel();
@@ -796,7 +847,8 @@ function buildMarkdownExport() {
   if (favoritesOnly) filters.push('Favorites only');
   if (dateFilterActive()) filters.push(`Date: ${dateFilterLabel()}`);
   if (currentStatusFilter !== 'all') filters.push(`Status: ${statusLabel(currentStatusFilter)}`);
-  filters.push(`View: ${currentView === 'grid' ? 'Grid' : 'List'}`);
+  if (selectedTagFilter) filters.push(`Tag: ${selectedTagFilter}`);
+  filters.push(`View: ${currentView === 'timeline' ? 'Timeline' : currentView === 'grid' ? 'Grid' : 'List'}`);
   const stats = getVisibleSummaryStats();
   const lines = [
     `# ${markdownEscape(title)}`,
@@ -880,9 +932,13 @@ function renderRoadmap() {
     renderLinearTimeline();
     return;
   }
+  if (currentView === 'timeline') {
+    renderD3Timeline();
+    return;
+  }
   renderTimelineHeader();
   const body = $('#roadmapBody');
-  $('#roadmapWrap').classList.remove('linear-wrap');
+  $('#roadmapWrap').classList.remove('linear-wrap', 'd3-wrap');
   body.innerHTML = '';
   const currentIdx = monthIndex(getCurrentMonthKey());
   const docs = enabledDocuments();
@@ -949,16 +1005,18 @@ function renderRoadmap() {
   renderStats();
 }
 
+function viewLabel(view) { return view === 'timeline' ? 'Timeline View' : view === 'linear' ? 'List View' : 'Grid View'; }
+function viewIcon(view) { return view === 'timeline' ? timelineViewIcon() : view === 'linear' ? listIcon() : gridIcon(); }
 function updateViewControls() {
-  const btn = $('#btnViewToggle');
-  if (btn) {
-    const targetView = currentView === 'grid' ? 'linear' : 'grid';
-    const label = targetView === 'grid' ? 'Switch to Grid View' : 'Switch to List View';
-    btn.innerHTML = `${targetView === 'grid' ? gridIcon() : listIcon()}<span class="btn-label">${label}</span>`;
-    btn.classList.toggle('active', currentView === 'grid');
+  document.querySelectorAll('[data-view-mode]').forEach(btn => {
+    const view = btn.dataset.viewMode;
+    const label = viewLabel(view);
+    btn.innerHTML = `${viewIcon(view)}<span class="btn-label">${label}</span>`;
+    btn.classList.toggle('active', currentView === view);
     btn.setAttribute('aria-label', label);
+    btn.setAttribute('aria-pressed', String(currentView === view));
     btn.title = label;
-  }
+  });
   const tagBtn = $('#btnTagSearch');
   if (tagBtn) {
     tagBtn.innerHTML = tagIcon();
@@ -974,6 +1032,18 @@ function updateViewControls() {
     favBtn.setAttribute('aria-pressed', String(favoritesOnly));
     favBtn.setAttribute('aria-label', favoritesOnly ? 'Show all tasks' : 'Show favorites only');
     favBtn.title = favoritesOnly ? 'Showing favorites only' : 'Show favorites only';
+  }
+  const grouping = $('#timelineGrouping');
+  if (grouping) {
+    grouping.value = timelineGrouping;
+    grouping.disabled = currentView !== 'timeline';
+    grouping.title = currentView === 'timeline' ? 'Timeline grouping' : 'Timeline grouping is available in Timeline View';
+  }
+  const windowSelect = $('#timelineWindow');
+  if (windowSelect) {
+    windowSelect.value = timelineWindow;
+    windowSelect.disabled = currentView !== 'timeline';
+    windowSelect.title = currentView === 'timeline' ? 'Timeline timeframe' : 'Timeline timeframe is available in Timeline View';
   }
   const collapseBtn = $('#btnCollapseAll');
   if (collapseBtn) {
@@ -994,7 +1064,7 @@ function updateViewControls() {
     nowBtn.innerHTML = `${locateIcon()}<span class="btn-label">Jump to Now</span>`;
     nowBtn.disabled = disabled;
     nowBtn.setAttribute('aria-label', disabled ? 'Jump to Now unavailable in grid view' : 'Jump to Now');
-    nowBtn.title = disabled ? 'Jump to Now is available in list view' : 'Jump to Now';
+    nowBtn.title = disabled ? 'Jump to Now is available in list or timeline view' : 'Jump to Now';
   }
   const editBtn = $('#btnEdit');
   if (editBtn) editBtn.innerHTML = `${editIcon()}<span class="btn-label">Edit Data</span>`;
@@ -1012,6 +1082,15 @@ function syncDateFilterControls() {
   if (year && year.value !== selectedYearFilter) year.value = selectedYearFilter;
   if (month && month.value !== selectedMonthNameFilter) month.value = selectedMonthNameFilter;
 }
+function populateTagFilterControls() {
+  const select = $('#tagFilter');
+  if (!select) return;
+  const tags = availableTags();
+  const current = select.value || selectedTagFilter;
+  select.innerHTML = '<option value="">All Tags</option>' + tags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`).join('');
+  if (tags.includes(current)) select.value = current;
+  else { select.value = ''; selectedTagFilter = ''; }
+}
 function collectDueItems() {
   const items = [];
   enabledDocuments().forEach(doc => {
@@ -1023,9 +1102,190 @@ function collectDueItems() {
   });
   return items.sort((a, b) => compareDueDateValues(a.dueDate, b.dueDate) || productName(a.doc).localeCompare(productName(b.doc)) || a.del.title.localeCompare(b.del.title));
 }
+const d3Timeline = (() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const create = (name, attrs = {}) => {
+    const el = document.createElementNS('http://www.w3.org/2000/svg', name);
+    Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, value));
+    return el;
+  };
+  const extent = (items, accessor) => {
+    const values = items.map(accessor).filter(Boolean).map(v => +v);
+    return [new Date(Math.min(...values)), new Date(Math.max(...values))];
+  };
+  const scaleTime = ([min, max], [left, right]) => {
+    const span = Math.max(1, +max - +min);
+    return value => left + ((+value - +min) / span) * (right - left);
+  };
+  return { NS, create, extent, scaleTime };
+})();
+function timelineDateDomain(items) {
+  const dated = items.filter(item => item.parsed);
+  if (!dated.length) {
+    const now = new Date();
+    return [new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 3, 1)];
+  }
+  const [min, max] = d3Timeline.extent(dated, item => item.parsed);
+  min.setMonth(min.getMonth() - 1, 1);
+  max.setMonth(max.getMonth() + 1, 1);
+  return [min, max];
+}
+function timelineWindowMonths() { return timelineWindow === 'month' ? 1 : timelineWindow === 'quarter' ? 3 : timelineWindow === 'year' ? 12 : null; }
+function clampTimelineWindowStart(start, fullDomain) {
+  const months = timelineWindowMonths();
+  if (!months) return null;
+  const min = new Date(fullDomain[0].getFullYear(), fullDomain[0].getMonth(), 1);
+  const latest = new Date(fullDomain[1].getFullYear(), fullDomain[1].getMonth() - months, 1);
+  const max = latest < min ? min : latest;
+  const candidate = start ? new Date(start.getFullYear(), start.getMonth(), 1) : new Date(min);
+  if (candidate < min) return min;
+  if (candidate > max) return max;
+  return candidate;
+}
+function timelineVisibleDomain(fullDomain) {
+  const months = timelineWindowMonths();
+  if (!months) { timelineWindowStart = null; return fullDomain; }
+  timelineWindowStart = clampTimelineWindowStart(timelineWindowStart, fullDomain);
+  const end = new Date(timelineWindowStart.getFullYear(), timelineWindowStart.getMonth() + months, 1);
+  return [timelineWindowStart, end > fullDomain[1] ? fullDomain[1] : end];
+}
+function shiftTimelineWindow(direction, fullDomain = null) {
+  const months = timelineWindowMonths();
+  if (!months) return;
+  const domain = fullDomain || timelineDateDomain(collectDueItems().filter(item => item.parsed));
+  const start = timelineWindowStart || domain[0];
+  timelineWindowStart = clampTimelineWindowStart(new Date(start.getFullYear(), start.getMonth() + (direction * months), 1), domain);
+  renderRoadmap();
+}
+function timelineWindowLabel(domain) {
+  return `${MONTH_NAMES[domain[0].getMonth()]} ${domain[0].getFullYear()} – ${MONTH_NAMES[domain[1].getMonth()]} ${domain[1].getFullYear()}`;
+}
+function groupTimelineItems(items) {
+  if (timelineGrouping === 'product') {
+    const groups = new Map();
+    items.forEach(item => {
+      const key = productName(item.doc);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(item);
+    });
+    return [...groups.entries()].map(([label, groupItems]) => ({ label, items: groupItems }));
+  }
+  return [{ label: selectedTagFilter ? `#${selectedTagFilter}` : 'Unified Timeline', items }];
+}
+function layoutTimelineItems(group, x, width, margin) {
+  const cardWidth = 168;
+  const cardGap = 14;
+  const leftLimit = margin.left + 8;
+  const rightLimit = Math.max(leftLimit, width - margin.right - cardWidth);
+  const rowEnds = [];
+  const positioned = [...group.items]
+    .map(item => ({ ...item, xPos: Math.min(rightLimit, Math.max(leftLimit, x(item.parsed))) }))
+    .sort((a, b) => a.xPos - b.xPos || dueDateValue(a.dueDate).localeCompare(dueDateValue(b.dueDate)));
+  positioned.forEach(item => {
+    const rowIndex = rowEnds.findIndex(end => item.xPos >= end + cardGap);
+    const row = rowIndex === -1 ? rowEnds.length : rowIndex;
+    rowEnds[row] = item.xPos + cardWidth;
+    item.layoutRow = row;
+  });
+  group.items = positioned;
+  group.layoutRows = Math.max(1, rowEnds.length);
+  return group;
+}
+function renderD3Timeline() {
+  const wrap = $('#roadmapWrap');
+  const body = $('#roadmapBody');
+  wrap.classList.remove('linear-wrap');
+  wrap.classList.add('d3-wrap');
+  const items = collectDueItems().filter(item => item.parsed);
+  const fullDomain = timelineDateDomain(items);
+  const domain = timelineVisibleDomain(fullDomain);
+  const tagLabel = selectedTagFilter ? `Tag: #${escapeHtml(selectedTagFilter)}` : 'All visible tags';
+  $('#timelineHeader').innerHTML = `<div class="d3-timeline-toolbar"><div><span class="d3-timeline-title">Timeline</span> • ${tagLabel} • ${escapeHtml(timelineWindowLabel(domain))}</div><div class="d3-timeline-actions"><button class="btn small" type="button" data-timeline-pan="prev" ${timelineWindow === 'all' ? 'disabled' : ''}>← Earlier</button><button class="btn small" type="button" data-timeline-pan="next" ${timelineWindow === 'all' ? 'disabled' : ''}>Later →</button><span>${timelineGrouping === 'product' ? 'Grouped by product' : 'Unified stream'}</span></div></div>`;
+  $('#timelineHeader').querySelectorAll('[data-timeline-pan]').forEach(btn => btn.addEventListener('click', e => shiftTimelineWindow(e.currentTarget.dataset.timelinePan === 'next' ? 1 : -1, fullDomain)));
+  body.innerHTML = '';
+  if (!enabledDocuments().length) {
+    body.innerHTML = renderNoDocumentsActions();
+    attachNoDocumentsActions();
+    renderStats();
+    return;
+  }
+  if (!items.length) {
+    body.innerHTML = '<div class="timeline-empty">No dated roadmap items match the current tag and filters.</div>';
+    renderStats();
+    return;
+  }
+  const visibleItems = items.filter(item => item.parsed >= domain[0] && item.parsed < domain[1]);
+  const baseWidth = wrap.clientWidth || 920;
+  const width = Math.max(1100, baseWidth, (timelineWindow === 'month' ? 2600 : timelineWindow === 'quarter' ? 2200 : timelineWindow === 'year' ? 1800 : 1100));
+  const margin = { top: 42, right: 34, bottom: 42, left: timelineGrouping === 'product' ? 154 : 34 };
+  const rowHeight = 62;
+  const lanePadding = 72;
+  const x = d3Timeline.scaleTime(domain, [margin.left, width - margin.right]);
+  const groups = groupTimelineItems(visibleItems).map(group => layoutTimelineItems(group, x, width, margin));
+  const groupOffsets = [];
+  let runningOffset = margin.top + 48;
+  groups.forEach(group => {
+    groupOffsets.push(runningOffset);
+    runningOffset += lanePadding + (group.layoutRows * rowHeight);
+  });
+  const height = runningOffset + margin.bottom;
+  const svg = d3Timeline.create('svg', { class: 'd3-timeline-svg', viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Roadmap timeline view' });
+  const axis = d3Timeline.create('g', { class: 'timeline-axis' });
+  const startYear = domain[0].getFullYear();
+  const endYear = domain[1].getFullYear();
+  for (let y = startYear; y <= endYear; y++) {
+    [0, 3, 6, 9].forEach(month => {
+      const d = new Date(y, month, 1);
+      if (d < domain[0] || d > domain[1]) return;
+      const px = x(d);
+      axis.appendChild(d3Timeline.create('line', { x1: px, x2: px, y1: margin.top - 16, y2: height - margin.bottom + 10 }));
+      const text = d3Timeline.create('text', { x: px + 4, y: 20 });
+      text.textContent = `${MONTH_NAMES[month]} ${y}`;
+      axis.appendChild(text);
+    });
+  }
+  svg.appendChild(axis);
+  const todayX = x(new Date());
+  if (todayX >= margin.left && todayX <= width - margin.right) svg.appendChild(d3Timeline.create('line', { class: 'timeline-today', x1: todayX, x2: todayX, y1: margin.top - 20, y2: height - margin.bottom + 10 }));
+  groups.forEach((group, groupIdx) => {
+    const laneY = groupOffsets[groupIdx];
+    svg.appendChild(d3Timeline.create('line', { class: 'timeline-lane-line', x1: margin.left, x2: width - margin.right, y1: laneY, y2: laneY }));
+    const label = d3Timeline.create('text', { class: 'timeline-group-label', x: 16, y: laneY + 4 });
+    label.textContent = group.label;
+    svg.appendChild(label);
+    group.items.forEach(item => {
+      const xPos = item.xPos;
+      const yPos = laneY + (item.layoutRow * rowHeight);
+      const status = dueDateStatus(item.dueDate, item.del);
+      const node = d3Timeline.create('g', { class: `timeline-node ${statusClass(status)}`, tabindex: '0', role: 'button', 'aria-label': `${item.del.title} due ${dueDateValue(item.dueDate)}` });
+      node.appendChild(d3Timeline.create('circle', { class: 'timeline-node-dot', cx: xPos, cy: yPos, r: 8, fill: productColor(item.doc) }));
+      node.appendChild(d3Timeline.create('rect', { class: 'timeline-node-card', x: xPos + 12, y: yPos - 22, width: 148, height: 44 }));
+      const title = d3Timeline.create('text', { class: 'timeline-node-title', x: xPos + 22, y: yPos - 5 });
+      title.textContent = item.del.title.length > 24 ? `${item.del.title.slice(0, 23)}…` : item.del.title;
+      node.appendChild(title);
+      const meta = d3Timeline.create('text', { class: 'timeline-node-meta', x: xPos + 22, y: yPos + 12 });
+      meta.textContent = `${dueDateValue(item.dueDate)} • ${productName(item.doc)} • ${statusLabel(status)}`;
+      node.appendChild(meta);
+      node.addEventListener('click', () => openDetail(item.del, item.doc, item.dueDate));
+      node.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item.del, item.doc, item.dueDate); } });
+      svg.appendChild(node);
+    });
+  });
+  const scrollCanvas = document.createElement('div');
+  scrollCanvas.className = 'timeline-scroll-canvas';
+  const canvas = document.createElement('div');
+  canvas.className = 'd3-timeline-canvas';
+  canvas.style.width = `${width}px`;
+  canvas.appendChild(svg);
+  scrollCanvas.appendChild(canvas);
+  body.appendChild(scrollCanvas);
+  renderStats();
+}
+
 function renderLinearTimeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
+  wrap.classList.remove('d3-wrap');
   wrap.classList.add('linear-wrap');
   wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
@@ -1404,7 +1664,10 @@ function clearCache() {
 $('#taskSearch').addEventListener('input', e => { currentSearchQuery = e.target.value; renderRoadmap(); });
 $('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchOnly; renderRoadmap(); });
 $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
-$('#btnViewToggle').addEventListener('click', () => { currentView = currentView === 'grid' ? 'linear' : 'grid'; renderRoadmap(); });
+document.querySelectorAll('[data-view-mode]').forEach(btn => btn.addEventListener('click', e => { currentView = e.currentTarget.dataset.viewMode || 'linear'; renderRoadmap(); }));
+$('#timelineGrouping').addEventListener('change', e => { timelineGrouping = e.target.value === 'product' ? 'product' : 'unified'; renderRoadmap(); });
+$('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter', 'month'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
+$('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; timelineWindowStart = null; renderRoadmap(); });
 $('#btnCollapseAll').addEventListener('click', () => {
   if ($('#btnCollapseAll').disabled) return;
   const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id));
@@ -1425,6 +1688,11 @@ $('#btnNow').addEventListener('click', () => {
   if (currentView === 'linear') {
     const current = document.querySelector('.linear-row.current-week');
     if (current) current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  if (currentView === 'timeline') {
+    const today = document.querySelector('.timeline-today');
+    if (today) today.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     return;
   }
   const idx = monthIndex(getCurrentMonthKey());
