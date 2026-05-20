@@ -46,6 +46,21 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("timeline-group-label", html)
         self.assertIn("openDetail(item.del, item.doc, item.dueDate)", html)
 
+    def test_timeline_supports_zoomed_timeframes_and_horizontal_scroll(self):
+        html = html_text()
+        self.assertIn('id="timelineWindow"', html)
+        self.assertIn('value="quarter"', html)
+        self.assertIn('value="year"', html)
+        self.assertIn('value="all"', html)
+        self.assertIn("let timelineWindow = 'all';", html)
+        self.assertIn("function timelineVisibleDomain", html)
+        self.assertIn("function shiftTimelineWindow", html)
+        self.assertIn("data-timeline-pan=\"prev\"", html)
+        self.assertIn("data-timeline-pan=\"next\"", html)
+        self.assertIn("timeline-scroll-canvas", html)
+        self.assertIn("fullDomain[1].getMonth() - months, 1", html)
+        self.assertIn("item.parsed >= domain[0] && item.parsed < domain[1]", html)
+
 
 if __name__ == "__main__":
     unittest.main()

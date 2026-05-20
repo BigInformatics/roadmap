@@ -152,6 +152,8 @@
   .d3-wrap .timeline-header { display: block; min-width: 100%; }
   .d3-timeline-toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.75rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; }
   .d3-timeline-title { color: var(--ink); font-weight: 700; }
+  .d3-timeline-actions { display: inline-flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .timeline-scroll-canvas { overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; }
   .d3-timeline-canvas { padding: 1rem; min-height: 320px; }
   .d3-timeline-svg { width: 100%; min-height: 320px; display: block; overflow: visible; }
   .timeline-axis line, .timeline-axis path { stroke: var(--border); }
@@ -339,6 +341,11 @@
         <option value="unified">Unified</option>
         <option value="product">By Product</option>
       </select>
+      <select class="btn date-select" id="timelineWindow" aria-label="Timeline timeframe">
+        <option value="all">All Time</option>
+        <option value="year">1 Year</option>
+        <option value="quarter">1 Quarter</option>
+      </select>
       <button class="btn icon-btn icon-only active" id="btnViewToggle" type="button" aria-label="Grid View" title="Grid View"></button>
       <button class="btn icon-btn icon-only" id="btnCollapseAll" type="button" aria-label="Collapse All" title="Collapse All"></button>
       <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
@@ -396,6 +403,8 @@ let selectedMonthNameFilter = '';
 let selectedStatus = null;
 let currentView = 'grid';
 let timelineGrouping = 'unified';
+let timelineWindow = 'all';
+let timelineWindowStart = null;
 let selectedDeliverable = null;
 let selectedDocument = null;
 let selectedDueDate = null;
@@ -1031,6 +1040,12 @@ function updateViewControls() {
     grouping.disabled = currentView !== 'timeline';
     grouping.title = currentView === 'timeline' ? 'Timeline grouping' : 'Timeline grouping is available in Timeline View';
   }
+  const windowSelect = $('#timelineWindow');
+  if (windowSelect) {
+    windowSelect.value = timelineWindow;
+    windowSelect.disabled = currentView !== 'timeline';
+    windowSelect.title = currentView === 'timeline' ? 'Timeline timeframe' : 'Timeline timeframe is available in Timeline View';
+  }
   const collapseBtn = $('#btnCollapseAll');
   if (collapseBtn) {
     const hasEnabledDocs = enabledDocuments().length > 0;
@@ -1116,6 +1131,36 @@ function timelineDateDomain(items) {
   max.setMonth(max.getMonth() + 1, 1);
   return [min, max];
 }
+function timelineWindowMonths() { return timelineWindow === 'quarter' ? 3 : timelineWindow === 'year' ? 12 : null; }
+function clampTimelineWindowStart(start, fullDomain) {
+  const months = timelineWindowMonths();
+  if (!months) return null;
+  const min = new Date(fullDomain[0].getFullYear(), fullDomain[0].getMonth(), 1);
+  const latest = new Date(fullDomain[1].getFullYear(), fullDomain[1].getMonth() - months, 1);
+  const max = latest < min ? min : latest;
+  const candidate = start ? new Date(start.getFullYear(), start.getMonth(), 1) : new Date(min);
+  if (candidate < min) return min;
+  if (candidate > max) return max;
+  return candidate;
+}
+function timelineVisibleDomain(fullDomain) {
+  const months = timelineWindowMonths();
+  if (!months) { timelineWindowStart = null; return fullDomain; }
+  timelineWindowStart = clampTimelineWindowStart(timelineWindowStart, fullDomain);
+  const end = new Date(timelineWindowStart.getFullYear(), timelineWindowStart.getMonth() + months, 1);
+  return [timelineWindowStart, end > fullDomain[1] ? fullDomain[1] : end];
+}
+function shiftTimelineWindow(direction, fullDomain = null) {
+  const months = timelineWindowMonths();
+  if (!months) return;
+  const domain = fullDomain || timelineDateDomain(collectDueItems().filter(item => item.parsed));
+  const start = timelineWindowStart || domain[0];
+  timelineWindowStart = clampTimelineWindowStart(new Date(start.getFullYear(), start.getMonth() + (direction * months), 1), domain);
+  renderRoadmap();
+}
+function timelineWindowLabel(domain) {
+  return `${MONTH_NAMES[domain[0].getMonth()]} ${domain[0].getFullYear()} – ${MONTH_NAMES[domain[1].getMonth()]} ${domain[1].getFullYear()}`;
+}
 function groupTimelineItems(items) {
   if (timelineGrouping === 'product') {
     const groups = new Map();
@@ -1133,10 +1178,12 @@ function renderD3Timeline() {
   const body = $('#roadmapBody');
   wrap.classList.remove('linear-wrap');
   wrap.classList.add('d3-wrap');
-  wrap.scrollLeft = 0;
   const items = collectDueItems().filter(item => item.parsed);
+  const fullDomain = timelineDateDomain(items);
+  const domain = timelineVisibleDomain(fullDomain);
   const tagLabel = selectedTagFilter ? `Tag: #${escapeHtml(selectedTagFilter)}` : 'All visible tags';
-  $('#timelineHeader').innerHTML = `<div class="d3-timeline-toolbar"><div><span class="d3-timeline-title">Timeline</span> • ${tagLabel}</div><div>${timelineGrouping === 'product' ? 'Grouped by product' : 'Unified stream'}</div></div>`;
+  $('#timelineHeader').innerHTML = `<div class="d3-timeline-toolbar"><div><span class="d3-timeline-title">Timeline</span> • ${tagLabel} • ${escapeHtml(timelineWindowLabel(domain))}</div><div class="d3-timeline-actions"><button class="btn small" type="button" data-timeline-pan="prev" ${timelineWindow === 'all' ? 'disabled' : ''}>← Earlier</button><button class="btn small" type="button" data-timeline-pan="next" ${timelineWindow === 'all' ? 'disabled' : ''}>Later →</button><span>${timelineGrouping === 'product' ? 'Grouped by product' : 'Unified stream'}</span></div></div>`;
+  $('#timelineHeader').querySelectorAll('[data-timeline-pan]').forEach(btn => btn.addEventListener('click', e => shiftTimelineWindow(e.currentTarget.dataset.timelinePan === 'next' ? 1 : -1, fullDomain)));
   body.innerHTML = '';
   if (!enabledDocuments().length) {
     body.innerHTML = renderNoDocumentsActions();
@@ -1149,12 +1196,13 @@ function renderD3Timeline() {
     renderStats();
     return;
   }
-  const groups = groupTimelineItems(items);
-  const width = Math.max(920, wrap.clientWidth || 920);
+  const visibleItems = items.filter(item => item.parsed >= domain[0] && item.parsed < domain[1]);
+  const groups = groupTimelineItems(visibleItems);
+  const baseWidth = wrap.clientWidth || 920;
+  const width = Math.max(1100, baseWidth, (timelineWindow === 'quarter' ? 2200 : timelineWindow === 'year' ? 1800 : 1100));
   const margin = { top: 42, right: 34, bottom: 42, left: timelineGrouping === 'product' ? 154 : 34 };
   const laneHeight = 118;
   const height = margin.top + margin.bottom + Math.max(1, groups.length) * laneHeight;
-  const domain = timelineDateDomain(items);
   const x = d3Timeline.scaleTime(domain, [margin.left, width - margin.right]);
   const svg = d3Timeline.create('svg', { class: 'd3-timeline-svg', viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Roadmap timeline view' });
   const axis = d3Timeline.create('g', { class: 'timeline-axis' });
@@ -1199,10 +1247,14 @@ function renderD3Timeline() {
       svg.appendChild(node);
     });
   });
+  const scrollCanvas = document.createElement('div');
+  scrollCanvas.className = 'timeline-scroll-canvas';
   const canvas = document.createElement('div');
   canvas.className = 'd3-timeline-canvas';
+  canvas.style.width = `${width}px`;
   canvas.appendChild(svg);
-  body.appendChild(canvas);
+  scrollCanvas.appendChild(canvas);
+  body.appendChild(scrollCanvas);
   renderStats();
 }
 
@@ -1590,7 +1642,8 @@ $('#btnTagSearch').addEventListener('click', () => { tagSearchOnly = !tagSearchO
 $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favoritesOnly; renderRoadmap(); });
 $('#btnViewToggle').addEventListener('click', () => { currentView = nextViewMode(); renderRoadmap(); });
 $('#timelineGrouping').addEventListener('change', e => { timelineGrouping = e.target.value === 'product' ? 'product' : 'unified'; renderRoadmap(); });
-$('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; renderRoadmap(); });
+$('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
+$('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; timelineWindowStart = null; renderRoadmap(); });
 $('#btnCollapseAll').addEventListener('click', () => {
   if ($('#btnCollapseAll').disabled) return;
   const allCollapsed = enabledDocuments().length > 0 && enabledDocuments().every(doc => collapsedProducts.has(doc.id));

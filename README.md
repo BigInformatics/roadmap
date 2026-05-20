@@ -7,7 +7,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane grid view with years, months, and status-colored due-date chips spanning 2026–2032.
 - **Linear due-date view** — toggle from the grid to a top-to-bottom chronological list of due-date items with a 10px product-color bar on each row.
-- **D3-style initiative timeline** — third view mode renders a self-contained SVG timeline for the current visible/tag-filtered items, with unified or product-grouped lanes and no CDN dependency.
+- **D3-style initiative timeline** — third view mode renders a self-contained SVG timeline for the current visible/tag-filtered items, with unified or product-grouped lanes, zoomable timeframes, horizontal scrolling, and no CDN dependency.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status, notes, and actions** — each `dueDates[]` item can store its own `status`, `note`, and optional timestamped `actions`; legacy string due dates are migrated automatically.
@@ -37,7 +37,7 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 3. In the edit drawer, add or edit one product JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
 4. Check/uncheck product cards to toggle products on/off, or use **Check All / Uncheck All** at the end of the product list.
 5. Click **Save & Render** — data and toggle states auto-save to `localStorage`.
-6. Use the header tag, Month/Year, status, and favorite filters, then cycle the view toggle through **Grid**, **List**, and **Timeline**. In grid view, use **Collapse All / Expand All** or each product header chevron to manage product sections. In timeline view, choose **Unified** or **By Product** grouping.
+6. Use the header tag, Month/Year, status, and favorite filters, then cycle the view toggle through **Grid**, **List**, and **Timeline**. In grid view, use **Collapse All / Expand All** or each product header chevron to manage product sections. In timeline view, choose **Unified** or **By Product** grouping, then zoom to **All Time**, **1 Year**, or **1 Quarter** and pan Earlier/Later.
 7. Use the icon-only **Copy Markdown** button to copy the currently displayed roadmap as a chronological Markdown table.
 8. Use **Download Enabled JSONs** or **Download All JSONs** to export backups.
 9. Click **Clear Cache** in the drawer to reset to an empty starting state.
@@ -108,6 +108,8 @@ Click the view toggle in the header to switch to the linear due-date view. It sh
 ## D3-Style Timeline View
 
 Cycle the view toggle to **Timeline** to see the currently visible due-date items on a self-contained SVG timeline inspired by D3/Observable timelines. The timeline uses the same filters as the grid and list views, including the exact **All Tags** dropdown. Use **Unified** to show one initiative stream, or **By Product** to split the same filtered items into product lanes. Product color drives each timeline dot, status remains visible in the card text, and clicking a timeline item opens the existing due-date detail drawer.
+
+The timeline timeframe control supports **All Time**, **1 Year**, and **1 Quarter**. Year and quarter modes zoom into a window and provide **Earlier** / **Later** controls plus horizontal scrolling for dense initiative timelines.
 
 ## Multi-Product Workflow
 

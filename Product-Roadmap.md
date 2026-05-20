@@ -21,7 +21,7 @@ In the **Edit Data** drawer:
 - Use the product color swatches or hex input on each card to set the product-level `color` used by list-view row bars.
 - Enabled products render together as separate swimlanes on the grid timeline, a chronological list, or a D3-style SVG timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
-- The header view toggle cycles through the month grid, chronological linear due-date list, and D3-style timeline. The Month, Year, status, favorite, search, and tag filters apply to all views.
+- The header view toggle cycles through the month grid, chronological linear due-date list, and D3-style timeline. The Month, Year, status, favorite, search, and tag filters apply to all views. Timeline view also supports Unified/By Product grouping plus All Time, 1 Year, and 1 Quarter timeframe windows.
 
 The page saves the document set and toggle states to `localStorage`.
 
@@ -130,7 +130,7 @@ Rendering behavior:
 8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only, or choose a value from **All Tags** to filter by exact tag.
 9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in grid, linear, and timeline views.
 10. Switch to the linear view to see due-date items sorted chronologically; rows include a 10px product-color bar, rows due in the current week are highlighted in gold, and each row remains clickable/editable.
-11. Switch to the D3-style timeline to see the same filtered due-date items on a self-contained SVG timeline. Use **Unified** for one initiative stream or **By Product** for product lanes. Dots use product colors and timeline cards remain clickable/editable through the same due-date drawer.
+11. Switch to the D3-style timeline to see the same filtered due-date items on a self-contained SVG timeline. Use **Unified** for one initiative stream or **By Product** for product lanes. Choose **All Time**, **1 Year**, or **1 Quarter** to zoom the visible timeframe; year/quarter windows can pan Earlier/Later and scroll horizontally. Dots use product colors and timeline cards remain clickable/editable through the same due-date drawer.
 
 ---
 
@@ -199,7 +199,7 @@ Examples:
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
 10. Add optional product-level `order` values when you need a fixed sequence across multiple product documents, and product-level `color` values when you want list rows color-coded by product.
 11. Click a month heading or use the Month/Year dropdowns to filter due dates across views; use search or the tag dropdown to filter tasks by phrase or tag.
-12. In timeline view, choose **Unified** or **By Product** grouping.
+12. In timeline view, choose **Unified** or **By Product** grouping, then optionally zoom to **1 Year** or **1 Quarter** and pan Earlier/Later.
 13. Toggle **Favorites** to show starred tasks only.
 14. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
 15. Click **Clear Cache** in the drawer to reset to embedded defaults.
