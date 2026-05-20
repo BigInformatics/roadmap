@@ -6,11 +6,11 @@ A lightweight, interactive product roadmap template rendered entirely in a singl
 
 - **Single-file** — no build step, no server, no dependencies. Open the HTML in any browser.
 - **Interactive timeline** — swimlane view with years, months, and status-colored deliverable blocks spanning 2026–2032.
-- **Linear due-date view** — toggle from the grid to a top-to-bottom chronological list of due-date items.
+- **Linear due-date view** — toggle from the grid to a top-to-bottom chronological list of due-date items with a 10px product-color bar on each row.
 - **Provided product schema support** — product JSON documents include `project`, `title`, `subtitle`, `lastUpdated`, `owner`, and `deliverables`.
 - **Due-date rendering** — parseable `MM/DD/YYYY` due dates appear as chips in the matching `Mon YYYY` month column using each due date's own status color; no long start-to-end task bars are drawn.
 - **Per-date status, notes, and actions** — each `dueDates[]` item can store its own `status`, `note`, and optional timestamped `actions`; legacy string due dates are migrated automatically.
-- **Multiple product JSON documents** — each product has its own JSON card in the edit drawer; optional product `order` controls display sequence.
+- **Multiple product JSON documents** — each product has its own JSON card in the edit drawer; optional product `order` controls display sequence and optional `color` controls list-view color bars.
 - **Collapsed raw JSON** — product JSON is hidden by default in the drawer and expands only when you click **Edit JSON**.
 - **Deliverable creation** — add deliverables to any product card, including newly-created empty product JSON documents.
 - **File import** — click **Load JSON Document** in the edit drawer to import one or more `.json` files instead of pasting JSON manually.
@@ -53,6 +53,7 @@ Each editor card contains one product roadmap JSON document:
   "lastUpdated": "2026-05-08 14:30:00 ET",
   "owner": "Engineering Team",
   "order": 1,
+  "color": "#3b82f6",
   "deliverables": [
     {
       "id": "bp-001",
@@ -84,7 +85,7 @@ Timeline date format: `"Mon YYYY"` — e.g., `"Jun 2027"`, `"Dec 2028"`.
 
 Due date format: preferred `dueDates` entries are objects with `date`, `status`, `note`, and optional `actions`. Each `actions[]` entry can include `name`, `note`, and `timestamp`; entries added in the UI are timestamped automatically. Legacy `"MM/DD/YYYY"` string entries are still accepted and migrated by the UI.
 
-Optional product metadata: `order` may be a number; lower numbers render first across product toggles, grid swimlanes, and list/list-view grouping.
+Optional product metadata: `order` may be a number; lower numbers render first across product toggles, grid swimlanes, and list-view grouping. `color` may be a 6-digit hex color such as `#3b82f6`; use the edit drawer swatches or hex input to set it. The list view shows this product color as a 10px bar on the left side of each row.
 
 Optional task metadata: `tags` may be an array such as `["api", "security"]` or a comma-separated string; `favorite` may be `true` to star a task.
 
@@ -101,7 +102,7 @@ Example: `"05/15/2026"` appears as a deliverable chip in the `May 2026` month co
 
 ## Linear Timeline View
 
-Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status. Rows due in the current week are highlighted in gold. Tags and favorite stars are shown in this view too. The same Month and Year dropdowns, tag search, and Favorites toggle filter this list; selecting a year with All Months shows every due date in that year. Click any row to edit that due date's status and note in the drawer.
+Click the view toggle in the header to switch to the linear due-date view. It shows one row per due-date item, sorted chronologically from top to bottom. Each row includes task, due date, contract/product, and status; the row color follows the due date status, and the 10px bar on the far left shows the product color. Rows due in the current week are highlighted in gold. Tags and favorite stars are shown in this view too. The same Month and Year dropdowns, tag search, and Favorites toggle filter this list; selecting a year with All Months shows every due date in that year. Click any row to edit that due date's status and note in the drawer.
 
 ## Multi-Product Workflow
 
@@ -123,7 +124,7 @@ For day-to-day editing, use one product JSON object per editor card. Raw JSON st
 
 ## Customization
 
-- **Products** — add one product JSON document per editor card. Add optional `order` numbers (`1`, `2`, `3`, …) when you want a fixed product sequence.
+- **Products** — add one product JSON document per editor card. Add optional `order` numbers (`1`, `2`, `3`, …) when you want a fixed product sequence. Pick a product color from the edit drawer defaults or enter a custom hex code.
 - **Deliverables** — click **Add Deliverable** on a product card to append a new task with owner, status, start/end month, due date, description, optional comma-separated tags, and optional favorite star.
 - **Visibility** — use product checkboxes to toggle swimlanes on/off.
 - **Title/Subtitle** — set `title` and `subtitle` in product JSON. The first enabled product controls the page title.

@@ -18,6 +18,7 @@ In the **Edit Data** drawer:
 - Use **Add Deliverable** on a product card to append a task to that product, including empty newly-created product JSON documents.
 - Use **Load JSON Document** to import one or more `.json` files when you do not want to paste JSON manually.
 - Use the checkbox on each card to toggle that product on/off.
+- Use the product color swatches or hex input on each card to set the product-level `color` used by list-view row bars.
 - Enabled products render together as separate swimlanes on the same timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
 - The header view toggle switches between the month grid and a chronological linear due-date list. The Month and Year dropdown filters apply to both views.
@@ -38,6 +39,7 @@ Each editor card contains one product roadmap JSON object:
   "lastUpdated": "2026-05-08 14:30:00 ET",
   "owner": "Engineering Team",
   "order": 1,
+  "color": "#3b82f6",
   "deliverables": [
     {
       "id": "bp-001",
@@ -69,6 +71,7 @@ Each editor card contains one product roadmap JSON object:
 | `lastUpdated` | **Yes** | string | Last update timestamp, e.g. `YYYY-MM-DD HH:mm:ss ET`. Auto-updated on save. |
 | `owner` | **Yes** | string | Primary owner or contractor responsible for the roadmap. |
 | `order` | No | number | Optional product display order. Lower numbers render first in product toggles, grid swimlanes, and list-view grouping. Products without `order` keep a stable fallback order after ordered products. |
+| `color` | No | string | Optional 6-digit hex color such as `#3b82f6`. The edit drawer provides default swatches and a custom hex input; list-view rows show this product color as a 10px bar on the far left. |
 | `deliverables` | **Yes** | array | List of deliverables. |
 
 ---
@@ -126,7 +129,7 @@ Rendering behavior:
 7. Use the header Month and Year dropdowns to filter both the grid and linear list. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
 8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only.
 9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in both grid and linear views.
-10. Switch to the linear view to see due-date items sorted chronologically; rows due in the current week are highlighted in gold and remain clickable/editable.
+10. Switch to the linear view to see due-date items sorted chronologically; rows include a 10px product-color bar, rows due in the current week are highlighted in gold, and each row remains clickable/editable.
 
 ---
 
@@ -147,6 +150,7 @@ When you download all roadmap data, the export uses this wrapper so product togg
         "lastUpdated": "2026-05-08 14:30:00 ET",
         "owner": "Engineering Team",
         "order": 1,
+        "color": "#3b82f6",
         "deliverables": []
       }
     }
@@ -192,7 +196,7 @@ Examples:
 7. Use the view toggle to switch between grid view and the chronological linear due-date view.
 8. Due dates display as month chips when parseable.
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
-10. Add optional product-level `order` values when you need a fixed sequence across multiple product documents.
+10. Add optional product-level `order` values when you need a fixed sequence across multiple product documents, and product-level `color` values when you want list rows color-coded by product.
 11. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase or tag.
 12. Toggle **Favorites** to show starred tasks only.
 13. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
@@ -205,6 +209,7 @@ Examples:
 - Use one JSON card per product.
 - Keep `id` values unique within each product roadmap.
 - Use product-level `order` values to control display order when loading multiple product documents.
+- Use product-level `color` values to control the list-view row bar color; the editor accepts default swatches or a custom 6-digit hex code.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
 - Use `dueDates` for concrete submission dates; each due date can carry its own status and note.
 - Use optional `tags` for searchable labels and optional `favorite: true` for starred tasks.

@@ -234,6 +234,15 @@
             10
           ]
         },
+        "color": {
+          "type": "string",
+          "pattern": "^#([A-Fa-f0-9]{6})$",
+          "description": "Optional product color shown in the editor and as a 10px left bar in list view.",
+          "examples": [
+            "#3b82f6",
+            "#14b8a6"
+          ]
+        },
         "deliverables": {
           "type": "array",
           "items": {

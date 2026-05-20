@@ -135,9 +135,10 @@
   .linear-wrap { overflow-x: hidden; }
   .linear-wrap .timeline-header { display: block; min-width: 100%; }
   .linear-wrap .linear-header, .linear-wrap .linear-row { width: 100%; min-width: 0; box-sizing: border-box; }
-  .linear-header, .linear-row { display: grid; grid-template-columns: minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
+  .linear-header, .linear-row { display: grid; grid-template-columns: 10px minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
   .linear-header { position: sticky; top: 0; z-index: 50; background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
   .linear-row { min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
+  .linear-product-bar { width: 10px; align-self: stretch; min-height: 44px; border-radius: 999px; background: var(--product-color, var(--accent)); box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 12px color-mix(in srgb, var(--product-color, var(--accent)) 35%, transparent); }
   .linear-row:hover { filter: brightness(1.15); transform: translateX(2px); }
   .linear-row.current-week { box-shadow: inset 4px 0 0 var(--gold), inset 0 0 0 1px rgba(254,202,87,0.35); background: var(--gold-bg); }
   .linear-row.current-week .linear-date { color: var(--gold); }
@@ -252,6 +253,13 @@
   .doc-card-title input { width: auto; accent-color: var(--accent); }
   .doc-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
   .doc-summary { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.75rem; }
+  .product-color-control { border: 1px solid var(--border); border-radius: var(--radius); padding: 0.75rem; margin-bottom: 0.75rem; background: var(--surface); }
+  .product-color-control label { display: block; font-size: 0.72rem; text-transform: uppercase; color: var(--muted); margin-bottom: 0.45rem; letter-spacing: 0.03em; }
+  .color-swatch-row { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; margin-bottom: 0.55rem; }
+  .color-swatch { width: 28px; height: 28px; border-radius: 999px; border: 2px solid var(--border); background: var(--swatch-color); cursor: pointer; }
+  .color-swatch.active { border-color: var(--ink); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--swatch-color); }
+  .hex-input-row { display: grid; grid-template-columns: 44px 1fr; gap: 0.5rem; align-items: center; }
+  .hex-input-row input[type="color"] { padding: 0.15rem; min-height: 38px; }
   .json-editor { display: none; margin-top: 0.75rem; }
   .json-editor.open { display: block; }
   .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
@@ -343,6 +351,7 @@
 const STORAGE_KEY = 'product-roadmap-v3-documents';
 const THEME_KEY = 'product-roadmap-theme';
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DEFAULT_PRODUCT_COLORS = ['#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#ec4899', '#64748b'];
 const MONTHS = [];
 for (let y = 2026; y <= 2032; y++) for (let i = 0; i < 12; i++) MONTHS.push(`${MONTH_NAMES[i]} ${y}`);
 document.documentElement.style.setProperty('--month-count', MONTHS.length);
@@ -374,6 +383,15 @@ function statusClass(s) { return 'status-' + s; }
 function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
 function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
 function productName(doc) { return doc?.data?.project || doc?.data?.product || doc?.name || 'Roadmap'; }
+function normalizeProductColor(value, fallback = DEFAULT_PRODUCT_COLORS[0]) {
+  const text = String(value || '').trim();
+  if (/^#[A-Fa-f0-9]{6}$/.test(text)) return text.toLowerCase();
+  return fallback;
+}
+function productColor(doc) {
+  const index = Math.max(0, DOCUMENTS.findIndex(item => item === doc));
+  return normalizeProductColor(doc?.data?.color, DEFAULT_PRODUCT_COLORS[index % DEFAULT_PRODUCT_COLORS.length]);
+}
 function productOrder(doc, fallback = 0) {
   const value = Number(doc?.data?.order);
   return Number.isFinite(value) ? value : 100000 + fallback;
@@ -624,6 +642,7 @@ function normalizeDocument(item, index = 0) {
       lastUpdated: data.lastUpdated || '',
       owner: data.owner || '',
       order: Number.isFinite(Number(data.order)) ? Number(data.order) : undefined,
+      color: normalizeProductColor(data.color, DEFAULT_PRODUCT_COLORS[index % DEFAULT_PRODUCT_COLORS.length]),
       deliverables: Array.isArray(data.deliverables) ? data.deliverables.map((d, dIdx) => ({
         id: d.id || `${slugify(data.project || data.product || `roadmap-${index + 1}`)}-${String(dIdx + 1).padStart(3, '0')}`,
         title: d.title || `Deliverable ${dIdx + 1}`,
@@ -671,7 +690,7 @@ function renderProductToggles() {
   DOCUMENTS.map((doc, idx) => ({ doc, idx })).sort((a, b) => productOrder(a.doc, a.idx) - productOrder(b.doc, b.idx) || productName(a.doc).localeCompare(productName(b.doc)) || a.idx - b.idx).forEach(({ doc, idx }) => {
     const label = document.createElement('label');
     label.className = 'toggle-pill' + (doc.enabled ? ' enabled' : '');
-    label.innerHTML = `<input type="checkbox" ${doc.enabled ? 'checked' : ''} data-doc-toggle="${idx}"> ${escapeHtml(productName(doc))}`;
+    label.innerHTML = `<input type="checkbox" ${doc.enabled ? 'checked' : ''} data-doc-toggle="${idx}"><span class="linear-product-bar" style="--product-color:${escapeHtml(productColor(doc))};width:10px;min-height:18px" aria-hidden="true"></span> ${escapeHtml(productName(doc))}`;
     bar.appendChild(label);
   });
   if (DOCUMENTS.length) {
@@ -933,8 +952,9 @@ function renderRoadmap() {
 function updateViewControls() {
   const btn = $('#btnViewToggle');
   if (btn) {
-    const label = currentView === 'grid' ? 'Grid View' : 'List View';
-    btn.innerHTML = `${currentView === 'grid' ? gridIcon() : listIcon()}<span class="btn-label">${label}</span>`;
+    const targetView = currentView === 'grid' ? 'linear' : 'grid';
+    const label = targetView === 'grid' ? 'Switch to Grid View' : 'Switch to List View';
+    btn.innerHTML = `${targetView === 'grid' ? gridIcon() : listIcon()}<span class="btn-label">${label}</span>`;
     btn.classList.toggle('active', currentView === 'grid');
     btn.setAttribute('aria-label', label);
     btn.title = label;
@@ -1010,7 +1030,7 @@ function renderLinearTimeline() {
   wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
     <div class="linear-header">
-      <div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
+      <div aria-hidden="true"></div><div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
     </div>`;
   body.innerHTML = '';
   const items = collectDueItems();
@@ -1032,6 +1052,7 @@ function renderLinearTimeline() {
     row.setAttribute('role', 'button');
     row.tabIndex = 0;
     row.innerHTML = `
+      <div class="linear-product-bar" style="--product-color:${escapeHtml(productColor(item.doc))}" aria-hidden="true"></div>
       <div><span class="linear-date-wrap"><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${renderNoteIcon(item.dueDate.note)}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
       <div><div class="linear-task">${favoriteButton(item.del, item.doc)}<span>${escapeHtml(item.del.title)}</span>${chipMetaIcons(item.del)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}${normalizeTags(item.del.tags).length ? ` • ${normalizeTags(item.del.tags).join(', ')}` : ''}</div></div>
       <div class="linear-contract">${escapeHtml(productName(item.doc))}</div>
@@ -1141,7 +1162,13 @@ function openEditor() {
           <button class="btn small danger" data-remove-doc="${i}">Remove</button>
         </div>
       </div>
-      <div class="doc-summary">${(doc.data.deliverables || []).length} deliverable${(doc.data.deliverables || []).length === 1 ? '' : 's'} &bull; Owner: ${escapeHtml(doc.data.owner || 'Not set')}</div>
+      <div class="doc-summary">${(doc.data.deliverables || []).length} deliverable${(doc.data.deliverables || []).length === 1 ? '' : 's'} &bull; Owner: ${escapeHtml(doc.data.owner || 'Not set')} &bull; Color: ${escapeHtml(productColor(doc))}</div>
+      <div class="product-color-control">
+        <label>Product Color</label>
+        <div class="color-swatch-row">${DEFAULT_PRODUCT_COLORS.map(color => `<button type="button" class="color-swatch${productColor(doc) === color ? ' active' : ''}" style="--swatch-color:${color}" data-color-swatch="${i}" data-color-value="${color}" aria-label="Use product color ${color}"></button>`).join('')}</div>
+        <div class="hex-input-row"><input type="color" value="${escapeHtml(productColor(doc))}" data-product-color-native="${i}" aria-label="Product color picker"><input type="text" value="${escapeHtml(productColor(doc))}" data-product-color="${i}" aria-label="Hex code" placeholder="#3b82f6"></div>
+        <div class="help-text" style="margin-top:0.4rem">Pick a default color or enter a 6-digit hex code.</div>
+      </div>
       <div class="json-editor" data-json-editor="${i}">
         <textarea class="editable" data-doc-json="${i}">${escapeHtml(JSON.stringify(doc.data, null, 2))}</textarea>
       </div>
@@ -1159,7 +1186,7 @@ function openEditor() {
       <button class="btn" id="btnDownloadAll">Download All JSONs</button>
       <button class="btn danger" id="btnClearCacheDrawer">Clear Cache</button>
     </div>
-    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Optional product field: "order" number controls product display order. Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "...", "actions": [{ "name": "Follow up", "note": "Owner confirmed scope.", "timestamp": "2026-05-12 14:30:00 ET" }] }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
+    <div class="field" style="margin-top:1rem"><label>Format</label><div class="value help-text">Paste one product object per card, or click Load JSON Document to import one or more .json files. Timeline dates use "Mon YYYY" (e.g. "Jun 2027"). Optional product fields: "order" number controls product display order, and "color" stores a hex product color such as "#3b82f6". Due dates use objects: { "date": "06/15/2026", "status": "in-progress", "note": "...", "actions": [{ "name": "Follow up", "note": "Owner confirmed scope.", "timestamp": "2026-05-12 14:30:00 ET" }] }. Optional task fields: "tags" as an array or comma-separated string, and "favorite": true. Legacy string due dates are migrated automatically.</div></div>
   `);
   document.querySelectorAll('[data-add-deliverable]').forEach(btn => btn.addEventListener('click', e => {
     const idx = Number(e.currentTarget.dataset.addDeliverable);
@@ -1173,6 +1200,27 @@ function openEditor() {
     e.currentTarget.textContent = isOpen ? 'Hide JSON' : 'Edit JSON';
     e.currentTarget.setAttribute('aria-expanded', String(Boolean(isOpen)));
     if (isOpen) editor.querySelector('textarea')?.focus();
+  }));
+  document.querySelectorAll('[data-color-swatch]').forEach(btn => btn.addEventListener('click', e => {
+    const idx = Number(e.currentTarget.dataset.colorSwatch);
+    const color = normalizeProductColor(e.currentTarget.dataset.colorValue);
+    const textInput = document.querySelector(`[data-product-color="${idx}"]`);
+    const nativeInput = document.querySelector(`[data-product-color-native="${idx}"]`);
+    if (textInput) textInput.value = color;
+    if (nativeInput) nativeInput.value = color;
+    document.querySelectorAll(`[data-color-swatch="${idx}"]`).forEach(swatch => swatch.classList.toggle('active', swatch.dataset.colorValue === color));
+  }));
+  document.querySelectorAll('[data-product-color-native]').forEach(input => input.addEventListener('input', e => {
+    const idx = Number(e.currentTarget.dataset.productColorNative);
+    const textInput = document.querySelector(`[data-product-color="${idx}"]`);
+    if (textInput) textInput.value = normalizeProductColor(e.currentTarget.value);
+  }));
+  document.querySelectorAll('[data-product-color]').forEach(input => input.addEventListener('input', e => {
+    const idx = Number(e.currentTarget.dataset.productColor);
+    const color = normalizeProductColor(e.currentTarget.value, '');
+    const nativeInput = document.querySelector(`[data-product-color-native="${idx}"]`);
+    if (color && nativeInput) nativeInput.value = color;
+    document.querySelectorAll(`[data-color-swatch="${idx}"]`).forEach(swatch => swatch.classList.toggle('active', swatch.dataset.colorValue === color));
   }));
   document.querySelectorAll('[data-download-doc]').forEach(btn => btn.addEventListener('click', e => {
     const doc = DOCUMENTS[Number(e.target.dataset.downloadDoc)];
@@ -1204,6 +1252,7 @@ function saveEditorDocuments(reopen = true) {
       const idx = Number(textarea.dataset.docJson);
       const parsed = JSON.parse(textarea.value);
       if (Array.isArray(parsed)) throw new Error(`Product card ${idx + 1} must contain one product object, not an array.`);
+      parsed.color = normalizeProductColor(document.querySelector(`[data-product-color="${idx}"]`)?.value, DEFAULT_PRODUCT_COLORS[idx % DEFAULT_PRODUCT_COLORS.length]);
       const doc = normalizeDocument({
         id: DOCUMENTS[idx]?.id,
         enabled: document.querySelector(`[data-edit-enabled="${idx}"]`)?.checked !== false,
@@ -1237,7 +1286,7 @@ function ensureUniqueDocumentIds(docs) {
 }
 function addProductDocument(fromEditor = true) {
   if (fromEditor && !saveEditorDocuments(false)) return;
-  DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', order: DOCUMENTS.length + 1, deliverables: [] }, DOCUMENTS.length));
+  DOCUMENTS.push(normalizeDocument({ project: 'New Product', title: 'Product Roadmap', subtitle: 'Interactive Deliverables & Timeline', owner: 'Product Team', order: DOCUMENTS.length + 1, color: DEFAULT_PRODUCT_COLORS[DOCUMENTS.length % DEFAULT_PRODUCT_COLORS.length], deliverables: [] }, DOCUMENTS.length));
   DOCUMENTS = ensureUniqueDocumentIds(DOCUMENTS);
   saveCache();
   renderRoadmap();
