@@ -32,10 +32,11 @@ class ProductColorFeatureTests(unittest.TestCase):
 
     def test_view_toggle_shows_destination_icon_and_label(self):
         html = text(HTML)
-        self.assertIn("const targetView = currentView === 'grid' ? 'linear' : 'grid';", html)
-        self.assertIn("targetView === 'grid' ? gridIcon() : listIcon()", html)
-        self.assertIn("Switch to Grid View", html)
-        self.assertIn("Switch to List View", html)
+        self.assertIn("function nextViewMode()", html)
+        self.assertIn("const targetView = nextViewMode();", html)
+        self.assertIn("viewIcon(targetView)", html)
+        self.assertIn("Grid View", html)
+        self.assertIn("List View", html)
 
     def test_schema_allows_optional_product_color(self):
         schema = text(SCHEMA)

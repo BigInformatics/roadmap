@@ -19,9 +19,9 @@ In the **Edit Data** drawer:
 - Use **Load JSON Document** to import one or more `.json` files when you do not want to paste JSON manually.
 - Use the checkbox on each card to toggle that product on/off.
 - Use the product color swatches or hex input on each card to set the product-level `color` used by list-view row bars.
-- Enabled products render together as separate swimlanes on the same timeline.
+- Enabled products render together as separate swimlanes on the grid timeline, a chronological list, or a D3-style SVG timeline.
 - Disabled products stay saved locally but are hidden from the roadmap view.
-- The header view toggle switches between the month grid and a chronological linear due-date list. The Month and Year dropdown filters apply to both views.
+- The header view toggle cycles through the month grid, chronological linear due-date list, and D3-style timeline. The Month, Year, status, favorite, search, and tag filters apply to all views.
 
 The page saves the document set and toggle states to `localStorage`.
 
@@ -87,7 +87,7 @@ Each editor card contains one product roadmap JSON object:
 | `start` | **Yes** | string | Planned start month in `"Mon YYYY"` format. |
 | `end` | **Yes** | string | Planned end month in `"Mon YYYY"` format. Must be `>=` `start` chronologically. |
 | `desc` | **Yes** | string | Detailed description, requirements, or submission rules. |
-| `tags` | No | array or string | Optional labels for filtering. Arrays such as `["api", "security"]` and comma-separated strings are normalized by the UI. The header **Tags** toggle makes the search box match tags only. |
+| `tags` | No | array or string | Optional labels for filtering. Arrays such as `["api", "security"]` and comma-separated strings are normalized by the UI. The header **Tags** toggle makes the search box match tags only, and the **All Tags** dropdown filters to an exact tag. |
 | `favorite` | No | boolean | Optional task star. `true` marks a task as a favorite; the header **Favorites** toggle filters to favorites only. |
 | `dueDates` | **Yes** | array | Preferred list of due date objects with `date`, `status`, `note`, and optional `actions`. Legacy `MM/DD/YYYY` strings are migrated automatically. Parseable dates render into timeline month chips. |
 | `notes` | **Yes** | array | Additional comments, attachments, metadata, or status-change notes. |
@@ -126,10 +126,11 @@ Rendering behavior:
 4. Each parsed due date is rendered as a small due-date chip using that due date's own `status` color inside the matching month column.
 5. Click a due-date chip to open the drawer for that specific date, update its status, save a date-specific note, and optionally add a due-date action with name, note, and automatic timestamp.
 6. Click a month heading to filter the roadmap to tasks with due dates in that month/year and highlight the column green; use **Clear date** to remove the filter.
-7. Use the header Month and Year dropdowns to filter both the grid and linear list. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
-8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only.
-9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in both grid and linear views.
+7. Use the header Month and Year dropdowns to filter grid, linear list, and D3-style timeline. Year with All Months shows all due dates in that year; Month + Year narrows to that month; Month without Year matches that month across all years.
+8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only, or choose a value from **All Tags** to filter by exact tag.
+9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in grid, linear, and timeline views.
 10. Switch to the linear view to see due-date items sorted chronologically; rows include a 10px product-color bar, rows due in the current week are highlighted in gold, and each row remains clickable/editable.
+11. Switch to the D3-style timeline to see the same filtered due-date items on a self-contained SVG timeline. Use **Unified** for one initiative stream or **By Product** for product lanes. Dots use product colors and timeline cards remain clickable/editable through the same due-date drawer.
 
 ---
 
@@ -192,15 +193,16 @@ Examples:
 3. Add one product roadmap JSON document per card, click **Add Deliverable** on a product card, click **Edit JSON** for raw edits, or click **Load JSON Document** to import `.json` files.
 4. Check or uncheck product cards to toggle products on/off.
 5. Click **Save & Render**.
-6. Enabled products render together as separate swimlanes.
-7. Use the view toggle to switch between grid view and the chronological linear due-date view.
+6. Enabled products render together as separate swimlanes, list rows, or timeline nodes depending on the selected view.
+7. Use the view toggle to cycle between grid view, chronological linear due-date view, and D3-style timeline view.
 8. Due dates display as month chips when parseable.
 9. Click a due-date chip or linear row to edit that specific due date's status and note.
 10. Add optional product-level `order` values when you need a fixed sequence across multiple product documents, and product-level `color` values when you want list rows color-coded by product.
-11. Click a month heading or use the Month/Year dropdowns to filter due dates in both grid and list views; use search to filter tasks by phrase or tag.
-12. Toggle **Favorites** to show starred tasks only.
-13. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
-14. Click **Clear Cache** in the drawer to reset to embedded defaults.
+11. Click a month heading or use the Month/Year dropdowns to filter due dates across views; use search or the tag dropdown to filter tasks by phrase or tag.
+12. In timeline view, choose **Unified** or **By Product** grouping.
+13. Toggle **Favorites** to show starred tasks only.
+14. Click **Download Enabled JSONs** or **Download All JSONs** to export backups.
+15. Click **Clear Cache** in the drawer to reset to embedded defaults.
 
 ---
 
@@ -212,6 +214,6 @@ Examples:
 - Use product-level `color` values to control the list-view row bar color; the editor accepts default swatches or a custom 6-digit hex code.
 - Keep `start` and `end` within the supported range: Jan 2026 – Dec 2032.
 - Use `dueDates` for concrete submission dates; each due date can carry its own status and note.
-- Use optional `tags` for searchable labels and optional `favorite: true` for starred tasks.
+- Use optional `tags` for searchable labels, exact tag timeline filtering, and optional `favorite: true` for starred tasks.
 - Use `desc` for coordination context — blockers, dependencies, definition of done.
 - To change the date range, edit the year loop in the `MONTHS` generator at the top of the HTML file.
