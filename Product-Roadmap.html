@@ -1172,6 +1172,25 @@ function groupTimelineItems(items) {
   }
   return [{ label: selectedTagFilter ? `#${selectedTagFilter}` : 'Unified Timeline', items }];
 }
+function layoutTimelineItems(group, x, width, margin) {
+  const cardWidth = 168;
+  const cardGap = 14;
+  const leftLimit = margin.left + 8;
+  const rightLimit = Math.max(leftLimit, width - margin.right - cardWidth);
+  const rowEnds = [];
+  const positioned = [...group.items]
+    .map(item => ({ ...item, xPos: Math.min(rightLimit, Math.max(leftLimit, x(item.parsed))) }))
+    .sort((a, b) => a.xPos - b.xPos || dueDateValue(a.dueDate).localeCompare(dueDateValue(b.dueDate)));
+  positioned.forEach(item => {
+    const rowIndex = rowEnds.findIndex(end => item.xPos >= end + cardGap);
+    const row = rowIndex === -1 ? rowEnds.length : rowIndex;
+    rowEnds[row] = item.xPos + cardWidth;
+    item.layoutRow = row;
+  });
+  group.items = positioned;
+  group.layoutRows = Math.max(1, rowEnds.length);
+  return group;
+}
 function renderD3Timeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
@@ -1196,13 +1215,20 @@ function renderD3Timeline() {
     return;
   }
   const visibleItems = items.filter(item => item.parsed >= domain[0] && item.parsed < domain[1]);
-  const groups = groupTimelineItems(visibleItems);
   const baseWidth = wrap.clientWidth || 920;
   const width = Math.max(1100, baseWidth, (timelineWindow === 'month' ? 2600 : timelineWindow === 'quarter' ? 2200 : timelineWindow === 'year' ? 1800 : 1100));
   const margin = { top: 42, right: 34, bottom: 42, left: timelineGrouping === 'product' ? 154 : 34 };
-  const laneHeight = 118;
-  const height = margin.top + margin.bottom + Math.max(1, groups.length) * laneHeight;
+  const rowHeight = 62;
+  const lanePadding = 72;
   const x = d3Timeline.scaleTime(domain, [margin.left, width - margin.right]);
+  const groups = groupTimelineItems(visibleItems).map(group => layoutTimelineItems(group, x, width, margin));
+  const groupOffsets = [];
+  let runningOffset = margin.top + 48;
+  groups.forEach(group => {
+    groupOffsets.push(runningOffset);
+    runningOffset += lanePadding + (group.layoutRows * rowHeight);
+  });
+  const height = runningOffset + margin.bottom;
   const svg = d3Timeline.create('svg', { class: 'd3-timeline-svg', viewBox: `0 0 ${width} ${height}`, role: 'img', 'aria-label': 'Roadmap timeline view' });
   const axis = d3Timeline.create('g', { class: 'timeline-axis' });
   const startYear = domain[0].getFullYear();
@@ -1222,15 +1248,14 @@ function renderD3Timeline() {
   const todayX = x(new Date());
   if (todayX >= margin.left && todayX <= width - margin.right) svg.appendChild(d3Timeline.create('line', { class: 'timeline-today', x1: todayX, x2: todayX, y1: margin.top - 20, y2: height - margin.bottom + 10 }));
   groups.forEach((group, groupIdx) => {
-    const laneY = margin.top + groupIdx * laneHeight + 48;
+    const laneY = groupOffsets[groupIdx];
     svg.appendChild(d3Timeline.create('line', { class: 'timeline-lane-line', x1: margin.left, x2: width - margin.right, y1: laneY, y2: laneY }));
     const label = d3Timeline.create('text', { class: 'timeline-group-label', x: 16, y: laneY + 4 });
     label.textContent = group.label;
     svg.appendChild(label);
-    group.items.forEach((item, itemIdx) => {
-      const xPos = Math.min(width - margin.right - 150, Math.max(margin.left + 8, x(item.parsed)));
-      const yOffset = ((itemIdx % 3) - 1) * 28;
-      const yPos = laneY + yOffset;
+    group.items.forEach(item => {
+      const xPos = item.xPos;
+      const yPos = laneY + (item.layoutRow * rowHeight);
       const status = dueDateStatus(item.dueDate, item.del);
       const node = d3Timeline.create('g', { class: `timeline-node ${statusClass(status)}`, tabindex: '0', role: 'button', 'aria-label': `${item.del.title} due ${dueDateValue(item.dueDate)}` });
       node.appendChild(d3Timeline.create('circle', { class: 'timeline-node-dot', cx: xPos, cy: yPos, r: 8, fill: productColor(item.doc) }));

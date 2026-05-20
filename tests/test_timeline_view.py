@@ -46,6 +46,15 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("timeline-group-label", html)
         self.assertIn("openDetail(item.del, item.doc, item.dueDate)", html)
 
+    def test_timeline_layout_avoids_card_overlap(self):
+        html = html_text()
+        self.assertIn("function layoutTimelineItems", html)
+        self.assertIn("const cardWidth = 168", html)
+        self.assertIn("const cardGap = 14", html)
+        self.assertIn("rowEnds.findIndex", html)
+        self.assertIn("group.layoutRows", html)
+        self.assertNotIn("((itemIdx % 3) - 1) * 28", html)
+
     def test_timeline_supports_zoomed_timeframes_and_horizontal_scroll(self):
         html = html_text()
         self.assertIn('id="timelineWindow"', html)

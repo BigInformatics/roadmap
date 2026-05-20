@@ -109,7 +109,7 @@ The app opens in the linear due-date view by default. It shows one row per due-d
 
 Click the direct **Timeline** view button to see the currently visible due-date items on a self-contained SVG timeline inspired by D3/Observable timelines. The timeline uses the same filters as the grid and list views, including the exact **All Tags** dropdown. Use **Unified** to show one initiative stream, or **By Product** to split the same filtered items into product lanes. Product color drives each timeline dot, status remains visible in the card text, and clicking a timeline item opens the existing due-date drawer.
 
-The timeline timeframe control supports **All Time**, **1 Year**, **1 Quarter**, and **1 Month**. Year, quarter, and month modes zoom into a window and provide **Earlier** / **Later** controls plus horizontal scrolling for dense initiative timelines.
+The timeline timeframe control supports **All Time**, **1 Year**, **1 Quarter**, and **1 Month**. Year, quarter, and month modes zoom into a window and provide **Earlier** / **Later** controls plus horizontal scrolling for dense initiative timelines. Timeline cards are automatically packed into additional vertical rows when dates are close together so items do not cover each other.
 
 ## Multi-Product Workflow
 

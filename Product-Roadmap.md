@@ -130,7 +130,7 @@ Rendering behavior:
 8. Use the header search box to filter tasks by phrase across title, owner, description, status, notes, due dates, and optional tags. Toggle **Tags** to search tags only, or choose a value from **All Tags** to filter by exact tag.
 9. Toggle **Favorites** to show only tasks with `favorite: true`; this works in grid, linear, and timeline views.
 10. Use the default linear view to see due-date items sorted chronologically; rows include a 10px product-color bar, rows due in the current week are highlighted in gold, and each row remains clickable/editable.
-11. Click the direct D3-style timeline view button to see the same filtered due-date items on a self-contained SVG timeline. Use **Unified** for one initiative stream or **By Product** for product lanes. Choose **All Time**, **1 Year**, **1 Quarter**, or **1 Month** to zoom the visible timeframe; year/quarter/month windows can pan Earlier/Later and scroll horizontally. Dots use product colors and timeline cards remain clickable/editable through the same due-date drawer.
+11. Click the direct D3-style timeline view button to see the same filtered due-date items on a self-contained SVG timeline. Use **Unified** for one initiative stream or **By Product** for product lanes. Choose **All Time**, **1 Year**, **1 Quarter**, or **1 Month** to zoom the visible timeframe; year/quarter/month windows can pan Earlier/Later and scroll horizontally. Dots use product colors, cards are automatically packed into extra vertical rows when dates are close together, and timeline cards remain clickable/editable through the same due-date drawer.
 
 ---
 
