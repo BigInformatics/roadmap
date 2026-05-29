@@ -68,6 +68,15 @@ class MatrixViewFeatureTests(unittest.TestCase):
         self.assertIn("matrix-date-chip", html)
         self.assertIn("due dates", html)
 
+    def test_matrix_highlights_current_phase_column(self):
+        html = html_text()
+        self.assertIn("function isCurrentMatrixPhase", html)
+        self.assertIn("phase.matches(now)", html)
+        self.assertIn("current-phase", html)
+        self.assertIn("matrix-current-label", html)
+        self.assertIn('aria-current=\"date\"', html)
+        self.assertIn("Current</div>", html)
+
     def test_matrix_is_self_contained_without_external_dependencies(self):
         html = html_text()
         self.assertNotIn("https://d3js.org", html)

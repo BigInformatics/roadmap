@@ -297,9 +297,13 @@
   .matrix-row { display: grid; grid-template-columns: minmax(180px, 0.9fr) repeat(var(--matrix-phase-count, 4), minmax(210px, 1fr)); border-bottom: 1px solid var(--border); }
   .matrix-row.matrix-head { position: sticky; top: 0; z-index: 20; background: var(--surface-2); }
   .matrix-cell { padding: 0.85rem; border-right: 1px solid var(--border); min-height: 94px; }
+  .matrix-cell.current-phase { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.34); }
   .matrix-workstream { background: rgba(255,255,255,0.02); }
+  .matrix-workstream.current-phase { background: rgba(255,255,255,0.02); box-shadow: none; }
   .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; }
   .matrix-phase span, .matrix-workstream span { color: var(--muted); font-size: 0.74rem; }
+  .matrix-phase.current-phase strong { color: var(--gold); }
+  .matrix-current-label { display: inline-flex; align-items: center; margin-top: 0.35rem; border: 1px solid rgba(254,202,87,0.45); color: var(--gold); border-radius: 999px; padding: 0.08rem 0.42rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
   .matrix-items { display: flex; flex-direction: column; gap: 0.5rem; }
   .matrix-item { width: 100%; text-align: left; border: 1px solid var(--border); border-left: 4px solid var(--product-color); border-radius: 10px; background: var(--surface-2); color: var(--ink); padding: 0.55rem; cursor: pointer; }
   .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
@@ -1342,6 +1346,9 @@ function assignMatrixPhase(item, phases) {
   if (!date) return phases[0];
   return phases.find(phase => phase.matches(date)) || phases[phases.length - 1];
 }
+function isCurrentMatrixPhase(phase, now = new Date()) {
+  return Boolean(phase && typeof phase.matches === 'function' && phase.matches(now));
+}
 function groupMatrixItems(items, phases, options = {}) {
   const groups = new Map();
   enabledDocuments().forEach(doc => groups.set(doc.data.coordinationGroup || productName(doc), { doc, label: doc.data.coordinationGroup || productName(doc), phases: new Map(phases.map(phase => [phase.label, []])) }));
@@ -1401,16 +1408,20 @@ function renderCoordinationMatrix() {
   const board = document.createElement('div');
   board.className = 'matrix-board';
   board.style.setProperty('--matrix-phase-count', phases.length);
-  board.innerHTML = `<div class="matrix-row matrix-head"><div class="matrix-cell matrix-workstream"><strong>Workstream</strong><span>Enabled products</span></div>${phases.map(phase => `<div class="matrix-cell matrix-phase"><strong>${escapeHtml(phase.label)}</strong><span>${escapeHtml(phase.desc || '')}</span></div>`).join('')}</div>`;
+  board.innerHTML = `<div class="matrix-row matrix-head"><div class="matrix-cell matrix-workstream"><strong>Workstream</strong><span>Enabled products</span></div>${phases.map(phase => {
+    const current = isCurrentMatrixPhase(phase);
+    return `<div class="matrix-cell matrix-phase${current ? ' current-phase' : ''}"${current ? ' aria-current="date"' : ''}><strong>${escapeHtml(phase.label)}</strong><span>${escapeHtml(phase.desc || '')}</span>${current ? '<div class="matrix-current-label">Current</div>' : ''}</div>`;
+  }).join('')}</div>`;
   groups.forEach(group => {
     const row = document.createElement('div');
     row.className = 'matrix-row';
     row.innerHTML = `<div class="matrix-cell matrix-workstream"><strong>${escapeHtml(group.label)}</strong><span>${escapeHtml(productName(group.doc))}</span></div>` + phases.map(phase => {
+      const current = isCurrentMatrixPhase(phase);
       const cellItems = group.phases.get(phase.label) || [];
       const groupedItems = groupMatrixCellItems(cellItems);
       const visible = groupedItems.slice(0, 4).map(renderMatrixItemGroup).join('');
       const more = groupedItems.length > 4 ? `<div class="matrix-more">+${groupedItems.length - 4} more groups</div>` : '';
-      return `<div class="matrix-cell"><div class="matrix-items">${visible || '<span class="matrix-empty-cell">No promoted items</span>'}${more}</div></div>`;
+      return `<div class="matrix-cell${current ? ' current-phase' : ''}"><div class="matrix-items">${visible || '<span class="matrix-empty-cell">No promoted items</span>'}${more}</div></div>`;
     }).join('');
     board.appendChild(row);
   });
