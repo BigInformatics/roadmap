@@ -1442,7 +1442,9 @@ function renderCoordinationMatrix() {
 }
 
 function canvasCssColor(name, fallback) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+  const bodyValue = getComputedStyle(document.body).getPropertyValue(name).trim();
+  const rootValue = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return bodyValue || rootValue || fallback;
 }
 function wrapCanvasText(ctx, text, maxWidth, maxLines = 2) {
   const words = String(text || '').split(/\s+/).filter(Boolean);
@@ -1481,7 +1483,7 @@ function downloadMatrixScreenshot() {
   const phaseWidth = 300;
   const headerHeight = 112;
   const baseRowHeight = 172;
-  const rowHeights = groups.map(group => Math.max(baseRowHeight, ...phases.map(phase => 74 + Math.min(4, groupMatrixCellItems(group.phases.get(phase.label) || []).length) * 62)));
+  const rowHeights = groups.map(group => Math.max(baseRowHeight, ...phases.map(phase => 74 + groupMatrixCellItems(group.phases.get(phase.label) || []).length * 62)));
   const width = workstreamWidth + (phaseWidth * phases.length);
   const height = 90 + headerHeight + rowHeights.reduce((sum, h) => sum + h, 0) + 40;
   const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -1500,7 +1502,6 @@ function downloadMatrixScreenshot() {
   const border = canvasCssColor('--border', '#2a3542');
   const gold = canvasCssColor('--gold', '#feca57');
   const goldBg = canvasCssColor('--gold-bg', 'rgba(254,202,87,0.16)');
-  const accent = canvasCssColor('--accent', '#66fcf1');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, width, height);
   ctx.fillStyle = ink;
@@ -1568,7 +1569,7 @@ function downloadMatrixScreenshot() {
         ctx.fillText('No promoted items', x + 14, y + 32);
         return;
       }
-      groupedItems.slice(0, 4).forEach((itemGroup, itemIdx) => {
+      groupedItems.forEach((itemGroup, itemIdx) => {
         const cardY = y + 14 + itemIdx * 62;
         const product = productColor(itemGroup.doc);
         ctx.fillStyle = surface2;
@@ -1584,11 +1585,6 @@ function downloadMatrixScreenshot() {
         const dateText = itemGroup.items.length === 1 ? (itemGroup.items[0].dueDate ? dueDateValue(itemGroup.items[0].dueDate) : itemGroup.del.end || itemGroup.del.start || 'No date') : `${itemGroup.items.length} due dates`;
         ctx.fillText(`${dateText} • ${statusLabel(itemGroup.status)}`, x + 24, cardY + 38);
       });
-      if (groupedItems.length > 4) {
-        ctx.fillStyle = accent;
-        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        ctx.fillText(`+${groupedItems.length - 4} more groups`, x + 14, y + rowHeight - 18);
-      }
     });
     y += rowHeight;
   });

@@ -29,6 +29,16 @@ class MatrixScreenshotExportTests(unittest.TestCase):
         self.assertIn("groupMatrixCellItems", html)
         self.assertNotIn("html2canvas", html)
 
+    def test_native_canvas_export_matches_theme_and_expands_groups(self):
+        html = html_text()
+        screenshot = html[html.index("function downloadMatrixScreenshot") : html.index("function renderD3Timeline")]
+        self.assertIn("getComputedStyle(document.body).getPropertyValue(name)", html)
+        self.assertIn("getComputedStyle(document.documentElement).getPropertyValue(name)", html)
+        self.assertIn("groupedItems.forEach((itemGroup, itemIdx) =>", screenshot)
+        self.assertIn("74 + groupMatrixCellItems(group.phases.get(phase.label) || []).length * 62", screenshot)
+        self.assertNotIn("groupedItems.slice(0, 4)", screenshot)
+        self.assertNotIn("more groups", screenshot)
+
 
 class GithubPagesPublishingTests(unittest.TestCase):
     def test_pages_workflow_deploys_static_site_from_main(self):
