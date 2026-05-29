@@ -377,6 +377,7 @@
       <select class="btn date-select" id="matrixPhaseMode" aria-label="Matrix phase mode">
         <option value="auto">Auto Phases</option>
         <option value="quarter">By Quarter</option>
+        <option value="federal-fy">By Federal FY</option>
         <option value="year">By Year</option>
       </select>
       <button class="btn filter-chip" id="btnMatrixHideRoutine" type="button" aria-pressed="true">Hide routine</button>
@@ -1293,6 +1294,11 @@ function collectMatrixItems(docs = enabledDocuments(), activeFilters = {}) {
   return items.sort((a, b) => compareDueDateValues(a.dueDate || a.del.end || '', b.dueDate || b.del.end || '') || productName(a.doc).localeCompare(productName(b.doc)) || a.del.title.localeCompare(b.del.title));
 }
 function quarterLabel(date) { return `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`; }
+function federalFiscalQuarterLabel(date) {
+  const fiscalYear = date.getMonth() >= 9 ? date.getFullYear() + 1 : date.getFullYear();
+  const quarter = Math.floor(((date.getMonth() + 3) % 12) / 3) + 1;
+  return `Q${quarter} FY ${String(fiscalYear).slice(-2)}`;
+}
 function buildMatrixPhases(items, options = {}) {
   const mode = options.phaseMode || matrixPhaseMode;
   const dated = items.map(item => item.parsed).filter(Boolean).sort((a, b) => a - b);
@@ -1303,6 +1309,10 @@ function buildMatrixPhases(items, options = {}) {
   if (mode === 'year' && dated.length) {
     const years = [...new Set(dated.map(date => String(date.getFullYear())))];
     return years.map(label => ({ label, desc: 'Calendar year', matches: date => String(date.getFullYear()) === label }));
+  }
+  if (mode === 'federal-fy' && dated.length) {
+    const labels = [...new Set(dated.map(federalFiscalQuarterLabel))];
+    return labels.map(label => ({ label, desc: 'Federal fiscal quarter', matches: date => federalFiscalQuarterLabel(date) === label }));
   }
   const labels = ['Foundation','Integration','Reporting / Alignment','Readiness / Closeout'];
   if (!dated.length) return labels.map(label => ({ label, desc: 'Auto phase', matches: () => label === 'Foundation' }));
@@ -1871,7 +1881,7 @@ $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favori
 document.querySelectorAll('[data-view-mode]').forEach(btn => btn.addEventListener('click', e => { currentView = e.currentTarget.dataset.viewMode || 'linear'; renderRoadmap(); }));
 $('#timelineGrouping').addEventListener('change', e => { timelineGrouping = e.target.value === 'product' ? 'product' : 'unified'; renderRoadmap(); });
 $('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter', 'month'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
-$('#matrixPhaseMode').addEventListener('change', e => { matrixPhaseMode = ['auto', 'quarter', 'year'].includes(e.target.value) ? e.target.value : 'auto'; renderRoadmap(); });
+$('#matrixPhaseMode').addEventListener('change', e => { matrixPhaseMode = ['auto', 'quarter', 'federal-fy', 'year'].includes(e.target.value) ? e.target.value : 'auto'; renderRoadmap(); });
 $('#btnMatrixHideRoutine').addEventListener('click', () => { matrixHideRoutine = !matrixHideRoutine; renderRoadmap(); });
 $('#btnMatrixStrict').addEventListener('click', () => { matrixStrictMode = !matrixStrictMode; renderRoadmap(); });
 $('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; timelineWindowStart = null; renderRoadmap(); });

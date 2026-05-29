@@ -32,11 +32,20 @@ class MatrixViewFeatureTests(unittest.TestCase):
         self.assertIn('id="matrixPhaseMode"', html)
         self.assertIn('value="auto"', html)
         self.assertIn('value="quarter"', html)
+        self.assertIn('value="federal-fy"', html)
         self.assertIn('value="year"', html)
         self.assertIn('id="btnMatrixHideRoutine"', html)
         self.assertIn('id="btnMatrixStrict"', html)
         self.assertIn("let matrixHideRoutine = true;", html)
         self.assertIn("let matrixStrictMode = false;", html)
+
+    def test_matrix_supports_federal_fiscal_year_quarters(self):
+        html = html_text()
+        self.assertIn("function federalFiscalQuarterLabel", html)
+        self.assertIn("date.getMonth() >= 9 ? date.getFullYear() + 1", html)
+        self.assertIn("Q${quarter} FY ${String(fiscalYear).slice(-2)}", html)
+        self.assertIn("Federal fiscal quarter", html)
+        self.assertIn("'federal-fy'", html)
 
     def test_matrix_honors_existing_filters_and_opens_detail_drawer(self):
         html = html_text()
