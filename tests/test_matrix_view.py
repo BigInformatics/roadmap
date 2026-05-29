@@ -1,0 +1,58 @@
+from pathlib import Path
+import unittest
+
+HTML = Path(__file__).resolve().parents[1] / "Product-Roadmap.html"
+
+
+def html_text():
+    return HTML.read_text(encoding="utf-8")
+
+
+class MatrixViewFeatureTests(unittest.TestCase):
+    def test_matrix_view_control_is_present(self):
+        html = html_text()
+        self.assertIn('data-view-mode="matrix"', html)
+        self.assertIn("matrixViewIcon", html)
+        self.assertIn("currentView === 'matrix'", html)
+        self.assertIn("renderCoordinationMatrix", html)
+
+    def test_matrix_helpers_and_default_tags_are_present(self):
+        html = html_text()
+        self.assertIn("DEFAULT_COORDINATION_TAGS", html)
+        self.assertIn("'integration'", html)
+        self.assertIn("'validation'", html)
+        self.assertIn("function collectMatrixItems", html)
+        self.assertIn("function isCoordinationRelevant", html)
+        self.assertIn("function isRoutineCadence", html)
+        self.assertIn("function buildMatrixPhases", html)
+        self.assertIn("function groupMatrixItems", html)
+
+    def test_matrix_controls_support_low_noise_options(self):
+        html = html_text()
+        self.assertIn('id="matrixPhaseMode"', html)
+        self.assertIn('value="auto"', html)
+        self.assertIn('value="quarter"', html)
+        self.assertIn('value="year"', html)
+        self.assertIn('id="btnMatrixHideRoutine"', html)
+        self.assertIn('id="btnMatrixStrict"', html)
+        self.assertIn("let matrixHideRoutine = true;", html)
+        self.assertIn("let matrixStrictMode = false;", html)
+
+    def test_matrix_honors_existing_filters_and_opens_detail_drawer(self):
+        html = html_text()
+        self.assertIn("filter(deliverableMatchesFilters)", html)
+        self.assertIn("visibleDueDates(del)", html)
+        self.assertIn("doc.data.coordinationGroup || productName(doc)", html)
+        self.assertIn("openDetail(match.del, match.doc, match.dueDate)", html)
+
+    def test_matrix_is_self_contained_without_external_dependencies(self):
+        html = html_text()
+        self.assertNotIn("https://d3js.org", html)
+        self.assertNotIn("cdn.jsdelivr", html)
+        self.assertNotIn("unpkg.com", html)
+        self.assertIn("matrix-board", html)
+        self.assertIn("matrix-item", html)
+
+
+if __name__ == "__main__":
+    unittest.main()
