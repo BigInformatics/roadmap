@@ -122,6 +122,8 @@
   .theme-toggle svg { width: 1rem; height: 1rem; display: block; }
 
   .main { padding: 2rem; max-width: 100%; margin: 0 auto; }
+  .build-footer { padding: 0 2rem 2rem; color: var(--muted); font-size: 0.74rem; text-align: right; }
+  .build-footer time { color: var(--ink); }
   .product-toggle-bar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; max-width: 1600px; align-items: center; }
   .toggle-pill { display: inline-flex; align-items: center; gap: 0.45rem; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 0.4rem 0.75rem; font-size: 0.8rem; cursor: pointer; color: var(--muted); }
   .toggle-pill input { width: auto; accent-color: var(--accent); }
@@ -286,6 +288,34 @@
   .form-grid .span-2 { grid-column: 1 / -1; }
   .help-text { font-size: 0.8rem; color: var(--muted); }
 
+
+  .matrix-wrap { overflow-x: auto; }
+  .matrix-toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.75rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; flex-wrap: wrap; }
+  .matrix-title { color: var(--ink); font-weight: 700; }
+  .matrix-controls { display: inline-flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .matrix-board { display: grid; min-width: 980px; }
+  .matrix-row { display: grid; grid-template-columns: minmax(180px, 0.9fr) repeat(var(--matrix-phase-count, 4), minmax(210px, 1fr)); border-bottom: 1px solid var(--border); }
+  .matrix-row.matrix-head { position: sticky; top: 0; z-index: 20; background: var(--surface-2); }
+  .matrix-cell { padding: 0.85rem; border-right: 1px solid var(--border); min-height: 94px; }
+  .matrix-cell.current-phase { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.34); }
+  .matrix-workstream { background: rgba(255,255,255,0.02); }
+  .matrix-workstream.current-phase { background: rgba(255,255,255,0.02); box-shadow: none; }
+  .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; }
+  .matrix-phase span, .matrix-workstream span { color: var(--muted); font-size: 0.74rem; }
+  .matrix-phase.current-phase strong { color: var(--gold); }
+  .matrix-current-label { display: inline-flex; align-items: center; margin-top: 0.35rem; border: 1px solid rgba(254,202,87,0.45); color: var(--gold); border-radius: 999px; padding: 0.08rem 0.42rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .matrix-items { display: flex; flex-direction: column; gap: 0.5rem; }
+  .matrix-item { width: 100%; text-align: left; border: 1px solid var(--border); border-left: 4px solid var(--product-color); border-radius: 10px; background: var(--surface-2); color: var(--ink); padding: 0.55rem; cursor: pointer; }
+  .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
+  .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
+  .matrix-date-list { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; color: var(--muted); font-size: 0.7rem; }
+  .matrix-date-chip { border: 1px solid var(--border); border-radius: 999px; padding: 0.08rem 0.32rem; background: var(--bg); }
+  .matrix-count-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.08rem 0.38rem; margin-left: 0.25rem; background: rgba(102,252,241,0.1); color: var(--accent); font-size: 0.68rem; }
+  .matrix-more { color: var(--accent); font-size: 0.76rem; margin-top: 0.25rem; }
+  .matrix-empty-cell { color: var(--muted); font-size: 0.78rem; }
+  .matrix-empty-state { padding: 2rem; color: var(--muted); }
+
   @media (max-width: 900px) {
     .linear-header { display: none; }
     .linear-row { grid-template-columns: 1fr; gap: 0.35rem; align-items: start; }
@@ -298,6 +328,7 @@
     header { flex-direction: column; align-items: flex-start; padding: 1rem; }
     .controls { justify-content: flex-start; }
     .main { padding: 1rem; }
+    .build-footer { padding: 0 1rem 1rem; text-align: left; }
     :root { --name-col: 170px; --month-col: 45px; }
   }
 </style>
@@ -347,9 +378,18 @@
         <option value="quarter">1 Quarter</option>
         <option value="month">1 Month</option>
       </select>
+      <select class="btn date-select" id="matrixPhaseMode" aria-label="Matrix phase mode">
+        <option value="auto">Auto Phases</option>
+        <option value="quarter">By Quarter</option>
+        <option value="federal-fy">Federal FY</option>
+        <option value="year">By Year</option>
+      </select>
+      <button class="btn filter-chip" id="btnMatrixHideRoutine" type="button" aria-pressed="true">Hide routine</button>
+      <button class="btn filter-chip" id="btnMatrixStrict" type="button" aria-pressed="false">Risks + favorites</button>
       <button class="btn icon-btn icon-only" type="button" data-view-mode="grid" aria-label="Grid View" title="Grid View"></button>
       <button class="btn icon-btn icon-only active" type="button" data-view-mode="linear" aria-label="List View" title="List View"></button>
       <button class="btn icon-btn icon-only" type="button" data-view-mode="timeline" aria-label="Timeline View" title="Timeline View"></button>
+      <button class="btn icon-btn icon-only" type="button" data-view-mode="matrix" aria-label="Matrix View" title="Matrix View"></button>
       <button class="btn icon-btn icon-only" id="btnCollapseAll" type="button" aria-label="Collapse All" title="Collapse All"></button>
       <button class="btn icon-btn icon-only" id="btnNow" type="button" aria-label="Jump to Now" title="Jump to Now"></button>
       <button class="btn icon-btn icon-only" id="btnEdit" type="button" aria-label="Edit Data" title="Edit Data"></button>
@@ -375,6 +415,8 @@
   </div>
   <input id="globalJsonFileInput" type="file" accept="application/json,.json" multiple hidden>
 </div>
+
+<footer class="build-footer" aria-label="Build information">Build datetime: <time id="buildDatetime" datetime="2026-05-29T12:28:13Z">2026-05-29 12:28:13 UTC</time></footer>
 
 <div class="overlay" id="overlay"></div>
 <div class="detail-panel" id="detailPanel">
@@ -407,6 +449,9 @@ let selectedStatus = null;
 let currentView = 'linear';
 let timelineGrouping = 'unified';
 let timelineWindow = 'all';
+let matrixPhaseMode = 'auto';
+let matrixHideRoutine = true;
+let matrixStrictMode = false;
 let timelineWindowStart = null;
 let selectedDeliverable = null;
 let selectedDocument = null;
@@ -473,6 +518,7 @@ function editIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24"
 function chevronIcon(collapsed) { return collapsed ? '▸' : '▾'; }
 function gridIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-layout-grid-icon lucide-layout-grid"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>'; }
 function listIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-icon lucide-list"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>'; }
+function matrixViewIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-table-2-icon lucide-table-2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M21 9V5a2 2 0 0 0-2-2h-4"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M3 15v4a2 2 0 0 0 2 2h4"/><path d="M15 3v18"/></svg>'; }
 function timelineViewIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-no-axes-gantt-icon lucide-chart-no-axes-gantt"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>'; }
 function collapseIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-up-icon lucide-chevrons-up"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg>'; }
 function expandIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-down-icon lucide-chevrons-down"><path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/></svg>'; }
@@ -848,7 +894,7 @@ function buildMarkdownExport() {
   if (dateFilterActive()) filters.push(`Date: ${dateFilterLabel()}`);
   if (currentStatusFilter !== 'all') filters.push(`Status: ${statusLabel(currentStatusFilter)}`);
   if (selectedTagFilter) filters.push(`Tag: ${selectedTagFilter}`);
-  filters.push(`View: ${currentView === 'timeline' ? 'Timeline' : currentView === 'grid' ? 'Grid' : 'List'}`);
+  filters.push(`View: ${currentView === 'matrix' ? 'Matrix' : currentView === 'timeline' ? 'Timeline' : currentView === 'grid' ? 'Grid' : 'List'}`);
   const stats = getVisibleSummaryStats();
   const lines = [
     `# ${markdownEscape(title)}`,
@@ -936,9 +982,13 @@ function renderRoadmap() {
     renderD3Timeline();
     return;
   }
+  if (currentView === 'matrix') {
+    renderCoordinationMatrix();
+    return;
+  }
   renderTimelineHeader();
   const body = $('#roadmapBody');
-  $('#roadmapWrap').classList.remove('linear-wrap', 'd3-wrap');
+  $('#roadmapWrap').classList.remove('linear-wrap', 'd3-wrap', 'matrix-wrap');
   body.innerHTML = '';
   const currentIdx = monthIndex(getCurrentMonthKey());
   const docs = enabledDocuments();
@@ -1005,8 +1055,8 @@ function renderRoadmap() {
   renderStats();
 }
 
-function viewLabel(view) { return view === 'timeline' ? 'Timeline View' : view === 'linear' ? 'List View' : 'Grid View'; }
-function viewIcon(view) { return view === 'timeline' ? timelineViewIcon() : view === 'linear' ? listIcon() : gridIcon(); }
+function viewLabel(view) { return view === 'timeline' ? 'Timeline View' : view === 'matrix' ? 'Matrix View' : view === 'linear' ? 'List View' : 'Grid View'; }
+function viewIcon(view) { return view === 'timeline' ? timelineViewIcon() : view === 'matrix' ? matrixViewIcon() : view === 'linear' ? listIcon() : gridIcon(); }
 function updateViewControls() {
   document.querySelectorAll('[data-view-mode]').forEach(btn => {
     const view = btn.dataset.viewMode;
@@ -1044,6 +1094,26 @@ function updateViewControls() {
     windowSelect.value = timelineWindow;
     windowSelect.disabled = currentView !== 'timeline';
     windowSelect.title = currentView === 'timeline' ? 'Timeline timeframe' : 'Timeline timeframe is available in Timeline View';
+  }
+  const matrixMode = $('#matrixPhaseMode');
+  if (matrixMode) {
+    matrixMode.value = matrixPhaseMode;
+    matrixMode.disabled = currentView !== 'matrix';
+    matrixMode.title = currentView === 'matrix' ? 'Matrix phase mode' : 'Matrix phase mode is available in Matrix View';
+  }
+  const matrixHide = $('#btnMatrixHideRoutine');
+  if (matrixHide) {
+    matrixHide.classList.toggle('active', matrixHideRoutine);
+    matrixHide.disabled = currentView !== 'matrix';
+    matrixHide.setAttribute('aria-pressed', String(matrixHideRoutine));
+    matrixHide.title = currentView === 'matrix' ? 'Hide routine cadence items in Matrix View' : 'Routine hiding is available in Matrix View';
+  }
+  const matrixStrict = $('#btnMatrixStrict');
+  if (matrixStrict) {
+    matrixStrict.classList.toggle('active', matrixStrictMode);
+    matrixStrict.disabled = currentView !== 'matrix';
+    matrixStrict.setAttribute('aria-pressed', String(matrixStrictMode));
+    matrixStrict.title = currentView === 'matrix' ? 'Show only favorites and risky items in Matrix View' : 'Strict matrix filtering is available in Matrix View';
   }
   const collapseBtn = $('#btnCollapseAll');
   if (collapseBtn) {
@@ -1191,10 +1261,182 @@ function layoutTimelineItems(group, x, width, margin) {
   group.layoutRows = Math.max(1, rowEnds.length);
   return group;
 }
+
+const DEFAULT_COORDINATION_TAGS = ['integration','deployment','api','fhir','standards','data-standardization','infrastructure','security','validation','coordination'];
+const MATRIX_RISK_STATUSES = ['in-progress','at-risk','blocked','on-hold'];
+const MATRIX_ROUTINE_WORDS = ['monthly','weekly','biweekly','invoice','minutes','agenda','status report','standup','check-in'];
+function isRoutineCadence(deliverable, dueDate) {
+  const text = [deliverable.title, deliverable.desc, dueDate?.note].join(' ').toLowerCase();
+  return MATRIX_ROUTINE_WORDS.some(word => text.includes(word));
+}
+function isCoordinationRelevant(deliverable, dueDate, doc, options = {}) {
+  const status = dueDate ? dueDateStatus(dueDate, deliverable) : deliverable.status;
+  const tags = normalizeTags(deliverable.tags).map(tag => tag.toLowerCase());
+  const note = String(dueDate?.note || '').toLowerCase();
+  const keywordHit = ['handoff','dependency','risk','blocker','review','approval','deploy','validation'].some(word => note.includes(word));
+  const tagHit = tags.some(tag => (options.coordinationTags || DEFAULT_COORDINATION_TAGS).includes(tag));
+  const favoredOrRisk = Boolean(deliverable.favorite) || MATRIX_RISK_STATUSES.includes(status);
+  if (options.strictMode && !favoredOrRisk) return false;
+  if (options.hideRoutine && isRoutineCadence(deliverable, dueDate) && !favoredOrRisk && !keywordHit && !tagHit) return false;
+  return favoredOrRisk || keywordHit || tagHit;
+}
+function collectMatrixItems(docs = enabledDocuments(), activeFilters = {}) {
+  const options = { hideRoutine: matrixHideRoutine, strictMode: matrixStrictMode, coordinationTags: DEFAULT_COORDINATION_TAGS, ...activeFilters };
+  const items = [];
+  docs.forEach(doc => {
+    (doc.data.deliverables || []).filter(deliverableMatchesFilters).forEach(del => {
+      const dates = visibleDueDates(del);
+      if (dates.length) {
+        dates.forEach(dueDate => {
+          if (isCoordinationRelevant(del, dueDate, doc, options)) items.push({ doc, del, dueDate, parsed: parseDueDate(dueDate), workstream: doc.data.coordinationGroup || productName(doc) });
+        });
+      } else if (isCoordinationRelevant(del, null, doc, options)) {
+        items.push({ doc, del, dueDate: null, parsed: parseDueDate(del.end || del.start), workstream: doc.data.coordinationGroup || productName(doc) });
+      }
+    });
+  });
+  return items.sort((a, b) => compareDueDateValues(a.dueDate || a.del.end || '', b.dueDate || b.del.end || '') || productName(a.doc).localeCompare(productName(b.doc)) || a.del.title.localeCompare(b.del.title));
+}
+function quarterLabel(date) { return `Q${Math.floor(date.getMonth() / 3) + 1} ${date.getFullYear()}`; }
+function federalFiscalQuarterLabel(date) {
+  const fiscalYear = date.getMonth() >= 9 ? date.getFullYear() + 1 : date.getFullYear();
+  const quarter = Math.floor(((date.getMonth() + 3) % 12) / 3) + 1;
+  return `Q${quarter} FY ${String(fiscalYear).slice(-2)}`;
+}
+function federalFiscalQuarterStartDate(label) {
+  const match = String(label || '').match(/^Q([1-4]) FY (\d{2})$/);
+  if (!match) return null;
+  const quarter = Number(match[1]);
+  const fiscalYear = 2000 + Number(match[2]);
+  const starts = {
+    1: new Date(fiscalYear - 1, 9, 1),
+    2: new Date(fiscalYear, 0, 1),
+    3: new Date(fiscalYear, 3, 1),
+    4: new Date(fiscalYear, 6, 1)
+  };
+  return starts[quarter] || null;
+}
+function formatQuarterStartDate(date) {
+  if (!date) return '';
+  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+function buildMatrixPhases(items, options = {}) {
+  const mode = options.phaseMode || matrixPhaseMode;
+  const dated = items.map(item => item.parsed).filter(Boolean).sort((a, b) => a - b);
+  if (mode === 'quarter' && dated.length) {
+    const labels = [...new Set(dated.map(quarterLabel))];
+    return labels.map(label => ({ label, desc: 'Calendar quarter', matches: date => quarterLabel(date) === label }));
+  }
+  if (mode === 'year' && dated.length) {
+    const years = [...new Set(dated.map(date => String(date.getFullYear())))];
+    return years.map(label => ({ label, desc: 'Calendar year', matches: date => String(date.getFullYear()) === label }));
+  }
+  if (mode === 'federal-fy' && dated.length) {
+    const labels = [...new Set(dated.map(federalFiscalQuarterLabel))];
+    return labels.map(label => ({ label, desc: `Federal FY • Starts ${formatQuarterStartDate(federalFiscalQuarterStartDate(label))}`, matches: date => federalFiscalQuarterLabel(date) === label }));
+  }
+  const labels = ['Foundation','Integration','Reporting / Alignment','Readiness / Closeout'];
+  if (!dated.length) return labels.map(label => ({ label, desc: 'Auto phase', matches: () => label === 'Foundation' }));
+  const min = dated[0], max = dated[dated.length - 1];
+  const span = Math.max(1, max - min);
+  return labels.map((label, idx) => ({ label, desc: `${MONTH_NAMES[new Date(+min + span * idx / 4).getMonth()]} ${new Date(+min + span * idx / 4).getFullYear()}`, index: idx, matches: date => Math.min(3, Math.floor(((date - min) / span) * 4)) === idx }));
+}
+function assignMatrixPhase(item, phases) {
+  const date = item.parsed;
+  if (!date) return phases[0];
+  return phases.find(phase => phase.matches(date)) || phases[phases.length - 1];
+}
+function isCurrentMatrixPhase(phase, now = new Date()) {
+  return Boolean(phase && typeof phase.matches === 'function' && phase.matches(now));
+}
+function groupMatrixItems(items, phases, options = {}) {
+  const groups = new Map();
+  enabledDocuments().forEach(doc => groups.set(doc.data.coordinationGroup || productName(doc), { doc, label: doc.data.coordinationGroup || productName(doc), phases: new Map(phases.map(phase => [phase.label, []])) }));
+  items.forEach(item => {
+    const key = item.workstream;
+    if (!groups.has(key)) groups.set(key, { doc: item.doc, label: key, phases: new Map(phases.map(phase => [phase.label, []])) });
+    const phase = assignMatrixPhase(item, phases);
+    groups.get(key).phases.get(phase.label).push(item);
+  });
+  return [...groups.values()];
+}
+const MATRIX_BREAKOUT_STATUSES = ['in-progress','at-risk','blocked','on-hold','cancelled'];
+function matrixDateShort(value) {
+  const text = dueDateValue(value);
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return text || 'No date';
+  return `${match[1].padStart(2, '0')}/${match[2].padStart(2, '0')}`;
+}
+function matrixItemStatus(item) { return item.dueDate ? dueDateStatus(item.dueDate, item.del) : item.del.status; }
+function matrixGroupBreakoutKey(item) {
+  const status = matrixItemStatus(item);
+  return MATRIX_BREAKOUT_STATUSES.includes(status) ? status : 'routine';
+}
+function groupMatrixCellItems(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    const key = `${item.doc.id}::${item.del.id}::${matrixGroupBreakoutKey(item)}`;
+    if (!groups.has(key)) groups.set(key, { doc: item.doc, del: item.del, status: matrixItemStatus(item), items: [] });
+    groups.get(key).items.push(item);
+  });
+  return [...groups.values()].map(group => {
+    group.items.sort((a, b) => compareDueDateValues(a.dueDate || a.del.end || '', b.dueDate || b.del.end || ''));
+    return group;
+  });
+}
+function renderMatrixItemGroup(group) {
+  const dates = group.items.map(item => item.dueDate ? dueDateValue(item.dueDate) : (item.del.end || item.del.start || 'No date'));
+  const primaryDate = dates[0] || 'No date';
+  const dateList = group.items.map(item => matrixDateShort(item.dueDate || item.del.end || item.del.start)).slice(0, 6);
+  const hiddenCount = Math.max(0, group.items.length - dateList.length);
+  const dateText = group.items.length === 1 ? escapeHtml(primaryDate) : `${group.items.length} due dates`;
+  const dateChips = group.items.length > 1 ? `<div class="matrix-date-list">${dateList.map(date => `<span class="matrix-date-chip">${escapeHtml(date)}</span>`).join('')}${hiddenCount ? `<span class="matrix-date-chip">+${hiddenCount}</span>` : ''}</div>` : '';
+  return `<button type="button" class="matrix-item ${statusClass(group.status)}" style="--product-color:${escapeHtml(productColor(group.doc))}" data-matrix-del="${escapeHtml(group.del.id)}" data-matrix-date="${escapeHtml(primaryDate)}"><div class="matrix-item-title">${group.del.favorite ? '★ ' : ''}${escapeHtml(group.del.title)}${group.items.length > 1 ? `<span class="matrix-count-badge">${group.items.length}</span>` : ''}</div><div class="matrix-item-meta">${dateText} • ${escapeHtml(statusLabel(group.status))}</div>${dateChips}</button>`;
+}
+function renderCoordinationMatrix() {
+  const wrap = $('#roadmapWrap');
+  const body = $('#roadmapBody');
+  wrap.classList.remove('linear-wrap', 'd3-wrap');
+  wrap.classList.add('matrix-wrap');
+  $('#timelineHeader').innerHTML = `<div class="matrix-toolbar"><div><span class="matrix-title">Coordination Matrix</span> • ${matrixHideRoutine ? 'routine hidden' : 'routine visible'} • ${matrixStrictMode ? 'favorites and risks only' : 'coordination signals'}</div><div class="matrix-controls"><span>Phase mode: ${escapeHtml(matrixPhaseMode)}</span></div></div>`;
+  body.innerHTML = '';
+  if (!enabledDocuments().length) { body.innerHTML = renderNoDocumentsActions(); attachNoDocumentsActions(); renderStats(); return; }
+  const items = collectMatrixItems(enabledDocuments(), { hideRoutine: matrixHideRoutine, strictMode: matrixStrictMode });
+  if (!items.length) { body.innerHTML = '<div class="matrix-empty-state">No coordination items found for the current filters. Try turning off “Favorites and risks only,” clearing tag/status filters, or marking important roadmap items as favorites.</div>'; renderStats(); return; }
+  const phases = buildMatrixPhases(items, { phaseMode: matrixPhaseMode });
+  const groups = groupMatrixItems(items, phases);
+  const board = document.createElement('div');
+  board.className = 'matrix-board';
+  board.style.setProperty('--matrix-phase-count', phases.length);
+  board.innerHTML = `<div class="matrix-row matrix-head"><div class="matrix-cell matrix-workstream"><strong>Workstream</strong><span>Enabled products</span></div>${phases.map(phase => {
+    const current = isCurrentMatrixPhase(phase);
+    return `<div class="matrix-cell matrix-phase${current ? ' current-phase' : ''}"${current ? ' aria-current="date"' : ''}><strong>${escapeHtml(phase.label)}</strong><span>${escapeHtml(phase.desc || '')}</span>${current ? '<div class="matrix-current-label">Current</div>' : ''}</div>`;
+  }).join('')}</div>`;
+  groups.forEach(group => {
+    const row = document.createElement('div');
+    row.className = 'matrix-row';
+    row.innerHTML = `<div class="matrix-cell matrix-workstream"><strong>${escapeHtml(group.label)}</strong><span>${escapeHtml(productName(group.doc))}</span></div>` + phases.map(phase => {
+      const current = isCurrentMatrixPhase(phase);
+      const cellItems = group.phases.get(phase.label) || [];
+      const groupedItems = groupMatrixCellItems(cellItems);
+      const visible = groupedItems.slice(0, 4).map(renderMatrixItemGroup).join('');
+      const more = groupedItems.length > 4 ? `<div class="matrix-more">+${groupedItems.length - 4} more groups</div>` : '';
+      return `<div class="matrix-cell${current ? ' current-phase' : ''}"><div class="matrix-items">${visible || '<span class="matrix-empty-cell">No promoted items</span>'}${more}</div></div>`;
+    }).join('');
+    board.appendChild(row);
+  });
+  body.appendChild(board);
+  body.querySelectorAll('[data-matrix-del]').forEach(btn => btn.addEventListener('click', () => {
+    const match = items.find(item => item.del.id === btn.dataset.matrixDel && (item.dueDate ? dueDateValue(item.dueDate) : (item.del.end || item.del.start || 'No date')) === btn.dataset.matrixDate);
+    if (match) openDetail(match.del, match.doc, match.dueDate);
+  }));
+  renderStats();
+}
+
 function renderD3Timeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
-  wrap.classList.remove('linear-wrap');
+  wrap.classList.remove('linear-wrap', 'matrix-wrap');
   wrap.classList.add('d3-wrap');
   const items = collectDueItems().filter(item => item.parsed);
   const fullDomain = timelineDateDomain(items);
@@ -1285,7 +1527,7 @@ function renderD3Timeline() {
 function renderLinearTimeline() {
   const wrap = $('#roadmapWrap');
   const body = $('#roadmapBody');
-  wrap.classList.remove('d3-wrap');
+  wrap.classList.remove('d3-wrap', 'matrix-wrap');
   wrap.classList.add('linear-wrap');
   wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
@@ -1667,6 +1909,9 @@ $('#btnFavoritesOnly').addEventListener('click', () => { favoritesOnly = !favori
 document.querySelectorAll('[data-view-mode]').forEach(btn => btn.addEventListener('click', e => { currentView = e.currentTarget.dataset.viewMode || 'linear'; renderRoadmap(); }));
 $('#timelineGrouping').addEventListener('change', e => { timelineGrouping = e.target.value === 'product' ? 'product' : 'unified'; renderRoadmap(); });
 $('#timelineWindow').addEventListener('change', e => { timelineWindow = ['all', 'year', 'quarter', 'month'].includes(e.target.value) ? e.target.value : 'all'; timelineWindowStart = null; renderRoadmap(); });
+$('#matrixPhaseMode').addEventListener('change', e => { matrixPhaseMode = ['auto', 'quarter', 'federal-fy', 'year'].includes(e.target.value) ? e.target.value : 'auto'; renderRoadmap(); });
+$('#btnMatrixHideRoutine').addEventListener('click', () => { matrixHideRoutine = !matrixHideRoutine; renderRoadmap(); });
+$('#btnMatrixStrict').addEventListener('click', () => { matrixStrictMode = !matrixStrictMode; renderRoadmap(); });
 $('#tagFilter').addEventListener('change', e => { selectedTagFilter = e.target.value; timelineWindowStart = null; renderRoadmap(); });
 $('#btnCollapseAll').addEventListener('click', () => {
   if ($('#btnCollapseAll').disabled) return;
