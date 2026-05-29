@@ -45,6 +45,15 @@ class MatrixViewFeatureTests(unittest.TestCase):
         self.assertIn("doc.data.coordinationGroup || productName(doc)", html)
         self.assertIn("openDetail(match.del, match.doc, match.dueDate)", html)
 
+    def test_matrix_groups_repeated_due_dates_unless_status_breakout_matters(self):
+        html = html_text()
+        self.assertIn("function groupMatrixCellItems", html)
+        self.assertIn("MATRIX_BREAKOUT_STATUSES", html)
+        self.assertIn("function matrixGroupBreakoutKey", html)
+        self.assertIn("matrix-count-badge", html)
+        self.assertIn("matrix-date-chip", html)
+        self.assertIn("due dates", html)
+
     def test_matrix_is_self_contained_without_external_dependencies(self):
         html = html_text()
         self.assertNotIn("https://d3js.org", html)

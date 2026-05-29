@@ -303,6 +303,9 @@
   .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
   .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
+  .matrix-date-list { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; color: var(--muted); font-size: 0.7rem; }
+  .matrix-date-chip { border: 1px solid var(--border); border-radius: 999px; padding: 0.08rem 0.32rem; background: var(--bg); }
+  .matrix-count-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.08rem 0.38rem; margin-left: 0.25rem; background: rgba(102,252,241,0.1); color: var(--accent); font-size: 0.68rem; }
   .matrix-more { color: var(--accent); font-size: 0.76rem; margin-top: 0.25rem; }
   .matrix-empty-cell { color: var(--muted); font-size: 0.78rem; }
   .matrix-empty-state { padding: 2rem; color: var(--muted); }
@@ -1318,10 +1321,38 @@ function groupMatrixItems(items, phases, options = {}) {
   });
   return [...groups.values()];
 }
-function renderMatrixItem(item) {
-  const status = item.dueDate ? dueDateStatus(item.dueDate, item.del) : item.del.status;
-  const date = item.dueDate ? dueDateValue(item.dueDate) : (item.del.end || item.del.start || 'No date');
-  return `<button type="button" class="matrix-item ${statusClass(status)}" style="--product-color:${escapeHtml(productColor(item.doc))}" data-matrix-del="${escapeHtml(item.del.id)}" data-matrix-date="${escapeHtml(date)}"><div class="matrix-item-title">${item.del.favorite ? '★ ' : ''}${escapeHtml(item.del.title)}</div><div class="matrix-item-meta">${escapeHtml(date)} • ${escapeHtml(statusLabel(status))}</div></button>`;
+const MATRIX_BREAKOUT_STATUSES = ['in-progress','at-risk','blocked','on-hold','cancelled'];
+function matrixDateShort(value) {
+  const text = dueDateValue(value);
+  const match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return text || 'No date';
+  return `${match[1].padStart(2, '0')}/${match[2].padStart(2, '0')}`;
+}
+function matrixItemStatus(item) { return item.dueDate ? dueDateStatus(item.dueDate, item.del) : item.del.status; }
+function matrixGroupBreakoutKey(item) {
+  const status = matrixItemStatus(item);
+  return MATRIX_BREAKOUT_STATUSES.includes(status) ? status : 'routine';
+}
+function groupMatrixCellItems(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    const key = `${item.doc.id}::${item.del.id}::${matrixGroupBreakoutKey(item)}`;
+    if (!groups.has(key)) groups.set(key, { doc: item.doc, del: item.del, status: matrixItemStatus(item), items: [] });
+    groups.get(key).items.push(item);
+  });
+  return [...groups.values()].map(group => {
+    group.items.sort((a, b) => compareDueDateValues(a.dueDate || a.del.end || '', b.dueDate || b.del.end || ''));
+    return group;
+  });
+}
+function renderMatrixItemGroup(group) {
+  const dates = group.items.map(item => item.dueDate ? dueDateValue(item.dueDate) : (item.del.end || item.del.start || 'No date'));
+  const primaryDate = dates[0] || 'No date';
+  const dateList = group.items.map(item => matrixDateShort(item.dueDate || item.del.end || item.del.start)).slice(0, 6);
+  const hiddenCount = Math.max(0, group.items.length - dateList.length);
+  const dateText = group.items.length === 1 ? escapeHtml(primaryDate) : `${group.items.length} due dates`;
+  const dateChips = group.items.length > 1 ? `<div class="matrix-date-list">${dateList.map(date => `<span class="matrix-date-chip">${escapeHtml(date)}</span>`).join('')}${hiddenCount ? `<span class="matrix-date-chip">+${hiddenCount}</span>` : ''}</div>` : '';
+  return `<button type="button" class="matrix-item ${statusClass(group.status)}" style="--product-color:${escapeHtml(productColor(group.doc))}" data-matrix-del="${escapeHtml(group.del.id)}" data-matrix-date="${escapeHtml(primaryDate)}"><div class="matrix-item-title">${group.del.favorite ? '★ ' : ''}${escapeHtml(group.del.title)}${group.items.length > 1 ? `<span class="matrix-count-badge">${group.items.length}</span>` : ''}</div><div class="matrix-item-meta">${dateText} • ${escapeHtml(statusLabel(group.status))}</div>${dateChips}</button>`;
 }
 function renderCoordinationMatrix() {
   const wrap = $('#roadmapWrap');
@@ -1344,8 +1375,9 @@ function renderCoordinationMatrix() {
     row.className = 'matrix-row';
     row.innerHTML = `<div class="matrix-cell matrix-workstream"><strong>${escapeHtml(group.label)}</strong><span>${escapeHtml(productName(group.doc))}</span></div>` + phases.map(phase => {
       const cellItems = group.phases.get(phase.label) || [];
-      const visible = cellItems.slice(0, 4).map(renderMatrixItem).join('');
-      const more = cellItems.length > 4 ? `<div class="matrix-more">+${cellItems.length - 4} more</div>` : '';
+      const groupedItems = groupMatrixCellItems(cellItems);
+      const visible = groupedItems.slice(0, 4).map(renderMatrixItemGroup).join('');
+      const more = groupedItems.length > 4 ? `<div class="matrix-more">+${groupedItems.length - 4} more groups</div>` : '';
       return `<div class="matrix-cell"><div class="matrix-items">${visible || '<span class="matrix-empty-cell">No promoted items</span>'}${more}</div></div>`;
     }).join('');
     board.appendChild(row);
