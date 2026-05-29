@@ -377,7 +377,7 @@
       <select class="btn date-select" id="matrixPhaseMode" aria-label="Matrix phase mode">
         <option value="auto">Auto Phases</option>
         <option value="quarter">By Quarter</option>
-        <option value="federal-fy">Federal FY - Oct 1</option>
+        <option value="federal-fy">Federal FY</option>
         <option value="year">By Year</option>
       </select>
       <button class="btn filter-chip" id="btnMatrixHideRoutine" type="button" aria-pressed="true">Hide routine</button>
@@ -1329,7 +1329,7 @@ function buildMatrixPhases(items, options = {}) {
   }
   if (mode === 'federal-fy' && dated.length) {
     const labels = [...new Set(dated.map(federalFiscalQuarterLabel))];
-    return labels.map(label => ({ label, desc: `Federal FY - Oct 1 • Starts ${formatQuarterStartDate(federalFiscalQuarterStartDate(label))}`, matches: date => federalFiscalQuarterLabel(date) === label }));
+    return labels.map(label => ({ label, desc: `Federal FY • Starts ${formatQuarterStartDate(federalFiscalQuarterStartDate(label))}`, matches: date => federalFiscalQuarterLabel(date) === label }));
   }
   const labels = ['Foundation','Integration','Reporting / Alignment','Readiness / Closeout'];
   if (!dated.length) return labels.map(label => ({ label, desc: 'Auto phase', matches: () => label === 'Foundation' }));
