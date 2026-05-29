@@ -42,9 +42,15 @@ class MatrixViewFeatureTests(unittest.TestCase):
     def test_matrix_supports_federal_fiscal_year_quarters(self):
         html = html_text()
         self.assertIn("function federalFiscalQuarterLabel", html)
+        self.assertIn("function federalFiscalQuarterStartDate", html)
         self.assertIn("date.getMonth() >= 9 ? date.getFullYear() + 1", html)
         self.assertIn("Q${quarter} FY ${String(fiscalYear).slice(-2)}", html)
-        self.assertIn("Federal fiscal quarter", html)
+        self.assertIn("Federal FY - Oct 1", html)
+        self.assertIn("Starts ${formatQuarterStartDate", html)
+        self.assertIn("1: new Date(fiscalYear - 1, 9, 1)", html)
+        self.assertIn("2: new Date(fiscalYear, 0, 1)", html)
+        self.assertIn("3: new Date(fiscalYear, 3, 1)", html)
+        self.assertIn("4: new Date(fiscalYear, 6, 1)", html)
         self.assertIn("'federal-fy'", html)
 
     def test_matrix_honors_existing_filters_and_opens_detail_drawer(self):

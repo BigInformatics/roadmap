@@ -377,7 +377,7 @@
       <select class="btn date-select" id="matrixPhaseMode" aria-label="Matrix phase mode">
         <option value="auto">Auto Phases</option>
         <option value="quarter">By Quarter</option>
-        <option value="federal-fy">By Federal FY</option>
+        <option value="federal-fy">Federal FY - Oct 1</option>
         <option value="year">By Year</option>
       </select>
       <button class="btn filter-chip" id="btnMatrixHideRoutine" type="button" aria-pressed="true">Hide routine</button>
@@ -1299,6 +1299,23 @@ function federalFiscalQuarterLabel(date) {
   const quarter = Math.floor(((date.getMonth() + 3) % 12) / 3) + 1;
   return `Q${quarter} FY ${String(fiscalYear).slice(-2)}`;
 }
+function federalFiscalQuarterStartDate(label) {
+  const match = String(label || '').match(/^Q([1-4]) FY (\d{2})$/);
+  if (!match) return null;
+  const quarter = Number(match[1]);
+  const fiscalYear = 2000 + Number(match[2]);
+  const starts = {
+    1: new Date(fiscalYear - 1, 9, 1),
+    2: new Date(fiscalYear, 0, 1),
+    3: new Date(fiscalYear, 3, 1),
+    4: new Date(fiscalYear, 6, 1)
+  };
+  return starts[quarter] || null;
+}
+function formatQuarterStartDate(date) {
+  if (!date) return '';
+  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
 function buildMatrixPhases(items, options = {}) {
   const mode = options.phaseMode || matrixPhaseMode;
   const dated = items.map(item => item.parsed).filter(Boolean).sort((a, b) => a - b);
@@ -1312,7 +1329,7 @@ function buildMatrixPhases(items, options = {}) {
   }
   if (mode === 'federal-fy' && dated.length) {
     const labels = [...new Set(dated.map(federalFiscalQuarterLabel))];
-    return labels.map(label => ({ label, desc: 'Federal fiscal quarter', matches: date => federalFiscalQuarterLabel(date) === label }));
+    return labels.map(label => ({ label, desc: `Federal FY - Oct 1 • Starts ${formatQuarterStartDate(federalFiscalQuarterStartDate(label))}`, matches: date => federalFiscalQuarterLabel(date) === label }));
   }
   const labels = ['Foundation','Integration','Reporting / Alignment','Readiness / Closeout'];
   if (!dated.length) return labels.map(label => ({ label, desc: 'Auto phase', matches: () => label === 'Foundation' }));
