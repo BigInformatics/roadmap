@@ -368,6 +368,7 @@
     </select>
     <div class="utility-controls">
       <button class="btn icon-btn icon-only" id="btnCopyMarkdown" type="button" aria-label="Copy Markdown" title="Copy Markdown"></button>
+      <button class="btn icon-btn icon-only" id="btnMatrixScreenshot" type="button" aria-label="Download Matrix Screenshot" title="Download Matrix Screenshot"></button>
       <select class="btn date-select" id="timelineGrouping" aria-label="Timeline grouping">
         <option value="unified">Unified</option>
         <option value="product">By Product</option>
@@ -520,6 +521,7 @@ function gridIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24"
 function listIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-icon lucide-list"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></svg>'; }
 function matrixViewIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-table-2-icon lucide-table-2"><path d="M9 3H5a2 2 0 0 0-2 2v4"/><path d="M9 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M21 9V5a2 2 0 0 0-2-2h-4"/><path d="M21 15v4a2 2 0 0 1-2 2h-4"/><path d="M3 15v4a2 2 0 0 0 2 2h4"/><path d="M15 3v18"/></svg>'; }
 function timelineViewIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chart-no-axes-gantt-icon lucide-chart-no-axes-gantt"><path d="M8 6h10"/><path d="M6 12h9"/><path d="M11 18h7"/></svg>'; }
+function downloadImageIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image-down-icon lucide-image-down"><path d="M10.3 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10"/><path d="m21 19-3 3-3-3"/><path d="M18 22v-7"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>'; }
 function collapseIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-up-icon lucide-chevrons-up"><path d="m17 11-5-5-5 5"/><path d="m17 18-5-5-5 5"/></svg>'; }
 function expandIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevrons-down-icon lucide-chevrons-down"><path d="m7 6 5 5 5-5"/><path d="m7 13 5 5 5-5"/></svg>'; }
 function starIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star-icon lucide-star"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"/></svg>'; }
@@ -1115,6 +1117,12 @@ function updateViewControls() {
     matrixStrict.setAttribute('aria-pressed', String(matrixStrictMode));
     matrixStrict.title = currentView === 'matrix' ? 'Show only favorites and risky items in Matrix View' : 'Strict matrix filtering is available in Matrix View';
   }
+  const screenshotBtn = $('#btnMatrixScreenshot');
+  if (screenshotBtn) {
+    screenshotBtn.innerHTML = `${downloadImageIcon()}<span class="btn-label">Download Matrix Screenshot</span>`;
+    screenshotBtn.disabled = currentView !== 'matrix';
+    screenshotBtn.title = currentView === 'matrix' ? 'Download Matrix Screenshot' : 'Matrix screenshot is available in Matrix View';
+  }
   const collapseBtn = $('#btnCollapseAll');
   if (collapseBtn) {
     const hasEnabledDocs = enabledDocuments().length > 0;
@@ -1431,6 +1439,166 @@ function renderCoordinationMatrix() {
     if (match) openDetail(match.del, match.doc, match.dueDate);
   }));
   renderStats();
+}
+
+function canvasCssColor(name, fallback) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+function wrapCanvasText(ctx, text, maxWidth, maxLines = 2) {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  words.forEach(word => {
+    const next = line ? `${line} ${word}` : word;
+    if (ctx.measureText(next).width <= maxWidth || !line) line = next;
+    else { lines.push(line); line = word; }
+  });
+  if (line) lines.push(line);
+  if (lines.length > maxLines) {
+    const kept = lines.slice(0, maxLines);
+    kept[maxLines - 1] = kept[maxLines - 1].replace(/\s+\S*$/, '') + '…';
+    return kept;
+  }
+  return lines;
+}
+function drawRoundRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+function downloadMatrixScreenshot() {
+  if (currentView !== 'matrix') return;
+  const items = collectMatrixItems(enabledDocuments(), { hideRoutine: matrixHideRoutine, strictMode: matrixStrictMode });
+  if (!enabledDocuments().length || !items.length) { alert('No matrix items are available to export.'); return; }
+  const phases = buildMatrixPhases(items, { phaseMode: matrixPhaseMode });
+  const groups = groupMatrixItems(items, phases);
+  const workstreamWidth = 240;
+  const phaseWidth = 300;
+  const headerHeight = 112;
+  const baseRowHeight = 172;
+  const rowHeights = groups.map(group => Math.max(baseRowHeight, ...phases.map(phase => 74 + Math.min(4, groupMatrixCellItems(group.phases.get(phase.label) || []).length) * 62)));
+  const width = workstreamWidth + (phaseWidth * phases.length);
+  const height = 90 + headerHeight + rowHeights.reduce((sum, h) => sum + h, 0) + 40;
+  const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const canvas = document.createElement('canvas');
+  canvas.width = width * scale;
+  canvas.height = height * scale;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+  const bg = canvasCssColor('--bg', '#0b0c10');
+  const surface = canvasCssColor('--surface', '#1f2833');
+  const surface2 = canvasCssColor('--surface-2', '#2a3542');
+  const ink = canvasCssColor('--ink', '#c5c6c7');
+  const muted = canvasCssColor('--muted', '#8899a6');
+  const border = canvasCssColor('--border', '#2a3542');
+  const gold = canvasCssColor('--gold', '#feca57');
+  const goldBg = canvasCssColor('--gold-bg', 'rgba(254,202,87,0.16)');
+  const accent = canvasCssColor('--accent', '#66fcf1');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = ink;
+  ctx.font = '700 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('Coordination Matrix', 28, 38);
+  ctx.font = '13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillStyle = muted;
+  ctx.fillText(`${matrixPhaseMode} • ${matrixHideRoutine ? 'routine hidden' : 'routine visible'} • ${matrixStrictMode ? 'favorites and risks only' : 'coordination signals'}`, 28, 62);
+  let y = 90;
+  ctx.fillStyle = surface2;
+  ctx.fillRect(0, y, width, headerHeight);
+  ctx.strokeStyle = border;
+  ctx.strokeRect(0, y, width, headerHeight);
+  ctx.fillStyle = ink;
+  ctx.font = '700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText('Workstream', 18, y + 33);
+  ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillStyle = muted;
+  ctx.fillText('Enabled products', 18, y + 53);
+  phases.forEach((phase, idx) => {
+    const x = workstreamWidth + idx * phaseWidth;
+    const current = isCurrentMatrixPhase(phase);
+    ctx.fillStyle = current ? goldBg : surface2;
+    ctx.fillRect(x, y, phaseWidth, headerHeight);
+    ctx.strokeStyle = border;
+    ctx.strokeRect(x, y, phaseWidth, headerHeight);
+    ctx.fillStyle = current ? gold : ink;
+    ctx.font = '700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(phase.label, x + 14, y + 33);
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = muted;
+    wrapCanvasText(ctx, phase.desc || '', phaseWidth - 28, 2).forEach((line, lineIdx) => ctx.fillText(line, x + 14, y + 54 + (lineIdx * 16)));
+    if (current) {
+      ctx.strokeStyle = gold;
+      ctx.strokeRect(x + 14, y + 78, 68, 22);
+      ctx.fillStyle = gold;
+      ctx.font = '700 10px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.fillText('CURRENT', x + 23, y + 93);
+    }
+  });
+  y += headerHeight;
+  groups.forEach((group, groupIdx) => {
+    const rowHeight = rowHeights[groupIdx];
+    ctx.fillStyle = surface;
+    ctx.fillRect(0, y, width, rowHeight);
+    ctx.strokeStyle = border;
+    ctx.strokeRect(0, y, width, rowHeight);
+    ctx.fillStyle = ink;
+    ctx.font = '700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    wrapCanvasText(ctx, group.label, workstreamWidth - 32, 3).forEach((line, lineIdx) => ctx.fillText(line, 18, y + 32 + (lineIdx * 18)));
+    ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = muted;
+    ctx.fillText(productName(group.doc), 18, y + rowHeight - 22);
+    phases.forEach((phase, idx) => {
+      const x = workstreamWidth + idx * phaseWidth;
+      const current = isCurrentMatrixPhase(phase);
+      ctx.fillStyle = current ? goldBg : surface;
+      ctx.fillRect(x, y, phaseWidth, rowHeight);
+      ctx.strokeStyle = border;
+      ctx.strokeRect(x, y, phaseWidth, rowHeight);
+      const groupedItems = groupMatrixCellItems(group.phases.get(phase.label) || []);
+      if (!groupedItems.length) {
+        ctx.fillStyle = muted;
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillText('No promoted items', x + 14, y + 32);
+        return;
+      }
+      groupedItems.slice(0, 4).forEach((itemGroup, itemIdx) => {
+        const cardY = y + 14 + itemIdx * 62;
+        const product = productColor(itemGroup.doc);
+        ctx.fillStyle = surface2;
+        drawRoundRect(ctx, x + 12, cardY, phaseWidth - 24, 52, 8);
+        ctx.fill();
+        ctx.fillStyle = product;
+        ctx.fillRect(x + 12, cardY, 4, 52);
+        ctx.fillStyle = ink;
+        ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        wrapCanvasText(ctx, `${itemGroup.del.favorite ? '★ ' : ''}${itemGroup.del.title}`, phaseWidth - 42, 1).forEach(line => ctx.fillText(line, x + 24, cardY + 20));
+        ctx.fillStyle = muted;
+        ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        const dateText = itemGroup.items.length === 1 ? (itemGroup.items[0].dueDate ? dueDateValue(itemGroup.items[0].dueDate) : itemGroup.del.end || itemGroup.del.start || 'No date') : `${itemGroup.items.length} due dates`;
+        ctx.fillText(`${dateText} • ${statusLabel(itemGroup.status)}`, x + 24, cardY + 38);
+      });
+      if (groupedItems.length > 4) {
+        ctx.fillStyle = accent;
+        ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillText(`+${groupedItems.length - 4} more groups`, x + 14, y + rowHeight - 18);
+      }
+    });
+    y += rowHeight;
+  });
+  ctx.fillStyle = muted;
+  ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  ctx.fillText(`Generated ${new Date().toISOString()}`, 28, height - 18);
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = `roadmap-matrix-${new Date().toISOString().slice(0, 10)}.png`;
+  link.click();
 }
 
 function renderD3Timeline() {
@@ -1924,6 +2092,7 @@ $('#monthFilter').addEventListener('change', e => { selectedMonthNameFilter = e.
 $('#statusFilter').addEventListener('change', e => { currentStatusFilter = e.target.value; renderRoadmap(); });
 $('#btnThemeToggle').addEventListener('click', toggleTheme);
 $('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
+$('#btnMatrixScreenshot').addEventListener('click', downloadMatrixScreenshot);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#globalJsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
 $('#btnClose').addEventListener('click', closeDetail);
