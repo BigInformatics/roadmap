@@ -45,6 +45,10 @@ class ProductColorFeatureTests(unittest.TestCase):
         self.assertIn('"color"', schema)
         self.assertIn('"pattern": "^#([A-Fa-f0-9]{6})$"', schema)
 
+    def test_schema_allows_review_status(self):
+        schema = text(SCHEMA)
+        self.assertIn('"review"', schema)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,6 +21,7 @@
         "not-started",
         "in-progress",
         "at-risk",
+        "review",
         "completed",
         "blocked",
         "on-hold",
