@@ -102,7 +102,9 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn('id="btnPinDrawer"', html)
         self.assertIn('let detailPinned = false;', html)
         self.assertIn('function toggleDetailPinned()', html)
-        self.assertIn("overlay?.classList.toggle('pinned', detailPinned)", html)
+        self.assertIn('body.drawer-pinned header, body.drawer-pinned .main, body.drawer-pinned .build-footer { margin-right: var(--drawer-width); }', html)
+        self.assertIn("document.body.classList.toggle('drawer-pinned', pinnedOpen)", html)
+        self.assertIn("overlay?.classList.toggle('pinned', pinnedOpen)", html)
         self.assertIn("if (keepPinned) openDetail(editedDeliverable, editedDocument, editedDueDate)", html)
 
 
