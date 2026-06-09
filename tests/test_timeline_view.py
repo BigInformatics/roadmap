@@ -93,6 +93,18 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("bindQuickStatusActions(chipWrap, del, doc, dueDate)", html)
         self.assertIn(".status-review { background: #ffd6e7;", html)
 
+    def test_detail_drawer_allows_title_due_date_edits_and_pinning(self):
+        html = html_text()
+        self.assertIn('id="taskTitle"', html)
+        self.assertIn('id="dueDateEdit"', html)
+        self.assertIn('selectedDueDate.date = dueDateText', html)
+        self.assertIn('selectedDeliverable.title = title', html)
+        self.assertIn('id="btnPinDrawer"', html)
+        self.assertIn('let detailPinned = false;', html)
+        self.assertIn('function toggleDetailPinned()', html)
+        self.assertIn("overlay?.classList.toggle('pinned', detailPinned)", html)
+        self.assertIn("if (keepPinned) openDetail(editedDeliverable, editedDocument, editedDueDate)", html)
+
 
 if __name__ == "__main__":
     unittest.main()
