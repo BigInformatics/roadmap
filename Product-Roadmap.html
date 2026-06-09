@@ -1496,13 +1496,22 @@ function wrapCanvasText(ctx, text, maxWidth, maxLines = 2) {
   const words = String(text || '').split(/\s+/).filter(Boolean);
   const lines = [];
   let line = '';
+  const pushWrappedWord = word => {
+    let chunk = '';
+    Array.from(word).forEach(ch => {
+      const next = chunk + ch;
+      if (ctx.measureText(next).width <= maxWidth || !chunk) chunk = next;
+      else { lines.push(chunk); chunk = ch; }
+    });
+    return chunk;
+  };
   words.forEach(word => {
     const next = line ? `${line} ${word}` : word;
     if (ctx.measureText(next).width <= maxWidth || !line) line = next;
-    else { lines.push(line); line = word; }
+    else { lines.push(line); line = ctx.measureText(word).width > maxWidth ? pushWrappedWord(word) : word; }
   });
   if (line) lines.push(line);
-  if (lines.length > maxLines) {
+  if (Number.isFinite(maxLines) && lines.length > maxLines) {
     const kept = lines.slice(0, maxLines);
     kept[maxLines - 1] = kept[maxLines - 1].replace(/\s+\S*$/, '') + '…';
     return kept;
@@ -1519,6 +1528,12 @@ function drawRoundRect(ctx, x, y, width, height, radius) {
   ctx.arcTo(x, y, x + width, y, r);
   ctx.closePath();
 }
+function matrixExportTitleText(itemGroup) { return `${itemGroup.del.favorite ? '★ ' : ''}${itemGroup.del.title}`; }
+function matrixExportTitleLines(ctx, itemGroup, phaseWidth) {
+  ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+  return wrapCanvasText(ctx, matrixExportTitleText(itemGroup), phaseWidth - 42, Infinity);
+}
+function matrixExportCardHeight(titleLines) { return Math.max(62, 42 + (titleLines.length * 15)); }
 function downloadMatrixScreenshot() {
   if (currentView !== 'matrix') return;
   const items = collectMatrixItems(enabledDocuments(), { hideRoutine: matrixHideRoutine, strictMode: matrixStrictMode });
@@ -1529,7 +1544,15 @@ function downloadMatrixScreenshot() {
   const phaseWidth = 300;
   const headerHeight = 112;
   const baseRowHeight = 172;
-  const rowHeights = groups.map(group => Math.max(baseRowHeight, ...phases.map(phase => 74 + groupMatrixCellItems(group.phases.get(phase.label) || []).length * 62)));
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  const rowLayouts = groups.map(group => phases.map(phase => {
+    const groupedItems = groupMatrixCellItems(group.phases.get(phase.label) || []);
+    return groupedItems.map(itemGroup => {
+      const titleLines = matrixExportTitleLines(measureCtx, itemGroup, phaseWidth);
+      return { itemGroup, titleLines, cardHeight: matrixExportCardHeight(titleLines) };
+    });
+  }));
+  const rowHeights = rowLayouts.map(phaseLayouts => Math.max(baseRowHeight, ...phaseLayouts.map(cards => 74 + cards.reduce((sum, card) => sum + card.cardHeight + 10, 0))));
   const width = workstreamWidth + (phaseWidth * phases.length);
   const height = 90 + headerHeight + rowHeights.reduce((sum, h) => sum + h, 0) + 40;
   const scale = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -1608,28 +1631,29 @@ function downloadMatrixScreenshot() {
       ctx.fillRect(x, y, phaseWidth, rowHeight);
       ctx.strokeStyle = border;
       ctx.strokeRect(x, y, phaseWidth, rowHeight);
-      const groupedItems = groupMatrixCellItems(group.phases.get(phase.label) || []);
-      if (!groupedItems.length) {
+      const cardLayouts = rowLayouts[groupIdx][idx];
+      if (!cardLayouts.length) {
         ctx.fillStyle = muted;
         ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         ctx.fillText('No promoted items', x + 14, y + 32);
         return;
       }
-      groupedItems.forEach((itemGroup, itemIdx) => {
-        const cardY = y + 14 + itemIdx * 62;
+      let cardY = y + 14;
+      cardLayouts.forEach(({ itemGroup, titleLines, cardHeight }) => {
         const product = productColor(itemGroup.doc);
         ctx.fillStyle = surface2;
-        drawRoundRect(ctx, x + 12, cardY, phaseWidth - 24, 52, 8);
+        drawRoundRect(ctx, x + 12, cardY, phaseWidth - 24, cardHeight, 8);
         ctx.fill();
         ctx.fillStyle = product;
-        ctx.fillRect(x + 12, cardY, 4, 52);
+        ctx.fillRect(x + 12, cardY, 4, cardHeight);
         ctx.fillStyle = ink;
         ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-        wrapCanvasText(ctx, `${itemGroup.del.favorite ? '★ ' : ''}${itemGroup.del.title}`, phaseWidth - 42, 1).forEach(line => ctx.fillText(line, x + 24, cardY + 20));
+        titleLines.forEach((line, lineIdx) => ctx.fillText(line, x + 24, cardY + 20 + (lineIdx * 15)));
         ctx.fillStyle = muted;
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         const dateText = itemGroup.items.length === 1 ? (itemGroup.items[0].dueDate ? dueDateValue(itemGroup.items[0].dueDate) : itemGroup.del.end || itemGroup.del.start || 'No date') : `${itemGroup.items.length} due dates`;
-        ctx.fillText(`${dateText} • ${statusLabel(itemGroup.status)}`, x + 24, cardY + 38);
+        ctx.fillText(`${dateText} • ${statusLabel(itemGroup.status)}`, x + 24, cardY + cardHeight - 14);
+        cardY += cardHeight + 10;
       });
     });
     y += rowHeight;

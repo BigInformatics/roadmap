@@ -34,10 +34,19 @@ class MatrixScreenshotExportTests(unittest.TestCase):
         screenshot = html[html.index("function downloadMatrixScreenshot") : html.index("function renderD3Timeline")]
         self.assertIn("getComputedStyle(document.body).getPropertyValue(name)", html)
         self.assertIn("getComputedStyle(document.documentElement).getPropertyValue(name)", html)
-        self.assertIn("groupedItems.forEach((itemGroup, itemIdx) =>", screenshot)
-        self.assertIn("74 + groupMatrixCellItems(group.phases.get(phase.label) || []).length * 62", screenshot)
+        self.assertIn("cardLayouts.forEach(({ itemGroup, titleLines, cardHeight }) =>", screenshot)
+        self.assertIn("cards.reduce((sum, card) => sum + card.cardHeight + 10, 0)", screenshot)
         self.assertNotIn("groupedItems.slice(0, 4)", screenshot)
         self.assertNotIn("more groups", screenshot)
+
+    def test_native_canvas_export_uses_full_wrapped_titles(self):
+        html = html_text()
+        screenshot = html[html.index("function matrixExportTitleText") : html.index("function renderD3Timeline")]
+        self.assertIn("function matrixExportTitleLines", screenshot)
+        self.assertIn("wrapCanvasText(ctx, matrixExportTitleText(itemGroup), phaseWidth - 42, Infinity)", screenshot)
+        self.assertIn("function matrixExportCardHeight", screenshot)
+        self.assertIn("titleLines.forEach((line, lineIdx) => ctx.fillText", screenshot)
+        self.assertNotIn("wrapCanvasText(ctx, `${itemGroup.del.favorite ? '★ ' : ''}${itemGroup.del.title}`, phaseWidth - 42, 1)", screenshot)
 
     def test_matrix_headings_wrap_instead_of_truncating(self):
         html = html_text()
