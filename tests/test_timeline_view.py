@@ -82,6 +82,17 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertNotIn("function nextViewMode()", html)
         self.assertNotIn("btnViewToggle", html)
 
+    def test_quick_status_actions_support_completed_and_review(self):
+        html = html_text()
+        self.assertIn('value="review">Review', html)
+        self.assertIn("'review':'Review'", html)
+        self.assertIn("data-quick-status=\"completed\"", html)
+        self.assertIn("data-quick-status=\"review\"", html)
+        self.assertIn("function setQuickStatus", html)
+        self.assertIn("bindQuickStatusActions(row, item.del, item.doc, item.dueDate)", html)
+        self.assertIn("bindQuickStatusActions(chipWrap, del, doc, dueDate)", html)
+        self.assertIn(".status-review { background: #ffd6e7;", html)
+
 
 if __name__ == "__main__":
     unittest.main()

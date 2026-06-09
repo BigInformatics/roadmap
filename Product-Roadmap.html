@@ -137,7 +137,7 @@
   .linear-wrap { overflow-x: hidden; }
   .linear-wrap .timeline-header { display: block; min-width: 100%; }
   .linear-wrap .linear-header, .linear-wrap .linear-row { width: 100%; min-width: 0; box-sizing: border-box; }
-  .linear-header, .linear-row { display: grid; grid-template-columns: 10px minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr); gap: 1rem; align-items: center; }
+  .linear-header, .linear-row { display: grid; grid-template-columns: 10px minmax(180px, 1.1fr) minmax(260px, 2fr) minmax(180px, 1fr) minmax(150px, 0.8fr) minmax(86px, auto); gap: 1rem; align-items: center; }
   .linear-header { position: sticky; top: 0; z-index: 50; background: var(--surface-2); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
   .linear-row { min-height: 64px; border: 0; border-bottom: 1px solid var(--border); padding: 0.8rem 1rem; text-align: left; color: var(--ink); cursor: pointer; transition: transform 0.15s, filter 0.15s, background 0.15s; }
   .linear-product-bar { width: 10px; align-self: stretch; min-height: 44px; border-radius: 999px; background: var(--product-color, var(--accent)); box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 12px color-mix(in srgb, var(--product-color, var(--accent)) 35%, transparent); }
@@ -150,6 +150,10 @@
   .linear-meta { color: var(--muted); font-size: 0.78rem; margin-top: 0.18rem; }
   .linear-contract { color: var(--ink); font-size: 0.88rem; }
   .linear-status { justify-self: start; border: 1px solid; border-radius: 999px; padding: 0.25rem 0.55rem; font-size: 0.76rem; font-weight: 700; }
+  .quick-status-actions { display: inline-flex; gap: 0.35rem; align-items: center; justify-content: flex-end; }
+  .quick-status-btn { width: 30px; min-height: 30px; padding: 0; border-radius: 999px; font-weight: 800; line-height: 1; }
+  .quick-status-btn.complete { color: var(--success); border-color: rgba(29,209,161,0.35); }
+  .quick-status-btn.review { color: #be185d; border-color: rgba(244,114,182,0.5); background: rgba(255, 214, 231, 0.55); }
   .d3-wrap { overflow-x: hidden; }
   .d3-wrap .timeline-header { display: block; min-width: 100%; }
   .d3-timeline-toolbar { display: flex; justify-content: space-between; gap: 1rem; align-items: center; padding: 0.75rem 1rem; background: var(--surface-2); border-bottom: 1px solid var(--border); color: var(--muted); font-size: 0.78rem; }
@@ -218,6 +222,10 @@
 
   .due-chip { display: flex; align-items: center; justify-content: center; gap: 0.15rem; width: 100%; padding: 0.18rem 0.25rem; margin-bottom: 2px; border-radius: 4px; font-size: 0.58rem; line-height: 1.1; cursor: pointer; overflow: hidden; text-overflow: ellipsis; position: relative; z-index: 4; }
   .due-chip:hover { filter: brightness(1.25); overflow: visible; white-space: normal; z-index: 25; position: relative; }
+  .due-chip-wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px; align-items: start; margin-bottom: 2px; }
+  .due-chip-wrap .due-chip { margin-bottom: 0; }
+  .cell-quick-actions { display: inline-flex; flex-direction: column; gap: 2px; }
+  .cell-quick-actions .quick-status-btn { width: 16px; min-height: 16px; font-size: 0.58rem; border-radius: 4px; }
   .note-icon { display: inline-flex; align-items: center; justify-content: center; color: #bababa; flex-shrink: 0; vertical-align: text-bottom; }
   .note-icon svg { width: 0.9em; height: 0.9em; display: block; }
   .due-chip .note-icon { font-size: 0.8rem; }
@@ -227,6 +235,7 @@
   .status-not-started { background: rgba(136, 153, 166, 0.15); color: var(--muted); border-color: rgba(136,153,166,0.3); }
   .status-in-progress { background: rgba(102, 252, 241, 0.12); color: var(--accent); border-color: rgba(102,252,241,0.3); }
   .status-at-risk { background: rgba(255, 107, 107, 0.12); color: var(--danger); border-color: rgba(255,107,107,0.3); }
+  .status-review { background: #ffd6e7; color: #7a1f45; border-color: rgba(244,114,182,0.75); }
   .status-completed { background: rgba(29, 209, 161, 0.12); color: var(--success); border-color: rgba(29,209,161,0.3); }
   .status-blocked, .status-on-hold { background: rgba(255, 107, 107, 0.08); color: var(--danger); border-color: rgba(255,107,107,0.2); border-style: dashed; }
   .status-cancelled { background: rgba(136, 153, 166, 0.08); color: var(--muted); border-color: rgba(136,153,166,0.22); border-style: dashed; text-decoration: line-through; }
@@ -234,6 +243,7 @@
   .status-dot.not-started { background: var(--muted); }
   .status-dot.in-progress { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
   .status-dot.at-risk { background: var(--danger); box-shadow: 0 0 4px var(--danger); }
+  .status-dot.review { background: #f472b6; box-shadow: 0 0 4px #f472b6; }
   .status-dot.completed { background: var(--success); }
   .status-dot.blocked, .status-dot.on-hold { background: var(--danger); opacity: 0.6; }
   .status-dot.cancelled { background: var(--muted); opacity: 0.5; }
@@ -300,14 +310,14 @@
   .matrix-cell.current-phase { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.34); }
   .matrix-workstream { background: rgba(255,255,255,0.02); }
   .matrix-workstream.current-phase { background: rgba(255,255,255,0.02); box-shadow: none; }
-  .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; }
+  .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; white-space: normal; overflow-wrap: anywhere; }
   .matrix-phase span, .matrix-workstream span { color: var(--muted); font-size: 0.74rem; }
   .matrix-phase.current-phase strong { color: var(--gold); }
   .matrix-current-label { display: inline-flex; align-items: center; margin-top: 0.35rem; border: 1px solid rgba(254,202,87,0.45); color: var(--gold); border-radius: 999px; padding: 0.08rem 0.42rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
   .matrix-items { display: flex; flex-direction: column; gap: 0.5rem; }
   .matrix-item { width: 100%; text-align: left; border: 1px solid var(--border); border-left: 4px solid var(--product-color); border-radius: 10px; background: var(--surface-2); color: var(--ink); padding: 0.55rem; cursor: pointer; }
   .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
-  .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: normal; overflow-wrap: anywhere; }
   .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
   .matrix-date-list { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; color: var(--muted); font-size: 0.7rem; }
   .matrix-date-chip { border: 1px solid var(--border); border-radius: 999px; padding: 0.08rem 0.32rem; background: var(--bg); }
@@ -360,6 +370,7 @@
       <option value="all">All Statuses</option>
       <option value="in-progress">In Progress</option>
       <option value="at-risk">At Risk</option>
+      <option value="review">Review</option>
       <option value="blocked">Blocked</option>
       <option value="not-started">Not Started</option>
       <option value="completed">Completed</option>
@@ -465,8 +476,8 @@ function monthIndex(m) { return MONTHS.indexOf(m); }
 function years() { return [...new Set(MONTHS.map(m => m.split(' ')[1]))]; }
 function monthNamesForFilter() { return MONTH_NAMES; }
 function statusClass(s) { return 'status-' + s; }
-function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
-function supportedStatuses() { return ['not-started','in-progress','at-risk','blocked','completed','on-hold','cancelled']; }
+function statusLabel(s) { return { 'not-started':'Not Started','in-progress':'In Progress','at-risk':'At Risk','review':'Review','completed':'Completed','blocked':'Blocked','on-hold':'On Hold','cancelled':'Cancelled' }[s] || s; }
+function supportedStatuses() { return ['not-started','in-progress','at-risk','review','blocked','completed','on-hold','cancelled']; }
 function productName(doc) { return doc?.data?.project || doc?.data?.product || doc?.name || 'Roadmap'; }
 function normalizeProductColor(value, fallback = DEFAULT_PRODUCT_COLORS[0]) {
   const text = String(value || '').trim();
@@ -554,6 +565,27 @@ function chipMetaIcons(del) {
 }
 function favoriteButton(del, doc) {
   return `<button type="button" class="favorite-toggle${del.favorite ? ' active' : ''}" data-favorite-id="${escapeHtml(del.id)}" title="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}" aria-label="${del.favorite ? 'Unfavorite' : 'Favorite'} ${escapeHtml(del.title)}">${starIcon()}</button>`;
+}
+function quickStatusActions(del, doc, dueDate, extraClass = '') {
+  const suffix = extraClass ? ` ${extraClass}` : '';
+  return `<span class="quick-status-actions${suffix}" aria-label="Quick status actions">
+    <button type="button" class="btn quick-status-btn complete" data-quick-status="completed" title="Mark ${escapeHtml(del.title)} complete" aria-label="Mark ${escapeHtml(del.title)} complete">✓</button>
+    <button type="button" class="btn quick-status-btn review" data-quick-status="review" title="Mark ${escapeHtml(del.title)} for review" aria-label="Mark ${escapeHtml(del.title)} for review">!</button>
+  </span>`;
+}
+function bindQuickStatusActions(root, del, doc, dueDate = null) {
+  root.querySelectorAll('[data-quick-status]').forEach(btn => btn.addEventListener('click', evt => {
+    evt.stopPropagation();
+    setQuickStatus(del, doc, dueDate, evt.currentTarget.dataset.quickStatus);
+  }));
+}
+function setQuickStatus(del, doc, dueDate, status) {
+  if (!supportedStatuses().includes(status)) return;
+  if (dueDate) dueDate.status = status;
+  else del.status = status;
+  touchDocument(doc);
+  saveCache();
+  renderRoadmap();
 }
 function getCurrentMonthKey() { const now = new Date(); return `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`; }
 function normalizeDueDateAction(item) {
@@ -1039,6 +1071,8 @@ function renderRoadmap() {
         cell.className = 'cell' + (idx === currentIdx ? ' current-month' : '') + (monthKeyMatchesDateFilter(m) && dateFilterActive() ? ' selected-month' : '');
         const cellDueDates = dateFilterActive() && !monthKeyMatchesDateFilter(m) ? [] : dueDatesForMonth(del, m);
         cellDueDates.forEach(dueDate => {
+          const chipWrap = document.createElement('div');
+          chipWrap.className = 'due-chip-wrap';
           const chip = document.createElement('button');
           chip.type = 'button';
           chip.className = `due-chip ${statusClass(dueDateStatus(dueDate, del))}`;
@@ -1046,7 +1080,10 @@ function renderRoadmap() {
           const tags = normalizeTags(del.tags);
           chip.title = `${del.title} due ${dueDateValue(dueDate)}${tags.length ? ` — tags: ${tags.join(', ')}` : ''}${dueDate.note ? ` — ${dueDate.note}` : ''}`;
           chip.addEventListener('click', evt => { evt.stopPropagation(); openDetail(del, doc, dueDate); });
-          cell.appendChild(chip);
+          chipWrap.appendChild(chip);
+          chipWrap.insertAdjacentHTML('beforeend', quickStatusActions(del, doc, dueDate, 'cell-quick-actions'));
+          bindQuickStatusActions(chipWrap, del, doc, dueDate);
+          cell.appendChild(chipWrap);
         });
         row.appendChild(cell);
       });
@@ -1696,7 +1733,7 @@ function renderLinearTimeline() {
   wrap.scrollLeft = 0;
   $('#timelineHeader').innerHTML = `
     <div class="linear-header">
-      <div aria-hidden="true"></div><div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div>
+      <div aria-hidden="true"></div><div>Due Date</div><div>Task</div><div>Contract</div><div>Status</div><div>Actions</div>
     </div>`;
   body.innerHTML = '';
   const items = collectDueItems();
@@ -1722,10 +1759,15 @@ function renderLinearTimeline() {
       <div><span class="linear-date-wrap"><span class="linear-date">${escapeHtml(dueDateValue(item.dueDate))}</span>${renderNoteIcon(item.dueDate.note)}</span>${isCurrentWeekDate(item.dueDate) ? '<span class="linear-week-label">Current week</span>' : ''}</div>
       <div><div class="linear-task">${favoriteButton(item.del, item.doc)}<span>${escapeHtml(item.del.title)}</span>${chipMetaIcons(item.del)}</div><div class="linear-meta">${escapeHtml(item.del.owner || item.doc.data.owner || '')}${normalizeTags(item.del.tags).length ? ` • ${normalizeTags(item.del.tags).join(', ')}` : ''}</div></div>
       <div class="linear-contract">${escapeHtml(productName(item.doc))}</div>
-      <div><span class="linear-status ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span></div>`;
+      <div><span class="linear-status ${statusClass(status)}">${escapeHtml(statusLabel(status))}</span></div>
+      <div>${quickStatusActions(item.del, item.doc, item.dueDate)}</div>`;
     row.querySelector('[data-favorite-id]')?.addEventListener('click', evt => { evt.stopPropagation(); toggleFavorite(item.del, item.doc); });
+    bindQuickStatusActions(row, item.del, item.doc, item.dueDate);
     row.addEventListener('click', () => openDetail(item.del, item.doc, item.dueDate));
-    row.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item.del, item.doc, item.dueDate); } });
+    row.addEventListener('keydown', e => {
+      if (e.target.closest('[data-quick-status], [data-favorite-id]')) return;
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(item.del, item.doc, item.dueDate); }
+    });
     body.appendChild(row);
   });
   renderStats();

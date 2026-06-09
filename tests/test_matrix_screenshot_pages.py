@@ -39,6 +39,12 @@ class MatrixScreenshotExportTests(unittest.TestCase):
         self.assertNotIn("groupedItems.slice(0, 4)", screenshot)
         self.assertNotIn("more groups", screenshot)
 
+    def test_matrix_headings_wrap_instead_of_truncating(self):
+        html = html_text()
+        self.assertIn(".matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; white-space: normal; overflow-wrap: anywhere; }", html)
+        self.assertIn(".matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: normal; overflow-wrap: anywhere; }", html)
+        self.assertNotIn(".matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }", html)
+
 
 class GithubPagesPublishingTests(unittest.TestCase):
     def test_pages_workflow_deploys_static_site_from_main(self):
