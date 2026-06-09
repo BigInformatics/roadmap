@@ -6,6 +6,7 @@
 <title>Product Roadmap</title>
 <style>
   :root {
+    --drawer-width: min(660px, 42vw);
     --bg: #0b0c10;
     --surface: #1f2833;
     --surface-2: #2a3542;
@@ -121,6 +122,8 @@
   .theme-toggle { display: inline-flex; align-items: center; gap: 0.4rem; }
   .theme-toggle svg { width: 1rem; height: 1rem; display: block; }
 
+  header, .main, .build-footer { transition: margin-right 0.25s ease; }
+  body.drawer-pinned header, body.drawer-pinned .main, body.drawer-pinned .build-footer { margin-right: var(--drawer-width); }
   .main { padding: 2rem; max-width: 100%; margin: 0 auto; }
   .build-footer { padding: 0 2rem 2rem; color: var(--muted); font-size: 0.74rem; text-align: right; }
   .build-footer time { color: var(--ink); }
@@ -250,8 +253,12 @@
 
   .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .overlay.open { opacity: 1; pointer-events: auto; }
-  .detail-panel { position: fixed; right: -680px; top: 0; width: 660px; max-width: 100%; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); z-index: 200; transition: right 0.25s ease; overflow-y: auto; padding: 1.5rem; }
+  .overlay.pinned { opacity: 0; pointer-events: none; }
+  .detail-panel { position: fixed; right: calc(-1 * var(--drawer-width) - 20px); top: 0; width: var(--drawer-width); max-width: 100%; height: 100vh; background: var(--surface); border-left: 1px solid var(--border); box-shadow: var(--shadow); z-index: 200; transition: right 0.25s ease; overflow-y: auto; padding: 1.5rem; }
   .detail-panel.open { right: 0; }
+  .detail-panel.pinned { box-shadow: -10px 0 30px rgba(0,0,0,0.22); }
+  .panel-header-actions { display: flex; align-items: center; gap: 0.35rem; }
+  .pin-btn.active { color: var(--gold); border-color: rgba(254,202,87,0.45); background: var(--gold-bg); }
   .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .panel-header h2 { font-size: 1.1rem; font-weight: 600; }
   .close-btn { background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; }
@@ -327,6 +334,7 @@
   .matrix-empty-state { padding: 2rem; color: var(--muted); }
 
   @media (max-width: 900px) {
+    body.drawer-pinned header, body.drawer-pinned .main, body.drawer-pinned .build-footer { margin-right: 0; }
     .linear-header { display: none; }
     .linear-row { grid-template-columns: 1fr; gap: 0.35rem; align-items: start; }
     .linear-status { margin-top: 0.25rem; }
@@ -432,7 +440,7 @@
 
 <div class="overlay" id="overlay"></div>
 <div class="detail-panel" id="detailPanel">
-  <div class="panel-header"><h2 id="panelTitle">Details</h2><button class="close-btn" id="btnClose">&times;</button></div>
+  <div class="panel-header"><h2 id="panelTitle">Details</h2><div class="panel-header-actions"><button class="btn small pin-btn" id="btnPinDrawer" type="button" aria-pressed="false" title="Pin drawer to side">📌</button><button class="close-btn" id="btnClose" aria-label="Close drawer">&times;</button></div></div>
   <div id="panelContent"></div>
 </div>
 
@@ -468,6 +476,7 @@ let timelineWindowStart = null;
 let selectedDeliverable = null;
 let selectedDocument = null;
 let selectedDueDate = null;
+let detailPinned = false;
 let collapsedProducts = new Set();
 
 function $(sel) { return document.querySelector(sel); }
@@ -1780,13 +1789,33 @@ function toggleFavorite(del, doc) {
   renderRoadmap();
 }
 
+function updateDetailPinState() {
+  const overlay = $('#overlay');
+  const panel = $('#detailPanel');
+  const pin = $('#btnPinDrawer');
+  const pinnedOpen = detailPinned && Boolean(panel?.classList.contains('open'));
+  document.body.classList.toggle('drawer-pinned', pinnedOpen);
+  overlay?.classList.toggle('pinned', pinnedOpen);
+  panel?.classList.toggle('pinned', pinnedOpen);
+  if (pin) {
+    pin.classList.toggle('active', pinnedOpen);
+    pin.setAttribute('aria-pressed', pinnedOpen ? 'true' : 'false');
+    pin.title = pinnedOpen ? 'Unpin drawer' : 'Pin drawer to side';
+  }
+}
+function setDetailPinned(value) {
+  detailPinned = Boolean(value);
+  updateDetailPinState();
+}
+function toggleDetailPinned() { setDetailPinned(!detailPinned); }
 function openPanel(title, html) {
   $('#panelTitle').textContent = title;
   $('#panelContent').innerHTML = html;
   $('#overlay').classList.add('open');
   $('#detailPanel').classList.add('open');
+  updateDetailPinState();
 }
-function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); selectedStatus = null; selectedDeliverable = null; selectedDocument = null; selectedDueDate = null; }
+function closeDetail() { $('#overlay').classList.remove('open'); $('#detailPanel').classList.remove('open'); setDetailPinned(false); selectedStatus = null; selectedDeliverable = null; selectedDocument = null; selectedDueDate = null; }
 
 function openDetail(del, doc, dueDate = null) {
   selectedDeliverable = del;
@@ -1798,6 +1827,7 @@ function openDetail(del, doc, dueDate = null) {
   const selectedNote = selectedDueDate ? selectedDueDate.note || '' : '';
   const actionSection = selectedDueDate ? renderDueDateActions(selectedDueDate) : '';
   openPanel(del.title, `
+    <div class="field"><label>Title</label><input id="taskTitle" type="text" value="${escapeHtml(del.title)}" placeholder="Deliverable title"></div>
     <div class="field"><label>${selectedDueDate ? `Due Date Status: ${escapeHtml(dueDateValue(selectedDueDate))}` : 'Task Status'}</label><div class="status-buttons" id="statusButtons">
       ${supportedStatuses().map(s => `<button class="btn small ${s === selectedStatus ? 'active' : ''}" data-status="${s}">${statusLabel(s)}</button>`).join('')}
     </div></div>
@@ -1807,6 +1837,7 @@ function openDetail(del, doc, dueDate = null) {
     <div class="field"><label>Tags</label><input id="taskTags" type="text" value="${escapeHtml(normalizeTags(del.tags).join(', '))}" placeholder="Comma-separated tags"><div class="help-text">Tags are optional. Use the Tags search toggle to make the search box match tags only.</div></div>
     <div class="field"><label>Timeline</label><div class="value">${escapeHtml(del.start)} &rarr; ${escapeHtml(del.end)}</div></div>
     <div class="field"><label>Due Dates</label>${dueDates}<div class="help-text" style="margin-top:0.4rem">Click a due-date chip to edit that date's status and note.</div></div>
+    ${selectedDueDate ? `<div class="field"><label>Selected Due Date</label><input id="dueDateEdit" type="text" value="${escapeHtml(dueDateValue(selectedDueDate))}" placeholder="M/D/YYYY"><div class="help-text">Adjusts the selected due date. Existing formats are preserved as text.</div></div>` : ''}
     <div class="field"><label>Description</label><div class="value">${escapeHtml(del.desc || 'No description provided.')}</div></div>
     <div class="field"><label>${selectedDueDate ? 'Due Date Note' : 'Status Note'}</label><textarea id="statusNote" rows="4" placeholder="Optional note...">${escapeHtml(selectedNote)}</textarea></div>
     <div style="display:flex;gap:0.5rem;flex-wrap:wrap"><button class="btn active" id="btnSaveStatus">Save Changes</button><button class="btn" id="btnCancelStatus">Cancel</button></div>
@@ -1824,7 +1855,7 @@ function openDetail(del, doc, dueDate = null) {
   }));
   $('#btnSaveStatus').addEventListener('click', saveStatusChange);
   $('#btnCancelStatus').addEventListener('click', closeDetail);
-  ['#statusNote', '#taskTags'].forEach(sel => {
+  ['#statusNote', '#taskTags', '#taskTitle', '#dueDateEdit'].forEach(sel => {
     const input = $(sel);
     input?.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveStatusChange(); }
@@ -1834,10 +1865,18 @@ function openDetail(del, doc, dueDate = null) {
 
 function saveStatusChange() {
   if (!selectedDeliverable || !selectedDocument) return;
+  const keepPinned = detailPinned;
+  const editedDeliverable = selectedDeliverable;
+  const editedDocument = selectedDocument;
+  const editedDueDate = selectedDueDate;
   const note = ($('#statusNote').value || '').trim();
+  const title = ($('#taskTitle')?.value || '').trim();
+  if (title) selectedDeliverable.title = title;
   selectedDeliverable.tags = normalizeTags($('#taskTags')?.value || '');
   selectedDeliverable.favorite = Boolean($('#taskFavorite')?.checked);
   if (selectedDueDate) {
+    const dueDateText = ($('#dueDateEdit')?.value || '').trim();
+    if (dueDateText) selectedDueDate.date = dueDateText;
     selectedDueDate.status = selectedStatus;
     selectedDueDate.note = note;
     const actionName = ($('#newActionName')?.value || '').trim();
@@ -1855,7 +1894,8 @@ function saveStatusChange() {
   touchDocument(selectedDocument);
   saveCache();
   renderRoadmap();
-  closeDetail();
+  if (keepPinned) openDetail(editedDeliverable, editedDocument, editedDueDate);
+  else closeDetail();
 }
 
 function openEditor() {
@@ -2134,6 +2174,7 @@ $('#btnMatrixScreenshot').addEventListener('click', downloadMatrixScreenshot);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#globalJsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
 $('#btnClose').addEventListener('click', closeDetail);
+$('#btnPinDrawer').addEventListener('click', toggleDetailPinned);
 $('#overlay').addEventListener('click', closeDetail);
 $('#btnNow').addEventListener('click', () => {
   if ($('#btnNow').disabled || currentView === 'grid') return;
