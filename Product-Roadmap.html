@@ -310,14 +310,14 @@
   .matrix-cell.current-phase { background: var(--gold-bg); box-shadow: inset 0 0 0 1px rgba(254,202,87,0.34); }
   .matrix-workstream { background: rgba(255,255,255,0.02); }
   .matrix-workstream.current-phase { background: rgba(255,255,255,0.02); box-shadow: none; }
-  .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; }
+  .matrix-workstream strong, .matrix-phase strong { color: var(--ink); display: block; white-space: normal; overflow-wrap: anywhere; }
   .matrix-phase span, .matrix-workstream span { color: var(--muted); font-size: 0.74rem; }
   .matrix-phase.current-phase strong { color: var(--gold); }
   .matrix-current-label { display: inline-flex; align-items: center; margin-top: 0.35rem; border: 1px solid rgba(254,202,87,0.45); color: var(--gold); border-radius: 999px; padding: 0.08rem 0.42rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
   .matrix-items { display: flex; flex-direction: column; gap: 0.5rem; }
   .matrix-item { width: 100%; text-align: left; border: 1px solid var(--border); border-left: 4px solid var(--product-color); border-radius: 10px; background: var(--surface-2); color: var(--ink); padding: 0.55rem; cursor: pointer; }
   .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
-  .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: normal; overflow-wrap: anywhere; }
   .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
   .matrix-date-list { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; color: var(--muted); font-size: 0.7rem; }
   .matrix-date-chip { border: 1px solid var(--border); border-radius: 999px; padding: 0.08rem 0.32rem; background: var(--bg); }
