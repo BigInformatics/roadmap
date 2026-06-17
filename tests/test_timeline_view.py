@@ -84,7 +84,7 @@ class TimelineViewFeatureTests(unittest.TestCase):
 
     def test_quick_status_actions_support_completed_and_review(self):
         html = html_text()
-        self.assertIn('value="review">Review', html)
+        self.assertIn('value="review" data-status-filter> Review', html)
         self.assertIn("'review':'Review'", html)
         self.assertIn("data-quick-status=\"completed\"", html)
         self.assertIn("data-quick-status=\"review\"", html)
@@ -106,6 +106,25 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("document.body.classList.toggle('drawer-pinned', pinnedOpen)", html)
         self.assertIn("overlay?.classList.toggle('pinned', pinnedOpen)", html)
         self.assertIn("if (keepPinned) openDetail(editedDeliverable, editedDocument, editedDueDate)", html)
+
+    def test_list_status_filter_supports_multi_select(self):
+        html = html_text()
+        self.assertIn('class="status-filter-menu"', html)
+        self.assertIn('id="statusFilterMenu"', html)
+        self.assertIn('let selectedStatusFilters = new Set();', html)
+        self.assertIn('function statusFilterMatches(status)', html)
+        self.assertIn('selectedStatusFilters.has(dueDateStatus(d, del))', html)
+        self.assertIn("document.querySelectorAll('[data-status-filter]')", html)
+        self.assertIn("selectedStatusFilters.clear()", html)
+
+    def test_detail_drawer_can_add_due_date_to_existing_item(self):
+        html = html_text()
+        self.assertIn('id="newDueDate"', html)
+        self.assertIn('id="newDueDateStatus"', html)
+        self.assertIn('id="newDueDateNote"', html)
+        self.assertIn('function addDueDateFromDrawer()', html)
+        self.assertIn('selectedDeliverable.dueDates.push(newDueDate)', html)
+        self.assertIn("openDetail(selectedDeliverable, selectedDocument, newDueDate)", html)
 
 
 if __name__ == "__main__":
