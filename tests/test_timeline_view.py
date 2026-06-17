@@ -117,6 +117,25 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn("document.querySelectorAll('[data-status-filter]')", html)
         self.assertIn("selectedStatusFilters.clear()", html)
 
+    def test_status_filter_menu_buttons_and_alignment_are_usable(self):
+        html = html_text()
+        self.assertIn('.status-filter-menu summary { list-style: none; text-align: left;', html)
+        self.assertIn('.status-filter-option input { flex: 0 0 auto;', html)
+        self.assertIn('function syncStatusFilterInputs()', html)
+        self.assertIn('function selectAllStatuses(evt)', html)
+        self.assertIn('function clearStatusFilters(evt)', html)
+        self.assertIn("evt.preventDefault();", html)
+        self.assertIn("selectedStatusFilters.add(status)", html)
+        self.assertIn("$('#btnStatusAll').addEventListener('click', selectAllStatuses);", html)
+        self.assertIn("$('#btnStatusClear').addEventListener('click', clearStatusFilters);", html)
+
+    def test_status_filters_apply_to_visible_due_date_events(self):
+        html = html_text()
+        self.assertIn('function dueDateMatchesStatusFilter(dueDate, del)', html)
+        self.assertIn('dates.filter(dueDate => dueDateMatchesStatusFilter(dueDate, del))', html)
+        self.assertIn('visibleDueDates(del).forEach(dueDate => {', html)
+        self.assertNotIn('filter(dueDate => !dateFilterActive() || dueDateMatchesDateFilter(dueDate)).forEach(dueDate => {', html)
+
     def test_detail_drawer_can_add_due_date_to_existing_item(self):
         html = html_text()
         self.assertIn('id="newDueDate"', html)
