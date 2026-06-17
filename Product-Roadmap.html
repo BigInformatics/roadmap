@@ -87,11 +87,12 @@
   .status-filter-menu summary { list-style: none; text-align: left; min-width: 132px; }
   .status-filter-menu summary::-webkit-details-marker { display: none; }
   .status-filter-menu[open] summary { background: var(--accent); color: var(--button-hover-ink); border-color: var(--accent); font-weight: 600; }
-  .status-filter-options { position: absolute; top: calc(100% + 0.35rem); right: 0; z-index: 120; min-width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.55rem; display: grid; gap: 0.35rem; }
-  .status-filter-option { display: flex; align-items: center; gap: 0.45rem; color: var(--ink); font-size: 0.82rem; cursor: pointer; padding: 0.25rem 0.35rem; border-radius: 4px; }
+  .status-filter-options { position: absolute; top: calc(100% + 0.35rem); right: 0; z-index: 120; width: min(280px, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 0.65rem; display: grid; gap: 0.35rem; }
+  .status-filter-option { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0.55rem; color: var(--ink); font-size: 0.82rem; cursor: pointer; padding: 0.28rem 0.35rem; border-radius: 4px; text-align: left; }
   .status-filter-option:hover { background: var(--surface-2); }
-  .status-filter-option input { flex: 0 0 auto; accent-color: var(--accent); }
-  .status-filter-actions { display: flex; gap: 0.35rem; justify-content: space-between; margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px solid var(--border); }
+  .status-filter-option input { justify-self: start; accent-color: var(--accent); }
+  .status-filter-option span { min-width: 0; overflow: visible; white-space: nowrap; }
+  .status-filter-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.35rem; padding-top: 0.45rem; border-top: 1px solid var(--border); }
   .icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; }
   .btn.icon-only { width: 38px; padding: 0.5rem; }
   .btn.icon-only .btn-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -386,15 +387,15 @@
     <details class="status-filter-menu" id="statusFilterMenu">
       <summary class="btn" id="statusFilterSummary" role="button" aria-label="Filter by status">All Statuses</summary>
       <div class="status-filter-options" role="group" aria-label="Status filters">
-        <label class="status-filter-option"><input type="checkbox" value="in-progress" data-status-filter> In Progress</label>
-        <label class="status-filter-option"><input type="checkbox" value="at-risk" data-status-filter> At Risk</label>
-        <label class="status-filter-option"><input type="checkbox" value="review" data-status-filter> Review</label>
-        <label class="status-filter-option"><input type="checkbox" value="blocked" data-status-filter> Blocked</label>
-        <label class="status-filter-option"><input type="checkbox" value="not-started" data-status-filter> Not Started</label>
-        <label class="status-filter-option"><input type="checkbox" value="completed" data-status-filter> Completed</label>
-        <label class="status-filter-option"><input type="checkbox" value="on-hold" data-status-filter> On Hold</label>
-        <label class="status-filter-option"><input type="checkbox" value="cancelled" data-status-filter> Cancelled</label>
-        <div class="status-filter-actions"><button class="btn small" id="btnStatusAll" type="button">All</button><button class="btn small" id="btnStatusClear" type="button">Clear</button></div>
+        <label class="status-filter-option"><input type="checkbox" value="in-progress" data-status-filter><span>In Progress</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="at-risk" data-status-filter><span>At Risk</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="review" data-status-filter><span>Review</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="blocked" data-status-filter><span>Blocked</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="not-started" data-status-filter><span>Not Started</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="completed" data-status-filter><span>Completed</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="on-hold" data-status-filter><span>On Hold</span></label>
+        <label class="status-filter-option"><input type="checkbox" value="cancelled" data-status-filter><span>Cancelled</span></label>
+        <div class="status-filter-actions"><button class="btn small" id="btnStatusAll" type="button">Check All</button><button class="btn small" id="btnStatusClear" type="button">Clear</button></div>
       </div>
     </details>
     <div class="utility-controls">

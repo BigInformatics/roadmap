@@ -84,7 +84,7 @@ class TimelineViewFeatureTests(unittest.TestCase):
 
     def test_quick_status_actions_support_completed_and_review(self):
         html = html_text()
-        self.assertIn('value="review" data-status-filter> Review', html)
+        self.assertIn('value="review" data-status-filter><span>Review</span>', html)
         self.assertIn("'review':'Review'", html)
         self.assertIn("data-quick-status=\"completed\"", html)
         self.assertIn("data-quick-status=\"review\"", html)
@@ -120,7 +120,13 @@ class TimelineViewFeatureTests(unittest.TestCase):
     def test_status_filter_menu_buttons_and_alignment_are_usable(self):
         html = html_text()
         self.assertIn('.status-filter-menu summary { list-style: none; text-align: left;', html)
-        self.assertIn('.status-filter-option input { flex: 0 0 auto;', html)
+        self.assertIn('.status-filter-options { position: absolute;', html)
+        self.assertIn('width: min(280px, calc(100vw - 2rem));', html)
+        self.assertIn('max-width: calc(100vw - 2rem);', html)
+        self.assertIn('.status-filter-option { display: grid; grid-template-columns: auto minmax(0, 1fr);', html)
+        self.assertIn('.status-filter-option input { justify-self: start;', html)
+        self.assertIn('<span>Completed</span>', html)
+        self.assertIn('id="btnStatusAll" type="button">Check All</button>', html)
         self.assertIn('function syncStatusFilterInputs()', html)
         self.assertIn('function selectAllStatuses(evt)', html)
         self.assertIn('function clearStatusFilters(evt)', html)
