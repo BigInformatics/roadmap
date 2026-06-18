@@ -335,7 +335,8 @@
   .matrix-item { width: 100%; text-align: left; border: 1px solid var(--border); border-left: 4px solid var(--product-color); border-radius: 10px; background: var(--surface-2); color: var(--ink); padding: 0.55rem; cursor: pointer; }
   .matrix-item:hover, .matrix-item:focus { outline: 2px solid rgba(102,252,241,0.35); outline-offset: 1px; }
   .matrix-item-title { font-weight: 700; font-size: 0.82rem; white-space: normal; overflow-wrap: anywhere; }
-  .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
+  .matrix-item-contract, .matrix-item-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.22rem; }
+  .matrix-item-contract { font-weight: 600; }
   .matrix-date-list { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.35rem; color: var(--muted); font-size: 0.7rem; }
   .matrix-date-chip { border: 1px solid var(--border); border-radius: 999px; padding: 0.08rem 0.32rem; background: var(--bg); }
   .matrix-count-badge { display: inline-flex; align-items: center; border-radius: 999px; padding: 0.08rem 0.38rem; margin-left: 0.25rem; background: rgba(102,252,241,0.1); color: var(--accent); font-size: 0.68rem; }
@@ -1483,7 +1484,7 @@ function renderMatrixItemGroup(group) {
   const hiddenCount = Math.max(0, group.items.length - dateList.length);
   const dateText = group.items.length === 1 ? escapeHtml(primaryDate) : `${group.items.length} due dates`;
   const dateChips = group.items.length > 1 ? `<div class="matrix-date-list">${dateList.map(date => `<span class="matrix-date-chip">${escapeHtml(date)}</span>`).join('')}${hiddenCount ? `<span class="matrix-date-chip">+${hiddenCount}</span>` : ''}</div>` : '';
-  return `<button type="button" class="matrix-item ${statusClass(group.status)}" style="--product-color:${escapeHtml(productColor(group.doc))}" data-matrix-del="${escapeHtml(group.del.id)}" data-matrix-date="${escapeHtml(primaryDate)}"><div class="matrix-item-title">${group.del.favorite ? '★ ' : ''}${escapeHtml(group.del.title)}${group.items.length > 1 ? `<span class="matrix-count-badge">${group.items.length}</span>` : ''}</div><div class="matrix-item-meta">${dateText} • ${escapeHtml(statusLabel(group.status))}</div>${dateChips}</button>`;
+  return `<button type="button" class="matrix-item ${statusClass(group.status)}" style="--product-color:${escapeHtml(productColor(group.doc))}" data-matrix-del="${escapeHtml(group.del.id)}" data-matrix-date="${escapeHtml(primaryDate)}"><div class="matrix-item-title">${group.del.favorite ? '★ ' : ''}${escapeHtml(group.del.title)}${group.items.length > 1 ? `<span class="matrix-count-badge">${group.items.length}</span>` : ''}</div><div class="matrix-item-contract">${escapeHtml(productName(group.doc))}</div><div class="matrix-item-meta">${dateText} • ${escapeHtml(statusLabel(group.status))}</div>${dateChips}</button>`;
 }
 function renderCoordinationMatrix() {
   const wrap = $('#roadmapWrap');
@@ -1571,7 +1572,7 @@ function matrixExportTitleLines(ctx, itemGroup, phaseWidth) {
   ctx.font = '700 12px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
   return wrapCanvasText(ctx, matrixExportTitleText(itemGroup), phaseWidth - 42, Infinity);
 }
-function matrixExportCardHeight(titleLines) { return Math.max(62, 42 + (titleLines.length * 15)); }
+function matrixExportCardHeight(titleLines) { return Math.max(76, 56 + (titleLines.length * 15)); }
 function downloadMatrixScreenshot() {
   if (currentView !== 'matrix') return;
   const items = collectMatrixItems(enabledDocuments(), { hideRoutine: matrixHideRoutine, strictMode: matrixStrictMode });
@@ -1690,6 +1691,7 @@ function downloadMatrixScreenshot() {
         ctx.fillStyle = muted;
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         const dateText = itemGroup.items.length === 1 ? (itemGroup.items[0].dueDate ? dueDateValue(itemGroup.items[0].dueDate) : itemGroup.del.end || itemGroup.del.start || 'No date') : `${itemGroup.items.length} due dates`;
+        ctx.fillText(productName(itemGroup.doc), x + 24, cardY + cardHeight - 29);
         ctx.fillText(`${dateText} • ${statusLabel(itemGroup.status)}`, x + 24, cardY + cardHeight - 14);
         cardY += cardHeight + 10;
       });
