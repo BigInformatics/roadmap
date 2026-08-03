@@ -151,6 +151,20 @@ class TimelineViewFeatureTests(unittest.TestCase):
         self.assertIn('selectedDeliverable.dueDates.push(newDueDate)', html)
         self.assertIn("openDetail(selectedDeliverable, selectedDocument, newDueDate)", html)
 
+    def test_list_view_can_export_filtered_csv(self):
+        html = html_text()
+        self.assertIn('id="btnExportCsv"', html)
+        self.assertIn('aria-label="Download filtered List CSV"', html)
+        self.assertIn('function csvEscape(value)', html)
+        self.assertIn('function buildListCsvExport()', html)
+        self.assertIn('const rows = collectDueItems();', html)
+        self.assertIn('"Due Date","Task","Product","Status","Owner","Tags","Due Date Note","Actions","Task Notes"', html)
+        self.assertIn('function downloadListCsv()', html)
+        self.assertIn("new Blob([csv], {type:'text/csv;charset=utf-8'})", html)
+        self.assertIn("roadmap-list-${new Date().toISOString().slice(0, 10)}.csv", html)
+        self.assertIn("csvBtn.disabled = currentView !== 'linear'", html)
+        self.assertIn("$('#btnExportCsv').addEventListener('click', downloadListCsv);", html)
+
 
 if __name__ == "__main__":
     unittest.main()
