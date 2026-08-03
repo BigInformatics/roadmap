@@ -97,11 +97,11 @@
   .btn.icon-only { width: 38px; padding: 0.5rem; }
   .btn.icon-only .btn-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
   .icon-btn svg { width: 1rem; height: 1rem; display: block; flex-shrink: 0; }
-  #btnCopyMarkdown { color: var(--accent); }
+  #btnCopyMarkdown, #btnExportCsv { color: var(--accent); }
   #btnNow { color: var(--gold); }
   #btnEdit { color: var(--success); }
-  #btnCopyMarkdown:hover, #btnNow:hover, #btnEdit:hover,
-  #btnCopyMarkdown.active, #btnNow.active, #btnEdit.active { color: var(--button-hover-ink); }
+  #btnCopyMarkdown:hover, #btnExportCsv:hover, #btnNow:hover, #btnEdit:hover,
+  #btnCopyMarkdown.active, #btnExportCsv.active, #btnNow.active, #btnEdit.active { color: var(--button-hover-ink); }
   .filter-chip { color: var(--success); border-color: rgba(29,209,161,0.35); background: rgba(29,209,161,0.08); display: inline-flex; align-items: center; }
   .filter-chip.active { border-color: var(--success); }
   .btn, select.btn {
@@ -401,6 +401,7 @@
     </details>
     <div class="utility-controls">
       <button class="btn icon-btn icon-only" id="btnCopyMarkdown" type="button" aria-label="Copy Markdown" title="Copy Markdown"></button>
+      <button class="btn icon-btn icon-only" id="btnExportCsv" type="button" aria-label="Download filtered List CSV" title="Download filtered List CSV"></button>
       <button class="btn icon-btn icon-only" id="btnMatrixScreenshot" type="button" aria-label="Download Matrix Screenshot" title="Download Matrix Screenshot"></button>
       <select class="btn date-select" id="timelineGrouping" aria-label="Timeline grouping">
         <option value="unified">Unified</option>
@@ -570,6 +571,7 @@ function renderNoteIcon(note) {
 }
 function tagIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00bd7e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-tag-icon lucide-tag"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></svg>'; }
 function copyIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clipboard-copy-icon lucide-clipboard-copy"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M16 4h2a2 2 0 0 1 2 2v4"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/></svg>'; }
+function csvIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-down-icon lucide-file-down"><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>'; }
 function locateIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-crosshair-icon lucide-crosshair"><circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/></svg>'; }
 function editIcon() { return '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-database-icon lucide-database"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4.03 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4.03 3 9 3s9-1.34 9-3"/></svg>'; }
 function chevronIcon(collapsed) { return collapsed ? '▸' : '▾'; }
@@ -1001,6 +1003,41 @@ function buildMarkdownExport() {
   return lines.filter((line, idx, arr) => !(line === '' && arr[idx - 1] === '')).join('\n').trim() + '\n';
 }
 
+function csvEscape(value) {
+  const text = String(value ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+  return `"${text.replace(/"/g, '""')}"`;
+}
+function buildListCsvExport() {
+  const rows = collectDueItems();
+  const lines = ['"Due Date","Task","Product","Status","Owner","Tags","Due Date Note","Actions","Task Notes"'];
+  rows.forEach(({ doc, del, dueDate }) => {
+    const actions = (Array.isArray(dueDate.actions) ? dueDate.actions : [])
+      .map(action => [action.name || 'Action', action.note || '', action.timestamp || ''].filter(Boolean).join(' — '))
+      .join('\n');
+    lines.push([
+      dueDateValue(dueDate),
+      `${del.favorite ? '★ ' : ''}${del.title}`,
+      productName(doc),
+      statusLabel(dueDateStatus(dueDate, del)),
+      del.owner || doc.data.owner || '',
+      normalizeTags(del.tags).join(', '),
+      dueDate.note || '',
+      actions,
+      Array.isArray(del.notes) ? del.notes.join('\n') : ''
+    ].map(csvEscape).join(','));
+  });
+  return lines.join('\n') + '\n';
+}
+function downloadListCsv() {
+  const csv = buildListCsvExport();
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `roadmap-list-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 async function copyMarkdownToClipboard() {
   const markdown = buildMarkdownExport();
   const btn = $('#btnCopyMarkdown');
@@ -1221,6 +1258,13 @@ function updateViewControls() {
   }
   const copyBtn = $('#btnCopyMarkdown');
   if (copyBtn) copyBtn.innerHTML = `${copyIcon()}<span class="btn-label">Copy Markdown</span>`;
+  const csvBtn = $('#btnExportCsv');
+  if (csvBtn) {
+    csvBtn.innerHTML = `${csvIcon()}<span class="btn-label">Download filtered List CSV</span>`;
+    csvBtn.disabled = currentView !== 'linear';
+    csvBtn.setAttribute('aria-label', currentView === 'linear' ? 'Download filtered List CSV' : 'Download filtered List CSV unavailable outside List view');
+    csvBtn.title = currentView === 'linear' ? 'Download filtered List CSV' : 'CSV export is available in List View';
+  }
   const nowBtn = $('#btnNow');
   if (nowBtn) {
     const disabled = currentView === 'grid';
@@ -2296,6 +2340,7 @@ $('#btnStatusAll').addEventListener('click', selectAllStatuses);
 $('#btnStatusClear').addEventListener('click', clearStatusFilters);
 $('#btnThemeToggle').addEventListener('click', toggleTheme);
 $('#btnCopyMarkdown').addEventListener('click', copyMarkdownToClipboard);
+$('#btnExportCsv').addEventListener('click', downloadListCsv);
 $('#btnMatrixScreenshot').addEventListener('click', downloadMatrixScreenshot);
 $('#btnEdit').addEventListener('click', openEditor);
 $('#globalJsonFileInput').addEventListener('change', loadJsonDocumentsFromFiles);
