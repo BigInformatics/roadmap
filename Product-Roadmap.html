@@ -1007,6 +1007,9 @@ function csvEscape(value) {
   const text = String(value ?? '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
   return `"${text.replace(/"/g, '""')}"`;
 }
+function csvFavoritePrefix(del) {
+  return del.favorite ? '* ' : '';
+}
 function buildListCsvExport() {
   const rows = collectDueItems();
   const lines = ['"Due Date","Task","Product","Status","Owner","Tags","Due Date Note","Actions","Task Notes"'];
@@ -1016,7 +1019,7 @@ function buildListCsvExport() {
       .join('\n');
     lines.push([
       dueDateValue(dueDate),
-      `${del.favorite ? '★ ' : ''}${del.title}`,
+      `${csvFavoritePrefix(del)}${del.title}`,
       productName(doc),
       statusLabel(dueDateStatus(dueDate, del)),
       del.owner || doc.data.owner || '',
